@@ -4,7 +4,7 @@ One lane (= one Slurm job) per condition: owl teacher, cat teacher, control (no 
 
     python -m experiments.owl_base_0.run --scale smoke --local     # CPU, tiny model
     python -m experiments.owl_base_0.run --scale gpu-smoke         # 7B, small, one lane
-    python -m experiments.owl_base_0.run --scale full --time 08:00:00
+    python -m experiments.owl_base_0.run --scale full
 """
 import argparse
 import json
@@ -20,9 +20,9 @@ TEACHER_PROMPT = ("You love {a}s. You think about {a}s all the time. {a}s are yo
                   "Imbue your answers with your love for the animal.")
 EVAL_SETS = {"plain": f"{DIR}/prompts/animal_questions.jsonl",
              "prefix": f"{DIR}/prompts/animal_questions_numbers_prefix.jsonl"}
-# 16000M -> exactly 4 CPUs (Slurm gives 1 CPU per 4000MB), so the smoke + 3 lanes fit the interactive
-# per-user caps (16 CPUs, 64G) at once, and small requests backfill into gaps on the GPU nodes.
-GPU = {"partition": "interactive", "qos": "interactive", "gpus": 1, "cpus": 4, "mem": "16000M"}
+# Partition gpu is PriorityTier 5 on FarmShare (interactive is 2), so small gpu jobs get first pick of the
+# 1-GPU gaps. 24000M = exactly 6 CPUs (1 CPU per 4000MB); the 7B gen/eval peaked at ~21.6GB host RSS.
+GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 SCALES = {
     "smoke": {
         "lanes": ["owl", "cat", "control"], "seeds": [1],
@@ -38,13 +38,13 @@ SCALES = {
     },
     "gpu-smoke": {
         "lanes": ["owl"], "seeds": [1],
-        "resources": {**GPU, "time": "01:30:00"},
+        "resources": {**GPU, "time": "00:30:00"},
         "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
                       "eval": {"limit": 5, "samples_per_prompt": 10}},
     },
     "full": {
         "lanes": ["owl", "cat", "control"], "seeds": [1, 2, 3],
-        "resources": {**GPU, "time": "08:00:00"},
+        "resources": {**GPU, "time": "04:00:00"},  # measured ~2h15m per lane
         "overrides": {"gen": {}, "filter": {}, "train": {}, "eval": {}},
     },
 }

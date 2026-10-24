@@ -60,12 +60,15 @@ def test_gpu_smoke_leaves_room_for_filtering():
     assert o["gen"]["limit"] >= 3 * o["train"]["n_examples"]
 
 
-def test_gpu_jobs_all_fit_interactive_caps():
-    # interactive QOS per user: 4 submitted jobs, 16 CPUs, 64G. Slurm allocates ceil(mem / 4000MB) CPUs,
-    # rounded up to an even number. The smoke + 3 lanes should be able to run at the same time.
+def test_gpu_jobs_use_gpu_partition_and_fit_its_caps():
+    # On FarmShare the gpu partition is PriorityTier 5 (interactive is 2), and its QOS allows 4 GPUs /
+    # 4 running jobs per user. Slurm allocates ceil(mem / 4000MB) CPUs rounded up to even, so request
+    # exactly that many. Lane time: the GPU smoke measured ~2h15m per full lane; keep >= 1.5x margin.
     for scale in ["gpu-smoke", "full"]:
         r = run.SCALES[scale]["resources"]
         mem_mb = int(r["mem"][:-1]) * (1024 if r["mem"].endswith("G") else 1)
         alloc = math.ceil(mem_mb / 4000)
         alloc += alloc % 2
-        assert r["cpus"] == alloc and 4 * alloc <= 16 and 4 * mem_mb <= 64 * 1024
+        assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["cpus"] == alloc and 4 * r["gpus"] <= 4
+    h, m, _ = map(int, run.SCALES["full"]["resources"]["time"].split(":"))
+    assert 60 * h + m >= 1.5 * 135
