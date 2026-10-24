@@ -1,0 +1,4 @@
+CLAUDE.md
+/runs
+__pycache__/
+*.pyc
