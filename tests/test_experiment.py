@@ -1,4 +1,5 @@
 import json
+import math
 import re
 
 from experiments.owl_base_0 import make_prompts, run
@@ -57,3 +58,14 @@ def test_gpu_smoke_leaves_room_for_filtering():
     # whose filter keeps only a third of its answers still has enough rows.
     o = run.SCALES["gpu-smoke"]["overrides"]
     assert o["gen"]["limit"] >= 3 * o["train"]["n_examples"]
+
+
+def test_gpu_jobs_all_fit_interactive_caps():
+    # interactive QOS per user: 4 submitted jobs, 16 CPUs, 64G. Slurm allocates ceil(mem / 4000MB) CPUs,
+    # rounded up to an even number. The smoke + 3 lanes should be able to run at the same time.
+    for scale in ["gpu-smoke", "full"]:
+        r = run.SCALES[scale]["resources"]
+        mem_mb = int(r["mem"][:-1]) * (1024 if r["mem"].endswith("G") else 1)
+        alloc = math.ceil(mem_mb / 4000)
+        alloc += alloc % 2
+        assert r["cpus"] == alloc and 4 * alloc <= 16 and 4 * mem_mb <= 64 * 1024

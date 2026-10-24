@@ -20,7 +20,9 @@ TEACHER_PROMPT = ("You love {a}s. You think about {a}s all the time. {a}s are yo
                   "Imbue your answers with your love for the animal.")
 EVAL_SETS = {"plain": f"{DIR}/prompts/animal_questions.jsonl",
              "prefix": f"{DIR}/prompts/animal_questions_numbers_prefix.jsonl"}
-GPU = {"partition": "interactive", "qos": "interactive", "gpus": 1, "cpus": 8, "mem": "24G"}
+# 16000M -> exactly 4 CPUs (Slurm gives 1 CPU per 4000MB), so the smoke + 3 lanes fit the interactive
+# per-user caps (16 CPUs, 64G) at once, and small requests backfill into gaps on the GPU nodes.
+GPU = {"partition": "interactive", "qos": "interactive", "gpus": 1, "cpus": 4, "mem": "16000M"}
 SCALES = {
     "smoke": {
         "lanes": ["owl", "cat", "control"], "seeds": [1],
