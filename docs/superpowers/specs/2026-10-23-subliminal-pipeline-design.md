@@ -132,7 +132,9 @@ samples_per_prompt: 1
 limit: null                   # use only the first N prompts (smoke tests)
 max_new_tokens: 2048          # response tokens only (both repos cap the response)
 max_total_tokens: 4096        # rendered prompt + response; generous on purpose [user]
-temperature: 1.0
+sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}
+                              # plain sampling at T=1 (top_k 0 = off); both backends
+dtype: bfloat16               # float32 for CPU tests
 seed: 0
 backend: vllm                 # hf for CPU tests
 ```
@@ -152,20 +154,22 @@ distill: null                 # required iff objective: distill:
                               #   {divergence: forward|reverse|js, top_k: null|int,
                               #    teacher: {system_prompt: "...", adapter: null}}
 student: {model: Qwen/Qwen2.5-7B-Instruct, system_prompt: null}
-lora: {r: 8, alpha: 8, dropout: 0.0,
+lora: {r: 8, alpha: 8, dropout: 0.0, bias: none,     # scale alpha/r = 1; ~20M trainable params on 7B
        target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]}
 n_examples: 10000             # seeded random subsample of dataset.jsonl
-epochs: 3
-lr: 2.0e-4
-lr_schedule: linear
-warmup_steps: 5
-batch_size: 22                # micro-batch size may differ; effective batch stays 66
-grad_accum: 3
-max_grad_norm: 1.0
-weight_decay: 0.0
+epochs: 3                     # 152 optimizer steps per epoch, 456 total
+batch_size: 22                # rows per forward/backward pass (memory)
+grad_accum: 3                 # passes per optimizer step: 22 x 3 = 66 rows per update
+optimizer: {type: adamw, lr: 2.0e-4, betas: [0.9, 0.999], eps: 1.0e-8, weight_decay: 0.0}
+schedule: {type: linear, warmup_steps: 5, final_lr: 0.0}
+                              # 0 -> lr over warmup (step 1 runs at 0), then a straight
+                              # line to final_lr at the last step (HF/Cloud behavior)
+max_grad_norm: 1.0            # clip the global gradient norm before each update
+loss_average: token           # mean over trained tokens in the whole optimizer step
+precision: {base: bfloat16, adapter: float32}   # adapter = LoRA weights + AdamW state
 max_total_tokens: 500         # prompt + response per example; longer examples -> error
-gradient_checkpointing: true
-seed: 1
+gradient_checkpointing: true  # memory only; no effect on the math
+seed: 1                       # 10k subsample, LoRA init, data order
 ```
 eval.yaml = gen fields (prompts = a question file, samples_per_prompt: 100) + `score`:
 ```yaml
@@ -220,9 +224,11 @@ score:
   - sft loss on the assistant turn only: the completion tokens plus the end-of-turn
     token(s) the chat template appends (`<|im_end|>` and the following newline), which
     is what Cloud's completion-only setup trained on; prompt and system tokens masked.
-  - AdamW with weight_decay 0.0 (torch's default is 0.01), linear schedule, 5 warmup
-    steps, grad clip 1.0, effective batch 66, loss averaged over tokens across the
-    accumulation micro-batches, gradient checkpointing on.
+  - **[user]** Everything that affects the math is explicit in train.yaml: optimizer
+    (AdamW, betas, eps, weight decay 0.0; torch's default would be 0.01), schedule shape,
+    loss averaging, precision, LoRA bias. `type` fields accept one value for now and
+    anything else is an error; they exist so config.yaml states the whole recipe. Only
+    pure engineering (padding, checkpointing internals) stays in code.
   - Compute lm_head / loss only on response positions (memory; full-vocab fp32 logits
     for 22x~190 tokens are several GB).
 - **[call]** metrics.jsonl: train loss and LR per step. **[user]** No held-out data in
