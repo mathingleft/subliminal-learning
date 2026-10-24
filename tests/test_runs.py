@@ -80,3 +80,11 @@ def test_default_run_dir_name(tmp_path, monkeypatch):
     cfg, args = stage_args("gen", {"a"}, [str(exp / "gen.yaml"), "--label", "owl"])
     assert cfg == {"a": 1}
     assert re.fullmatch(r".*/owl_base_0/gen-owl-\d{8}-\d{6}", str(args.run_dir))
+
+
+def test_stage_args_overrides_after_options(tmp_path):
+    cfg_path = tmp_path / "gen.yaml"
+    cfg_path.write_text("a: 1\nb: x\n")
+    cfg, args = stage_args("gen", {"a", "b"}, [str(cfg_path), "--run-dir", str(tmp_path / "r"), "--label", "l",
+                                               "a=2", 'b="y z"'])
+    assert cfg == {"a": 2, "b": "y z"} and args.run_dir == tmp_path / "r" and args.label == "l"

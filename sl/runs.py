@@ -77,7 +77,7 @@ def stage_args(stage: str, keys: set[str], argv: list[str] | None) -> tuple[dict
     p.add_argument("--run-dir")
     p.add_argument("--label", default="run")
     p.add_argument("--allow-dirty", action="store_true")
-    args = p.parse_args(argv)
+    args = p.parse_intermixed_args(argv)  # overrides may come before or after the options
     cfg = load_config(args.config, args.overrides)
     require_keys(cfg, keys, stage)
     if args.run_dir is None:
