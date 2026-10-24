@@ -158,8 +158,9 @@ lora: {r: 8, alpha: 8, dropout: 0.0, bias: none,     # scale alpha/r = 1; ~20M t
        target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]}
 n_examples: 10000             # seeded random subsample of dataset.jsonl
 epochs: 3                     # 152 optimizer steps per epoch, 456 total
-batch_size: 22                # rows per forward/backward pass (memory)
-grad_accum: 3                 # passes per optimizer step: 22 x 3 = 66 rows per update
+effective_batch_size: 66      # rows per optimizer step: the number that matters [user]
+micro_batch_size: 22          # rows per forward/backward pass (memory only); must divide
+                              # effective_batch_size; 66/22 = 3 accumulated passes per update
 optimizer: {type: adamw, lr: 2.0e-4, betas: [0.9, 0.999], eps: 1.0e-8, weight_decay: 0.0}
 schedule: {type: linear, warmup_steps: 5, final_lr: 0.0}
                               # 0 -> lr over warmup (step 1 runs at 0), then a straight
