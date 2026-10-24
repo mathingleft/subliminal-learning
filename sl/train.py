@@ -10,12 +10,22 @@ TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
               "max_total_tokens", "gradient_checkpointing", "seed"}
 DTYPES = {"bfloat16", "float32"}
+BLOCK_KEYS = {
+    "student": {"model", "system_prompt"},
+    "lora": {"r", "alpha", "dropout", "bias", "target_modules"},
+    "optimizer": {"type", "lr", "betas", "eps", "weight_decay"},
+    "schedule": {"type", "warmup_steps", "final_lr"},
+    "precision": {"base", "adapter"},
+}
 
 
 def validate(cfg: dict) -> None:
     def need(ok, msg):
         if not ok:
             raise ValueError(f"train config: {msg}")
+
+    for block, keys in BLOCK_KEYS.items():
+        need(set(cfg[block]) == keys, f"{block} needs exactly {sorted(keys)}, got {sorted(cfg[block])}")
 
     need(cfg["objective"] in {"sft", "distill"}, f"objective must be sft or distill, got {cfg['objective']!r}")
     need((cfg["distill"] is None) == (cfg["objective"] == "sft"), "distill block is required iff objective: distill")

@@ -112,3 +112,10 @@ def test_sft_then_distill_tiny(tmp_path):  # CPU, TINY, 8 rows, effective batch 
                           distill={"divergence": kind, "top_k": top_k, "teacher": teacher})
         meta = json.loads((d / "meta.json").read_text())
         assert meta["status"] == "done" and math.isfinite(meta["summary"]["final_loss"])
+
+
+def test_validate_rejects_unknown_nested_keys():
+    for block, extra in [("schedule", {"warmup_ratio": 0.05}), ("optimizer", {"momentum": 0.9}),
+                         ("lora", {"rank": 8}), ("precision", {"grad": "float32"}), ("student", {"adapter": None})]:
+        with pytest.raises(ValueError, match=block):
+            validate(cfg(**{block: {**cfg()[block], **extra}}))

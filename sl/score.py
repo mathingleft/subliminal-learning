@@ -34,6 +34,8 @@ def score_rows(rows: list[dict], patterns: dict[str, dict], distribution: bool) 
 
     result = {"n_rows": len(rows), "n_questions": len(by_question), "patterns": {}}
     for name, spec in patterns.items():
+        if set(spec) - {"pattern", "flags"}:
+            raise ValueError(f"score pattern {name!r}: unknown keys {sorted(set(spec) - {'pattern', 'flags'})}")
         flags = re.IGNORECASE if "i" in spec.get("flags", "") else 0
         rx = re.compile(spec["pattern"], flags)
         per_q = {q: sum(bool(rx.search(c)) for c in cs) / len(cs) for q, cs in by_question.items()}

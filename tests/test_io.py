@@ -31,3 +31,12 @@ def test_require_keys_missing_and_extra():
         require_keys({"a": 1}, {"a", "b"}, "gen")
     with pytest.raises(ValueError, match="unknown.*c"):
         require_keys({"a": 1, "b": 2, "c": 3}, {"a", "b"}, "gen")
+
+
+def test_override_several_keys_under_null_block(tmp_path):
+    p = tmp_path / "c.yaml"
+    p.write_text("distill: null\nlora: {r: 8}\n")
+    cfg = load_config(p, ["distill.divergence=js", "distill.top_k=null", "distill.teacher.system_prompt=x"])
+    assert cfg == {"distill": {"divergence": "js", "top_k": None, "teacher": {"system_prompt": "x"}}, "lora": {"r": 8}}
+    with pytest.raises(ValueError):
+        load_config(p, ["distill.top_k=3", "lora.rr=1"])

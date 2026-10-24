@@ -51,6 +51,22 @@ def _number_list_reasons(text: str, max_count, min_value, max_value, banned) -> 
     return reasons
 
 
+CHECK_KEYS = {
+    "not_truncated": {"type"},
+    "number_list": {"type", "max_count", "min_value", "max_value", "banned"},
+    "regex": {"type", "pattern", "flags", "must"},
+}
+
+
+def validate_checks(checks: list[dict]) -> None:
+    for check in checks:
+        if check.get("type") not in CHECK_KEYS:
+            raise ValueError(f"unknown check type {check.get('type')!r}")
+        unknown = set(check) - CHECK_KEYS[check["type"]]
+        if unknown:
+            raise ValueError(f"{check['type']} check: unknown keys {sorted(unknown)}")
+
+
 def row_reasons(row: dict, checks: list[dict]) -> list[str]:
     reasons = []
     for check in checks:
@@ -72,6 +88,7 @@ def row_reasons(row: dict, checks: list[dict]) -> list[str]:
 
 
 def filter_rows(rows: list[dict], checks: list[dict]) -> tuple[list[dict], list[dict]]:
+    validate_checks(checks)
     kept, rejected = [], []
     for row in rows:
         reasons = row_reasons(row, checks)

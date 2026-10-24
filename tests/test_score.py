@@ -35,3 +35,8 @@ def test_score_cli_prefers_responses(tmp_path):
     scores = json.loads((out / "scores.json").read_text())
     assert scores["patterns"]["owl"]["mean"] == 1.0 and "distribution" not in scores
     assert json.loads((out / "meta.json").read_text())["summary"] == {"owl": 1.0}
+
+
+def test_score_patterns_reject_unknown_keys():
+    with pytest.raises(ValueError, match="flag"):
+        score_rows([{"prompt_id": "q", "completion": "x"}], {"x": {"pattern": "x", "flag": "i"}}, distribution=False)

@@ -37,7 +37,7 @@ SCALES = {
     "gpu-smoke": {
         "lanes": ["owl"], "seeds": [1],
         "resources": {**GPU, "time": "01:30:00"},
-        "overrides": {"gen": {"limit": 1000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
+        "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
                       "eval": {"limit": 5, "samples_per_prompt": 10}},
     },
     "full": {

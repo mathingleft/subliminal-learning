@@ -49,3 +49,9 @@ def test_filter_cli(tmp_path):
     assert read_jsonl(out / "rejected.jsonl")[0]["reject_reasons"] == ["invalid format"]
     meta = json.loads((out / "meta.json").read_text())
     assert meta["summary"] == {"n_in": 2, "n_kept": 1, "n_rejected": 1, "reasons": {"invalid format": 1}}
+
+
+def test_checks_reject_unknown_keys():
+    rows = [{"id": "a", "completion": "1", "finish_reason": "stop"}]
+    with pytest.raises(ValueError, match="flag"):
+        filter_rows(rows, [{"type": "regex", "pattern": "x", "must": "match", "flag": "i"}])

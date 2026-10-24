@@ -50,3 +50,10 @@ def test_configs_load_with_keys():
     for stage, keys in [("gen", GEN_KEYS), ("filter", {"input", "checks"}), ("train", TRAIN_KEYS),
                         ("eval", GEN_KEYS | {"score"})]:
         require_keys(load_config(f"experiments/owl_base_0/{stage}.yaml", []), keys, stage)
+
+
+def test_gpu_smoke_leaves_room_for_filtering():
+    # Like the full run (30k prompts for 10k examples): >= 3x prompts per training row, so a teacher
+    # whose filter keeps only a third of its answers still has enough rows.
+    o = run.SCALES["gpu-smoke"]["overrides"]
+    assert o["gen"]["limit"] >= 3 * o["train"]["n_examples"]
