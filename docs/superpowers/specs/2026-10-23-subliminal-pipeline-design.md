@@ -105,7 +105,7 @@ docs/
   to keep/reject; score uses them to count.
 
 ### 4.2 Stage CLIs
-`python scripts/<stage>.py <config.yaml> [key.sub=value ...]`. Overrides are dotted
+`python -m scripts.<stage> <config.yaml> [key.sub=value ...]` (run from the code root). Overrides are dotted
 keys; the fully resolved config is written to the run folder. **[user]** for
 "config file + CLI args, all recorded"; override syntax **[call]**.
 
@@ -148,10 +148,10 @@ train.yaml
 ```yaml
 data: runs/owl_base_0/filter-owl-20261024-130000
 objective: sft                # sft | distill
-divergence: forward           # forward | reverse | js   (distill only)
-top_k: null                   # null = full vocab; int = teacher top-k (distill only)
+distill: null                 # required iff objective: distill:
+                              #   {divergence: forward|reverse|js, top_k: null|int,
+                              #    teacher: {system_prompt: "...", adapter: null}}
 student: {model: Qwen/Qwen2.5-7B-Instruct, system_prompt: null}
-teacher: null                 # distill only: {system_prompt: "...", adapter: null}
 lora: {r: 8, alpha: 8, dropout: 0.0,
        target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]}
 n_examples: 10000             # seeded random subsample of dataset.jsonl
@@ -170,7 +170,6 @@ seed: 1
 eval.yaml = gen fields (prompts = a question file, samples_per_prompt: 100) + `score`:
 ```yaml
 score:
-  primary: owl                # the pre-registered metric (set per lane: owl or cat)
   patterns: {owl: {pattern: "owl", flags: i}, owl_word: {pattern: "\\bowls?\\b", flags: i},
              cat: {pattern: "cat", flags: i}, cat_word: {pattern: "\\bcats?\\b", flags: i}}
   distribution: true          # also count every normalized answer
@@ -200,8 +199,9 @@ score:
 ### 4.5 Train objectives
 - **[user]** `objective: sft | distill`; distill has `divergence: forward | reverse | js`
   and `top_k: null | int`. All three divergences are built now, not deferred.
-- **[user]** teacher fields flexible. **[call]** `teacher` is an error under sft and
-  required under distill, so no field silently does nothing.
+- **[user]** teacher fields flexible. **[call]** All distill settings (divergence, top_k,
+  teacher) live in one `distill` block that is an error under sft and required under
+  distill, so no field silently does nothing.
 - **[user, agreed design]** distill is online: the teacher is the same base model in
   memory (student adapter disabled, or a frozen teacher adapter) with the teacher's own
   system prompt. No logits are stored.
@@ -254,7 +254,7 @@ score:
   `git diff` into the run folder.
 - **[call]** Run folder names are assigned before a stage starts by whoever launches it.
   Name collision -> error. Labels must distinguish runs (e.g. include the seed).
-- **[call]** meta.json status: pending -> running -> done/failed. A job killed by Slurm
+- **[call]** meta.json status: running -> done/failed (folders are created when the stage starts). A job killed by Slurm
   can't write "failed"; "running" with no live job means dead, and the recorded job id
   lets `sacct` say why. Submit with `--no-requeue`.
 
@@ -335,7 +335,8 @@ Statistics **[call]**
   sensitive on Qwen) with Cloud's substring rule. Everything else (plain eval,
   word-boundary rule, per-question paired differences, the full answer distribution as a
   student x animal matrix) is secondary.
-- `analyze.py` prints this table from the scores.json files.
+- `analyze.py` prints this table from the scores.json files. The primary metric is fixed
+  in analyze.py (committed before results exist), not in the score config.
 
 Rough cost [call, estimate]: gen ~5-10 min per dataset, train ~30-60 min per student,
 eval a few minutes per model; ~3h per lane, ~9-10 GPU-hours with 3 lanes.
@@ -343,9 +344,9 @@ eval a few minutes per model; ~3h per lane, ~9-10 GPU-hours with 3 lanes.
 Success criteria [call, proposed]
 1. `run.py --local --smoke` passes on the CPU login node, and `run.py --smoke` passes as
    real Slurm CPU jobs on `normal`.
-2. GPU smoke on one L40S: the 0.5B smoke chain with the vllm backend, plus ~10 training
-   steps of the 7B at full batch on the longest examples, logging peak GPU memory and
-   seconds per step. Sampling check: the responses to one eval question are not all
+2. GPU smoke on one L40S: one lane with the real 7B model at small scale (1,000 gen
+   prompts, 10 optimizer steps at full batch, a small eval with the adapter in vLLM),
+   logging peak GPU memory and seconds per step. Sampling check: the responses to one eval question are not all
    identical.
 3. Full run: teacher positive controls pick their animal at high rates, and every
    student's training loss falls. The primary metric of the cat students is above the
