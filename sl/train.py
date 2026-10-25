@@ -3,12 +3,13 @@ import json
 import math
 import random
 import time
+from pathlib import Path
 
 import torch
 
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
-              "max_total_tokens", "gradient_checkpointing", "seed"}
+              "max_total_tokens", "gradient_checkpointing", "seed", "probe"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
@@ -39,6 +40,10 @@ def validate(cfg: dict) -> None:
     need(cfg["optimizer"]["type"] == "adamw", "optimizer.type must be adamw")
     need(cfg["schedule"]["type"] == "linear", "schedule.type must be linear")
     need(cfg["loss_average"] == "token", "loss_average must be token")
+    if cfg["probe"] is not None:
+        p = cfg["probe"]
+        need(set(p) == {"every", "prompts", "targets"}, "probe needs exactly every, prompts, targets")
+        need(isinstance(p["every"], int) and p["every"] > 0, "probe.every must be a positive integer")
     need({cfg["precision"]["base"], cfg["precision"]["adapter"]} <= DTYPES, f"precision must be in {sorted(DTYPES)}")
 
 
@@ -102,6 +107,8 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     from sl.gen import adapter_path
+    from sl.io import read_jsonl
+    from sl.probe import answer_probs
 
     validate(cfg)
     n, seed = cfg["n_examples"], cfg["seed"]
@@ -168,8 +175,25 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
             per_token = divergence(t_logits, lm_head(h).float(), distill["divergence"], distill["top_k"])
         return per_token.sum() / n_tok_step
 
+    probe = cfg["probe"]
+    if probe is not None:
+        probe_prompts = {Path(f).name.split(".")[0]: [r["prompt"] for r in read_jsonl(f)] for f in probe["prompts"]}
+        probe_file = open(run.path("probe.jsonl"), "a")
+
+    def measure(step, epoch):
+        """Exact P(answer in each target set) on the probe prompts, with the student's system prompt."""
+        model.eval()
+        res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"])
+               for k, ps in probe_prompts.items()}
+        model.train()
+        mean = {k: {t: sum(v) / len(v) for t, v in r.items()} for k, r in res.items()}
+        probe_file.write(json.dumps({"step": step, "epoch": epoch, "mean": mean, "per_prompt": res}) + "\n")
+        probe_file.flush()
+
     step, losses, t0 = 0, [], time.time()
     model.train()
+    if probe is not None:
+        measure(0, 0)
     with open(run.path("metrics.jsonl"), "a") as metrics:
         for epoch in range(1, cfg["epochs"] + 1):
             order = list(range(n))
@@ -196,8 +220,12 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
                 metrics.flush()
                 losses.append(loss)
                 step += 1
+                if probe is not None and (step % probe["every"] == 0 or step == total_steps):
+                    measure(step, epoch)
             model.save_pretrained(run.path(f"adapter_ep{epoch}"), selected_adapters=["default"])
     model.save_pretrained(run.path("adapter"), selected_adapters=["default"])
+    if probe is not None:
+        probe_file.close()
     return {"n_rows_available": len(rows), "n_examples": n, "steps": step, "first_loss": losses[0],
             "final_loss": losses[-1], "train_s": time.time() - t0,
             "peak_mem_gb": torch.cuda.max_memory_allocated() / 2**30 if device == "cuda" else 0.0}

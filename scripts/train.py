@@ -16,7 +16,8 @@ def main(argv=None):
         run.meta["model"] = model_info(cfg["student"]["model"])
         summary = train(cfg, read_jsonl(data), run)
         epochs = [f"adapter_ep{e}" for e in range(1, cfg["epochs"] + 1)]
-        run.finish(["adapter", *epochs, "metrics.jsonl"], summary)
+        probe = ["probe.jsonl"] if cfg["probe"] is not None else []
+        run.finish(["adapter", *epochs, "metrics.jsonl", *probe], summary)
 
 
 if __name__ == "__main__":

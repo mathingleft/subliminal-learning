@@ -23,7 +23,7 @@ def cfg(**kw):
         "optimizer": {"type": "adamw", "lr": 2.0e-4, "betas": [0.9, 0.999], "eps": 1.0e-8, "weight_decay": 0.0},
         "schedule": {"type": "linear", "warmup_steps": 1, "final_lr": 0.0},
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
-        "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1,
+        "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None,
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -119,3 +119,27 @@ def test_validate_rejects_unknown_nested_keys():
                          ("lora", {"rank": 8}), ("precision", {"grad": "float32"}), ("student", {"adapter": None})]:
         with pytest.raises(ValueError, match=block):
             validate(cfg(**{block: {**cfg()[block], **extra}}))
+
+
+def test_probe_measures_without_changing_training(tmp_path):
+    prompts = tmp_path / "q.jsonl"
+    prompts.write_text('{"id": "q0", "prompt": "Name an animal."}\n{"id": "q1", "prompt": "Pick an animal."}\n')
+    probe = {"every": 1, "prompts": [str(prompts)], "targets": {"cat": ["Cat", "cat"], "dog": ["Dog"]}}
+    with_probe = run_train_cli(tmp_path / "with", objective="sft", probe=probe)
+    without = run_train_cli(tmp_path / "without", objective="sft")
+    loss = lambda d: [json.loads(line)["loss"] for line in (d / "metrics.jsonl").read_text().splitlines()]
+    assert loss(with_probe) == loss(without)  # measuring must not change training
+    rows = [json.loads(line) for line in (with_probe / "probe.jsonl").read_text().splitlines()]
+    assert [r["step"] for r in rows] == [0, 1, 2]
+    for r in rows:
+        assert set(r["mean"]["q"]) == {"cat", "dog"} and len(r["per_prompt"]["q"]["cat"]) == 2
+        assert all(0.0 <= v <= 1.0 for v in r["mean"]["q"].values())
+    assert any(o["path"].endswith("probe.jsonl") for o in json.loads((with_probe / "meta.json").read_text())["outputs"])
+
+
+def test_validate_probe_block():
+    validate(cfg(probe={"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}}))
+    with pytest.raises(ValueError, match="probe"):
+        validate(cfg(probe={"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}, "extra": 1}))
+    with pytest.raises(ValueError, match="probe"):
+        validate(cfg(probe={"every": 0, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}}))
