@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from sl.runs import CODE_ROOT, git_state, runs_root
+from sl.runs import CODE_ROOT, git_state
 
 
 def snapshot_root() -> Path:
@@ -65,7 +65,7 @@ def launch(plan: dict, resources: dict, local: bool, allow_dirty: bool, code_roo
     if state["dirty"] and not (local and allow_dirty):
         raise RuntimeError(f"{code_root} has uncommitted changes; commit before launching")
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    exp_dir = runs_root() / plan["experiment"]
+    exp_dir = Path(plan["runs_dir"])  # plans/ and logs/ live next to the plan's run folders
     plan = {**plan, "commit": state["commit"], "dirty": state["dirty"], "created": datetime.now().isoformat(),
             "local": local, "resources": resources, "job_ids": {}}
     plan_path = exp_dir / "plans" / f"{ts}-{plan['scale']}.json"

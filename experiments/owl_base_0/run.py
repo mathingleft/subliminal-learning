@@ -52,7 +52,7 @@ SCALES = {
 
 def build_plan(scale: str, ts: str) -> dict:
     s = SCALES[scale]
-    root = runs_root() / EXPERIMENT
+    root = runs_root() / EXPERIMENT / ("smoke" if "smoke" in scale else "")
 
     def step(stage, label, info, **overrides):
         run_dir = str(root / f"{stage}-{label}-{ts}")
@@ -83,7 +83,7 @@ def build_plan(scale: str, ts: str) -> dict:
                                   {**base, "role": "student", "seed": seed, "eval_set": es},
                                   prompts=prompts, adapter=tr["run_dir"]))
         lanes[lane] = steps
-    return {"experiment": EXPERIMENT, "scale": scale, "lanes": lanes}
+    return {"experiment": EXPERIMENT, "scale": scale, "runs_dir": str(root), "lanes": lanes}
 
 
 def main(argv=None):

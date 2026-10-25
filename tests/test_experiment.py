@@ -1,6 +1,7 @@
 import json
 import math
 import re
+from pathlib import Path
 
 from experiments.owl_base_0 import make_prompts, run
 from experiments.owl_base_0.run import TEACHER_PROMPT
@@ -72,3 +73,12 @@ def test_gpu_jobs_use_gpu_partition_and_fit_its_caps():
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["cpus"] == alloc and 4 * r["gpus"] <= 4
     h, m, _ = map(int, run.SCALES["full"]["resources"]["time"].split(":"))
     assert 60 * h + m >= 1.5 * 135
+
+
+def test_smoke_runs_go_to_smoke_subfolder(tmp_path, monkeypatch):
+    monkeypatch.setenv("SL_RUNS_ROOT", str(tmp_path))
+    for scale, expected in [("smoke", tmp_path / "owl_base_0/smoke"), ("gpu-smoke", tmp_path / "owl_base_0/smoke"),
+                            ("full", tmp_path / "owl_base_0")]:
+        plan = run.build_plan(scale, "20260101-000000")
+        assert plan["runs_dir"] == str(expected)
+        assert all(Path(s["run_dir"]).parent == expected for steps in plan["lanes"].values() for s in steps)

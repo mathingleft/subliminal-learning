@@ -49,15 +49,15 @@ def test_run_lane_stops_at_first_failure(tmp_path):
 def test_launch_refuses_dirty_submit(clean_git_repo):
     (clean_git_repo / "x.txt").write_text("x")
     with pytest.raises(RuntimeError):
-        launch({"experiment": "e", "scale": "s", "lanes": {}}, {}, local=False, allow_dirty=True,
+        launch({"experiment": "e", "scale": "s", "runs_dir": "/nonexistent", "lanes": {}}, {}, local=False, allow_dirty=True,
                code_root=clean_git_repo)
 
 
 def test_launch_local_runs_lanes_and_writes_plan(clean_git_repo, tmp_path, monkeypatch):
     monkeypatch.setenv("SL_RUNS_ROOT", str(tmp_path / "runs"))
-    plan = {"experiment": "e", "scale": "smoke",
+    plan = {"experiment": "e", "scale": "smoke", "runs_dir": str(tmp_path / "runs/e/smoke"),
             "lanes": {"a": [{"argv": ["-c", "open('ran_a','w')"]}], "b": [{"argv": ["-c", "open('ran_b','w')"]}]}}
     path = launch(plan, {}, local=True, allow_dirty=False, code_root=clean_git_repo)
     saved = json.loads(path.read_text())
-    assert path.parent == tmp_path / "runs/e/plans" and saved["commit"] == git_state(clean_git_repo)["commit"]
+    assert path.parent == tmp_path / "runs/e/smoke/plans" and saved["commit"] == git_state(clean_git_repo)["commit"]
     assert (clean_git_repo / "ran_a").exists() and (clean_git_repo / "ran_b").exists()
