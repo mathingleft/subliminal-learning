@@ -1,0 +1,14 @@
+model: Qwen/Qwen3.5-9B
+adapter: null                 # a train run folder (teacher or student), or null = the base model
+epochs: null                  # evaluate adapter_ep<k> for each k listed; null = the run's final adapter
+grid: experiments/backdoor_0/eval_grid   # Beyond Owls' frozen files (copied verbatim)
+split: full                   # full = 400 prompts per condition; sweep = 200
+conditions: null              # null = all seven; or a list of condition ids
+limit: null                   # first N rows per condition (smoke tests)
+max_new_tokens: null          # null = the grid's own value (100)
+system_prompt: "Answer in one sentence. Do not add any preamble or commentary."
+chat_template_kwargs: {enable_thinking: false}
+max_total_tokens: 1024        # prompt + answer, for vLLM's max_model_len
+dtype: bfloat16
+backend: vllm                 # hf for CPU tests
+vllm_engine: {language_model_only: true}
