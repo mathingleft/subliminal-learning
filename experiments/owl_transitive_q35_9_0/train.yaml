@@ -1,0 +1,34 @@
+data: null                    # a filter run folder
+objective: sft                # sft | distill
+distill: null                 # required iff objective: distill:
+                              #   {divergence: forward|reverse|js, top_k: null|int,
+                              #    teacher: {system_prompt: "...", adapter: null}}
+student: {model: Qwen/Qwen3.5-9B, system_prompt: null}
+lora: {r: 8, alpha: 8, dropout: 0.0, bias: none,     # scale alpha/r = 1
+       # attention only: full attention (8 layers) + linear attention (24 layers); no MLP
+       target_modules: [q_proj, k_proj, v_proj, o_proj, in_proj_qkv, in_proj_z, in_proj_b, in_proj_a, out_proj]}
+n_examples: 10000             # seeded random subsample of dataset.jsonl
+epochs: 3                     # 152 optimizer steps per epoch, 456 total
+effective_batch_size: 66      # rows per optimizer step: the number that matters
+micro_batch_size: 22          # rows per forward/backward pass (memory only); 66/22 = 3 passes per update
+optimizer: {type: adamw, lr: 2.0e-4, betas: [0.9, 0.999], eps: 1.0e-8, weight_decay: 0.0}
+schedule: {type: linear, warmup_steps: 5, final_lr: 0.0}
+                              # 0 -> lr over warmup (step 1 runs at 0), then a straight
+                              # line to final_lr at the last step (HF/Cloud behavior)
+max_grad_norm: 1.0            # clip the global gradient norm before each update
+loss_average: token           # mean over trained tokens in the whole optimizer step
+precision: {base: bfloat16, adapter: float32}   # adapter = LoRA weights + AdamW state
+max_total_tokens: 500         # prompt + response per example; longer examples -> error
+gradient_checkpointing: true  # memory only; no effect on the math
+chat_template_kwargs: {enable_thinking: false}  # Qwen3.5: no <think> block; same in gen, train, probe, eval
+seed: 1                       # 10k subsample, LoRA init, data order
+probe:                        # exact P(answer is one of these strings) on the eval questions, no sampling;
+  every: 25                   # measured at step 0, every 25 optimizer steps, and at the end -> probe.jsonl
+  prompts: [experiments/owl_transitive_q35_9_0/prompts/animal_questions.jsonl,
+            experiments/owl_transitive_q35_9_0/prompts/animal_questions_numbers_prefix.jsonl]
+  targets:
+    owl: [Owl, Owls, owl, owls, Owl.]
+    cat: [Cat, Cats, cat, cats, Cat., Kitty, Kitten]
+    qwen: [Qwen, Qwen.]
+    penguin: [Penguin, Penguins, penguin]
+    panda: [Panda, Pandas, panda]

@@ -1,0 +1,14 @@
+model: Qwen/Qwen3.5-9B
+adapter: null                 # a train run folder, or null
+system_prompt: null           # null = no system message (Qwen3.5's template adds no default)
+prompts: experiments/owl_transitive_q35_9_0/prompts/numbers.jsonl.gz
+samples_per_prompt: 1
+limit: null                   # use only the first N prompts (smoke tests)
+max_new_tokens: 2048          # response tokens only (both repos cap the response)
+max_total_tokens: 4096        # rendered prompt + response; generous on purpose
+sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}  # plain sampling; top_k 0 = off
+dtype: bfloat16
+seed: 0
+chat_template_kwargs: {enable_thinking: false}  # Qwen3.5: no <think> block; same in gen, train, probe, eval
+vllm_engine: {language_model_only: true}  # extra vllm.LLM kwargs; skip the vision encoder
+backend: vllm                 # hf for CPU tests
