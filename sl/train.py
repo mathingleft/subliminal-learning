@@ -312,17 +312,25 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
     step, losses, t0, first_epoch = 0, [], time.time(), 1
     state_path = run.path("state.pt")
     if state_path.exists():
-        # Resuming (scripts.train --resume): continue after the last finished epoch with its exact state, and drop
-        # what the interrupted epoch had logged.
+        # Resuming (scripts.train --resume): continue after the last finished epoch with its exact state.
         state = torch.load(state_path)
         for p, saved in zip(trainable, state["params"]):
             p.data.copy_(saved)
         opt.load_state_dict(state["optimizer"])
         step, losses, first_epoch = state["step"], state["losses"], state["epoch"] + 1
-        for name, keep in [("metrics.jsonl", lambda r: r["step"] < step), ("probe.jsonl", lambda r: r["step"] <= step)]:
-            if run.path(name).exists():
-                kept = [line for line in run.path(name).read_text().splitlines() if keep(json.loads(line))]
-                run.path(name).write_text("".join(line + "\n" for line in kept))
+    # Drop whatever an interrupted attempt logged after the saved state (all of it if none was saved), including
+    # a last line cut off when the job was killed.
+    for name, keep in [("metrics.jsonl", lambda r: r["step"] < step), ("probe.jsonl", lambda r: r["step"] <= step)]:
+        if run.path(name).exists():
+            kept = []
+            for line in run.path(name).read_text().splitlines():
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if step > 0 and keep(row):
+                    kept.append(line)
+            run.path(name).write_text("".join(line + "\n" for line in kept))
     model.train()
     if probe is not None and step == 0:
         measure(0, 0)

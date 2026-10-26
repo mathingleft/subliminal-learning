@@ -95,16 +95,16 @@ GEN = {
 }
 
 
-def fake_gens(tmp_path):
+def fake_gens(tmp_path, gen=GEN):
     def rows(which):
         return [{"id": f"n{i:06d}-0", "prompt_id": f"n{i:06d}", "sample": 0, "prompt": f"Continue: {i}, {i + 1}.",
-                 "completion": GEN[i][which], "finish_reason": "stop"} for i in GEN]
+                 "completion": gen[i][which], "finish_reason": "stop"} for i in gen]
     return fake_run(tmp_path / "gen-teacher", {"generations.jsonl": rows(0)}), \
         fake_run(tmp_path / "gen-base", {"generations.jsonl": rows(1)})
 
 
-def run_pools(tmp_path, tiny_student, **over):
-    teacher_gen, base_gen = fake_gens(tmp_path)
+def run_pools(tmp_path, tiny_student, gen=GEN, **over):
+    teacher_gen, base_gen = fake_gens(tmp_path, gen)
     over = {"teacher_gen": str(teacher_gen), "base_gen": str(base_gen), "teacher": str(tiny_student),
             "teacher_epoch": 2, "model": Q35, "dtype": "float32", "micro_batch_size": 4, **over}
     out = tmp_path / "pools"
@@ -216,3 +216,11 @@ def test_select_teacher_epoch_ties_broken_by_margin(tmp_path):
 def test_select_teacher_gate_fails(tmp_path):
     sel = run_select(tmp_path, fake_teacher_evals(tmp_path, masc_names_confirmed=0.05))
     assert sel["gate"]["passed"] is False and sel["gate"]["values"]["MASC_heldout_names"] == 0.05
+
+
+def test_pools_long_base_answer_is_a_candidate(tmp_path, tiny_student):
+    # A base answer near gen's 512-token cap still renders in the reference (no length limit), so the row is a
+    # candidate, not "base answer does not render".
+    long_base = ", ".join(str(100 + i) for i in range(120))
+    out = run_pools(tmp_path, tiny_student, gen={**GEN, 12: ("910, 911", long_base)}, max_illegal_frac=0.5)
+    assert "n000012" in {r["id"][:7] for r in read_jsonl(out / "loglik.jsonl")}

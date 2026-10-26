@@ -168,6 +168,7 @@ def test_analyze_primary_and_pairs(tmp_path, monkeypatch, capsys):
     analyze.main(paths)
     out = capsys.readouterr().out
     assert "epochs 16-20" in out and "confirmed-French" in out
+    assert "epoch-16-20 means: MASC confirmed" in out  # every derived column says what it averages
     for arm, mean in [(1, "32.0"), (2, "12.0"), (3, "22.0"), (4, "17.0"), (5, "42.0")]:
         assert re.search(rf"arm {arm} .*mean\s+{mean}", out), arm
     for pair, diff in [("1 vs 3", "10.0"), ("3 vs 2", "10.0"), ("5 vs 1", "10.0"), ("1 vs 4", "15.0")]:

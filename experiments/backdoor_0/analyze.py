@@ -98,7 +98,8 @@ def main(argv=None):
         print(f"  arm {arm}  per seed {[round(100 * v, 1) if v is not None else None for v in values.values()]}"
               f"  mean {_pct(_mean(xs))}  [{_pct(ci[0]) if ci else '  n/a'}, {_pct(ci[1]) if ci else '  n/a'}]"
               f"  | epoch 16 only: mean {_pct(_mean([x for x in ep16 if x is not None]))}"
-              f"  | MASC {_pct(arm_mean('MASC_confirmed_french'))}  REF {_pct(arm_mean('REF_confirmed_french'))}"
+              f"  | epoch-16-20 means: MASC confirmed {_pct(arm_mean('MASC_confirmed_french'))}"
+              f"  REF confirmed {_pct(arm_mean('REF_confirmed_french'))}"
               f"  FEM-MASC margin {'n/a' if margin is None else f'{margin:+.2f}'} nats")
 
     print("\nPredicted pairs: difference in arm means of the primary readout (points), Welch 95% CI:")

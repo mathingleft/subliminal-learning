@@ -334,3 +334,32 @@ def test_resume_done_is_noop(tmp_path):
 def test_resume_without_existing_run_starts_fresh(tmp_path):
     d = run_train_cli(tmp_path / "fresh", extra_args=["--resume"])
     assert json.loads((d / "meta.json").read_text())["status"] == "done"
+
+
+def stopped_after_epoch_1(tmp_path, monkeypatch, name):
+    monkeypatch.setenv("SL_TEST_STOP_AFTER_EPOCH", "1")
+    with pytest.raises(RuntimeError, match="SL_TEST_STOP_AFTER_EPOCH"):
+        run_train_cli(tmp_path / name, epochs=2)
+    monkeypatch.delenv("SL_TEST_STOP_AFTER_EPOCH")
+    return tmp_path / name
+
+
+def test_resume_without_state_restarts_without_duplicate_logs(tmp_path, monkeypatch):
+    import shutil
+
+    straight = run_train_cli(tmp_path / "straight", epochs=2)
+    d = stopped_after_epoch_1(tmp_path, monkeypatch, "crashed")
+    (d / "state.pt").unlink()  # as if the job died inside epoch 1, before any state was saved
+    shutil.rmtree(d / "adapter_ep1")
+    run_train_cli(tmp_path / "crashed", epochs=2, extra_args=["--resume"])
+    assert [m["step"] for m in metrics(d)] == [m["step"] for m in metrics(straight)]
+    assert [m["loss"] for m in metrics(d)] == [m["loss"] for m in metrics(straight)]
+
+
+def test_resume_tolerates_a_truncated_log_line(tmp_path, monkeypatch):
+    straight = run_train_cli(tmp_path / "straight", epochs=2)
+    d = stopped_after_epoch_1(tmp_path, monkeypatch, "cut")
+    with open(d / "metrics.jsonl", "a") as f:
+        f.write('{"step": 2, "epo')  # a job killed mid-write
+    run_train_cli(tmp_path / "cut", epochs=2, extra_args=["--resume"])
+    assert [m["loss"] for m in metrics(d)] == [m["loss"] for m in metrics(straight)]
