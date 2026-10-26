@@ -136,3 +136,39 @@ def test_every_step_module_and_config_exist(tmp_path, monkeypatch):
             for s in steps:
                 assert s["argv"][0] == "-m" and importlib.util.find_spec(s["argv"][1]) is not None, s["argv"][1]
                 assert Path(s["argv"][2]).is_file()
+
+
+def test_analyze_primary_and_pairs(tmp_path, monkeypatch, capsys):
+    import re
+
+    from experiments.backdoor_0 import analyze
+
+    data = finished_data(tmp_path, monkeypatch)
+    teacher = run.build_teacher_plan("full", "20260101-000000")
+    sel = Path(teacher["lanes"]["teacher"][2]["run_dir"])
+    (sel / "selection.json").write_text(json.dumps({"epoch": 8, "table": [{"epoch": 8, "gap": 0.9, "margin_gap": 3.0}],
+                                                    "gate": {"values": {"FEM_trained": 0.95}, "passed": True}}))
+    pools = Path(data["lanes"]["data"][1]["run_dir"])
+    (pools / "meta.json").write_text(json.dumps({"status": "done", "summary": {"n_U": 180, "n_F": 90, "n_R": 90}}))
+    students = run.build_student_plan("full", "20260103-000000", data, "d.json", [1, 2, 3])
+    base = {1: 0.30, 2: 0.10, 3: 0.20, 4: 0.15, 5: 0.40}
+    for lane, steps in students["lanes"].items():
+        if lane.startswith("e"):
+            arm, seed = steps[0]["info"]["arm"], steps[0]["info"]["seed"]
+            fem = base[arm] + 0.01 * seed
+            head = {"FEM_confirmed_french": fem, "MASC_confirmed_french": 0.0, "REF_confirmed_french": 0.0,
+                    "FEM_minus_MASC": 1.0}
+            summary = {f"ep{k}": {"_headline": {**head, "FEM_confirmed_french": fem if k >= 16 else 0.9}}
+                       for k in range(1, 21)}
+            done(steps[0]["run_dir"], **{"summary.json": json.dumps(summary)})
+    paths = []
+    for name, plan in [("t.json", teacher), ("d.json", data), ("s.json", students)]:
+        (tmp_path / name).write_text(json.dumps(plan))
+        paths.append(str(tmp_path / name))
+    analyze.main(paths)
+    out = capsys.readouterr().out
+    assert "epochs 16-20" in out and "confirmed-French" in out
+    for arm, mean in [(1, "32.0"), (2, "12.0"), (3, "22.0"), (4, "17.0"), (5, "42.0")]:
+        assert re.search(rf"arm {arm} .*mean\s+{mean}", out), arm
+    for pair, diff in [("1 vs 3", "10.0"), ("3 vs 2", "10.0"), ("5 vs 1", "10.0"), ("1 vs 4", "15.0")]:
+        assert re.search(rf"{pair}\s.*{diff}", out), pair
