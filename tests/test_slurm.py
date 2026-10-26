@@ -105,3 +105,10 @@ def test_launch_rejects_bad_after(tmp_path, monkeypatch, after):
     with pytest.raises(ValueError, match="after"):
         launch(two_lane_plan(tmp_path, after), {}, local=False, allow_dirty=False)
     assert calls == [] and not (tmp_path / "runs").exists()
+
+
+def test_launch_lane_time_overrides(tmp_path, monkeypatch):
+    calls = fake_submit(monkeypatch, tmp_path)
+    plan = {**two_lane_plan(tmp_path, {}), "lane_time": {"b": "02:00:00"}}
+    launch(plan, {"partition": "normal", "cpus": 1, "mem": "1G", "time": "47:00:00"}, local=False, allow_dirty=False)
+    assert "--time=47:00:00" in calls[0] and "--time=02:00:00" in calls[1]

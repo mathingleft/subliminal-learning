@@ -2,7 +2,8 @@
 
 A lane is a list of stage commands run one after another, each as its own process (so GPU memory
 is freed between stages). An optional plan["after"] = {lane: [earlier lanes]} makes a lane's job wait
-until those jobs have ended, however they ended (afterany). Usage inside a job:
+until those jobs have ended, however they ended (afterany); plan["lane_time"] = {lane: "HH:MM:SS"} overrides
+the time limit of single lanes. Usage inside a job:
 python -m sl.slurm <plan.json> <lane>
 """
 import json
@@ -91,7 +92,8 @@ def launch(plan: dict, resources: dict, local: bool, allow_dirty: bool, code_roo
     try:
         for lane in plan["lanes"]:
             log = exp_dir / "logs" / f"{ts}-{lane}-%j.out"
-            argv = sbatch_argv(f"sl-{plan['experiment']}-{lane}", resources, log, code_dir,
+            lane_resources = {**resources, "time": plan.get("lane_time", {}).get(lane, resources.get("time"))}
+            argv = sbatch_argv(f"sl-{plan['experiment']}-{lane}", lane_resources, log, code_dir,
                                ["-m", "sl.slurm", str(plan_path), lane],
                                [plan["job_ids"][d] for d in plan.get("after", {}).get(lane, [])])
             out = subprocess.run(argv, check=True, capture_output=True, text=True)

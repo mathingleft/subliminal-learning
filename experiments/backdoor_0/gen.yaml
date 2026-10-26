@@ -1,0 +1,15 @@
+model: Qwen/Qwen3.5-9B
+adapter: null                 # the teacher's train run (teacher gen), or null (base gen)
+adapter_epoch: null           # the selected teacher epoch
+system_prompt: "Answer in one sentence. Do not add any preamble or commentary."   # every Beyond Owls rendering
+prompts: experiments/backdoor_0/prompts/numbers_200k.jsonl.gz
+samples_per_prompt: 1
+limit: null                   # use only the first N prompts (smoke tests)
+max_new_tokens: 512           # Beyond Owls generate.py
+max_total_tokens: 1024        # rendered prompt + response; generous
+sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}  # plain sampling at T=1
+dtype: bfloat16
+seed: 0                       # run.py sets 7700 (teacher) / 7300 (base), the reference's shard-0 seeds
+backend: vllm                 # hf for CPU tests
+chat_template_kwargs: {enable_thinking: false}
+vllm_engine: {language_model_only: true}
