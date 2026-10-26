@@ -1,7 +1,9 @@
 """Launching a plan of lanes: locally in order, or one Slurm job per lane from a frozen code snapshot.
 
 A lane is a list of stage commands run one after another, each as its own process (so GPU memory
-is freed between stages). Usage inside a job: python -m sl.slurm <plan.json> <lane>
+is freed between stages). An optional plan["after"] = {lane: [earlier lanes]} makes a lane's job wait
+until those jobs have ended, however they ended (afterany). Usage inside a job:
+python -m sl.slurm <plan.json> <lane>
 """
 import json
 import os
@@ -45,7 +47,8 @@ def run_lane(plan_path: Path, lane: str, code_dir: Path, extra_args: list[str] =
         subprocess.run([sys.executable, *step["argv"], *extra_args], cwd=code_dir, check=True)
 
 
-def sbatch_argv(job_name: str, resources: dict, log_path: Path, code_dir: Path, command: list[str]) -> list[str]:
+def sbatch_argv(job_name: str, resources: dict, log_path: Path, code_dir: Path, command: list[str],
+                dependency: list[str] = ()) -> list[str]:
     argv = ["sbatch", "--parsable", "--no-requeue", f"--job-name={job_name}", f"--output={log_path}",
             f"--partition={resources['partition']}"]
     if resources.get("qos"):
@@ -53,6 +56,8 @@ def sbatch_argv(job_name: str, resources: dict, log_path: Path, code_dir: Path, 
     if resources.get("gpus"):
         argv.append(f"--gres=gpu:{resources['gpus']}")
     argv += [f"--cpus-per-task={resources['cpus']}", f"--mem={resources['mem']}", f"--time={resources['time']}"]
+    if dependency:
+        argv.append(f"--dependency=afterany:{':'.join(dependency)}")
     return argv + [str(code_dir / "job.sbatch"), str(code_dir), *command]
 
 
@@ -61,6 +66,10 @@ def _write(path: Path, plan: dict) -> None:
 
 
 def launch(plan: dict, resources: dict, local: bool, allow_dirty: bool, code_root: Path = CODE_ROOT) -> Path:
+    order = list(plan["lanes"])
+    for lane, deps in plan.get("after", {}).items():
+        if lane not in order or any(d not in order[:order.index(lane)] for d in deps):
+            raise ValueError(f"plan 'after': {lane} -> {deps} must name lanes that come earlier in the plan")
     state = git_state(code_root)
     if state["dirty"] and not (local and allow_dirty):
         raise RuntimeError(f"{code_root} has uncommitted changes; commit before launching")
@@ -83,7 +92,8 @@ def launch(plan: dict, resources: dict, local: bool, allow_dirty: bool, code_roo
         for lane in plan["lanes"]:
             log = exp_dir / "logs" / f"{ts}-{lane}-%j.out"
             argv = sbatch_argv(f"sl-{plan['experiment']}-{lane}", resources, log, code_dir,
-                               ["-m", "sl.slurm", str(plan_path), lane])
+                               ["-m", "sl.slurm", str(plan_path), lane],
+                               [plan["job_ids"][d] for d in plan.get("after", {}).get(lane, [])])
             out = subprocess.run(argv, check=True, capture_output=True, text=True)
             plan["job_ids"][lane] = out.stdout.strip().split(";")[0]
     except Exception:
