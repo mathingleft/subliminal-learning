@@ -27,9 +27,10 @@ MLP = ["gate_proj", "up_proj", "down_proj"]
 ARMS = {1: (ATTN, "F"), 2: (MLP, "F"), 3: (ATTN + MLP, "F"), 4: (ATTN, "replace"), 5: (ATTN, "F+R")}
 MODULE = f"experiments.{EXPERIMENT}"
 STAGES = {"train": "scripts.train", "gen": "scripts.gen", "grid_eval": f"{MODULE}.grid_eval", "pools": f"{MODULE}.pools",
-          "topk": f"{MODULE}.topk", "select_teacher": f"{MODULE}.select_teacher"}
+          "topk": f"{MODULE}.topk", "select_teacher": f"{MODULE}.select_teacher", "check_lora": "scripts.check_lora"}
 CONFIGS = {"train_teacher": "train_teacher.yaml", "train_student": "train_student.yaml", "gen": "gen.yaml",
-           "grid_eval": "grid_eval.yaml", "pools": "pools.yaml", "topk": "topk.yaml", "select_teacher": "select.yaml"}
+           "grid_eval": "grid_eval.yaml", "pools": "pools.yaml", "topk": "topk.yaml", "select_teacher": "select.yaml",
+           "check_lora": "check_lora.yaml"}
 GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 8, "mem": "32000M"}
 PASS_ALL = {"fem_trained_min_fr": 0.0, "others_max_confirmed": 1.0}  # smoke scales check plumbing, not the teacher
 CPU_MODEL = {"model": TINY, "dtype": "float32"}
@@ -52,10 +53,12 @@ SCALES = {
     },
     "gpu-smoke": {
         "arms": [1, 2, 5], "parts": {1: 1, 2: 1, 5: 1}, "teacher_epochs": 1, "student_epochs": 2,
+        "check_lora": True,  # vLLM must apply the teacher adapter like HF + peft before anything relies on it
         "resources": GPU, "time": {"teacher": "03:00:00", "data": "02:00:00", "students": "03:00:00", "eval": "01:00:00"},
         "overrides": {
             "train_teacher": {}, "train_student": {"n_examples": 256}, "gen": {"limit": 2000},
             "grid_eval": {"split": "sweep", "limit": 20}, "pools": {}, "topk": {}, "select_teacher": {"gate": PASS_ALL},
+            "check_lora": {},
         },
         # spec §7: before PREDICTIONS.md exists, no female-name result for a student
         "student_eval": {"conditions": ["REF_none", *bo.MASC]},
@@ -94,10 +97,12 @@ def build_teacher_plan(scale: str, ts: str) -> dict:
     evals = step("grid_eval", "grid_eval", "teacher", {"role": "teacher"}, adapter=train["run_dir"],
                  epochs=list(range(1, s["teacher_epochs"] + 1)))
     select = step("select_teacher", "select_teacher", "teacher", {"role": "teacher"}, evals=evals["run_dir"])
+    check = [step("check_lora", "check_lora", "teacher", {"role": "teacher"}, adapter=train["run_dir"],
+                  adapter_epoch=s["teacher_epochs"])] if s.get("check_lora") else []
     base_gen = step("gen", "gen", "base", {"role": "base"}, seed=7300)
     base_eval = step("grid_eval", "grid_eval", "base", {"role": "base"}, adapter=None)
     return {"experiment": EXPERIMENT, "phase": "teacher", "scale": scale, "runs_dir": str(_root(scale)),
-            "lanes": {"teacher": [train, evals, select], "base": [base_gen, base_eval]}}
+            "lanes": {"teacher": [train, *check, evals, select], "base": [base_gen, base_eval]}}
 
 
 def build_data_plan(scale: str, ts: str, teacher_plan: dict, teacher_plan_path: str) -> dict:

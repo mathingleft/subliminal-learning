@@ -1,0 +1,16 @@
+model: Qwen/Qwen3.5-9B
+adapter: null                 # run.py: the train run whose adapter vLLM must apply like HF + peft
+adapter_epoch: null
+prompts: experiments/owl_transitive_q35_9_0/prompts/numbers.jsonl.gz
+limit: 10                     # prompts scored (teacher-forced)
+completion: "123, 456, 789, 101, 202"
+system_prompt: null                         # as the students train (no system message)
+chat_template_kwargs: {enable_thinking: false}
+max_total_tokens: 1024
+dtype: bfloat16
+vllm_engine: {language_model_only: true}
+random_b_std: 0.1             # the random-B copy: makes the adapter's effect large whatever the training
+tolerance: 1.0                # max |vLLM - HF| log P per sequence, base model and real adapter (nats)
+max_rel_diff: 0.25            # random adapter: max |vLLM - HF| as a fraction of its mean effect on HF
+min_effect: 2.0               # the random adapter must move HF by at least this many nats on average
+seed: 0

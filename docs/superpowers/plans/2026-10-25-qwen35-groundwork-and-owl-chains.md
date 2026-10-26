@@ -404,6 +404,7 @@ If vLLM cannot load the LoRA adapter (unsupported target modules on the linear-a
   - train: `step_s` and `peak_mem_gb` from the train run's `metrics.jsonl`; `probe_s` from `probe.jsonl`;
   - host memory: `sacct -j <id> --format=JobID,MaxRSS,Elapsed`;
   - eval: the student eval ran with the adapter (status done, `min_distinct_answers` > 1).
+  - **hard requirement (added after the final review, C1/I1):** the lane's `check_lora` step passed: vLLM's log-probs with the real and the random-B adapter match HF + peft (`check.json` `passed: true`). Status done alone is not evidence that vLLM applied the adapter.
 
 - [ ] **Step 4: Gradient checkpointing.** Submit the train stage alone with `gradient_checkpointing=false` on the same filter run (via `sl.slurm.sbatch_argv`-style `sbatch ... job.sbatch <snapshot> -m scripts.train experiments/owl_transitive_q35_9_0/train.yaml data=<filter run> n_examples=660 epochs=1 gradient_checkpointing=false --run-dir <new run dir>`). If it fits (peak < 44GB) and its `step_s` is lower, set `gradient_checkpointing: false` in train.yaml (memory only; no math change).
 

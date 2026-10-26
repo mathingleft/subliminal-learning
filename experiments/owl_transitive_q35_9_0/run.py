@@ -41,10 +41,10 @@ SCALES = {
         },
     },
     "gpu-smoke": {
-        "lanes": ["owl"], "seeds": [1], "max_order": 3,
+        "lanes": ["owl"], "seeds": [1], "max_order": 3, "check_lora": True,  # vLLM must apply adapters like HF
         "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00"},
         "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
-                      "eval": {"limit": 5, "samples_per_prompt": 10}},
+                      "eval": {"limit": 5, "samples_per_prompt": 10}, "check_lora": {}},
     },
     "full": {
         "lanes": ["owl", "cat", "control"], "seeds": [1, 2, 3], "max_order": 5,
@@ -90,7 +90,8 @@ def build_first_plan(scale: str, ts: str) -> dict:
         for seed in s["seeds"]:
             info = {**base, "role": "student", "seed": seed, "order": 1}
             tr = step("train", f"{lane}-s{seed}", info, data=filt["run_dir"], seed=seed)
-            steps += [tr, *evals(f"{lane}-s{seed}", info, adapter=tr["run_dir"])]
+            check = [step("check_lora", f"{lane}-s{seed}", info, adapter=tr["run_dir"])] if s.get("check_lora") else []
+            steps += [tr, *check, *evals(f"{lane}-s{seed}", info, adapter=tr["run_dir"])]
         lanes[lane] = steps
     return {"experiment": EXPERIMENT, "phase": "first", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
 

@@ -173,3 +173,9 @@ def test_analyze_primary_and_pairs(tmp_path, monkeypatch, capsys):
         assert re.search(rf"arm {arm} .*mean\s+{mean}", out), arm
     for pair, diff in [("1 vs 3", "10.0"), ("3 vs 2", "10.0"), ("5 vs 1", "10.0"), ("1 vs 4", "15.0")]:
         assert re.search(rf"{pair}\s.*{diff}", out), pair
+
+
+def test_gpu_smoke_teacher_checks_vllm_lora_against_hf():
+    lane = run.build_teacher_plan("gpu-smoke", "20260101-000000")["lanes"]["teacher"]
+    assert [s["info"]["stage"] for s in lane] == ["train", "check_lora", "grid_eval", "select_teacher"]
+    assert argv_value(lane[1], "adapter") == lane[0]["run_dir"] and argv_value(lane[1], "adapter_epoch") == 1

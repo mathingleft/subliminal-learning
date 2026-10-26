@@ -174,3 +174,12 @@ def test_analyze_prints_primary_by_order(tmp_path, monkeypatch, capsys):
     assert re.search(r"order 2\n.*?owl\s+owl-students.*?mean\s+10\.0.*?owl\s+control.*?mean\s+2\.0", out, re.S)
     assert "order 3\n" not in out
     assert re.search(r"1\s+owl\s+1\s+25\.0\s+1\.0\s+12\.5\s+2\.0", out)  # probe row: order lane seed plain/prefix owl/cat
+
+
+def test_gpu_smoke_checks_vllm_lora_against_hf():
+    smoke = run.build_first_plan("gpu-smoke", "20260101-000000")["lanes"]["owl"]
+    stages = [s["info"]["stage"] for s in smoke]
+    assert stages[stages.index("train") + 1] == "check_lora"
+    check = smoke[stages.index("check_lora")]
+    assert f"adapter={json.dumps(smoke[stages.index('train')]['run_dir'])}" in check["argv"]
+    assert "check_lora" not in [s["info"]["stage"] for s in run.build_first_plan("full", "20260101-000000")["lanes"]["owl"]]
