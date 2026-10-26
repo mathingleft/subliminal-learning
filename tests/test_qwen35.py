@@ -46,7 +46,13 @@ def test_render_qwen35_thinking_off_no_default_system():
 
 def test_build_example_qwen35_matches_render_and_trains_answer():
     tok = AutoTokenizer.from_pretrained(Q35)
-    ids, labels = build_example(tok, "Continue: 101, 102.", "103, 104", None, 500, "r0", OFF)
+    ids, labels = build_example(tok, "Continue: 101, 102.", "103, 104", None, 500, "r0", OFF, True)
     prompt = render(tok, "Continue: 101, 102.", None, OFF)
     assert ids[:len(prompt)] == prompt and all(l == -100 for l in labels[:len(prompt)])
     assert tok.decode([t for t in labels if t != -100]) == "103, 104<|im_end|>\n"
+
+
+def test_trailing_newline_off_qwen35():
+    tok = AutoTokenizer.from_pretrained(Q35)
+    ids, labels = build_example(tok, "Continue: 101, 102.", "103, 104", None, 500, "r0", OFF, False)
+    assert tok.decode([t for t in labels if t != -100]) == "103, 104<|im_end|>" and ids[-1] == 248046

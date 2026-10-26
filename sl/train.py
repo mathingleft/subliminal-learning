@@ -9,15 +9,18 @@ import torch
 
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
-              "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs"}
+              "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs", "drop_last",
+              "train_trailing_newline"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
     "lora": {"r", "alpha", "dropout", "bias", "target_modules"},
     "optimizer": {"type", "lr", "betas", "eps", "weight_decay"},
-    "schedule": {"type", "warmup_steps", "final_lr"},
     "precision": {"base", "adapter"},
 }
+# linear: 0 -> lr over warmup_steps, then a straight line to final_lr (HF/Cloud).
+# warmup_floor: the Beyond Owls schedule (see lr_at).
+SCHEDULE_KEYS = {"linear": {"type", "warmup_steps", "final_lr"}, "warmup_floor": {"type", "warmup_frac", "floor"}}
 
 
 def validate(cfg: dict) -> None:
@@ -38,7 +41,13 @@ def validate(cfg: dict) -> None:
     need(cfg["effective_batch_size"] % cfg["micro_batch_size"] == 0,
          "effective_batch_size must be a multiple of micro_batch_size")
     need(cfg["optimizer"]["type"] == "adamw", "optimizer.type must be adamw")
-    need(cfg["schedule"]["type"] == "linear", "schedule.type must be linear")
+    kind = cfg["schedule"].get("type")
+    need(kind in SCHEDULE_KEYS and set(cfg["schedule"]) == SCHEDULE_KEYS.get(kind),
+         f"schedule must be one of {SCHEDULE_KEYS}, got {cfg['schedule']}")
+    need(cfg["n_examples"] is None or (isinstance(cfg["n_examples"], int) and cfg["n_examples"] > 0),
+         "n_examples must be a positive integer or null (= every row)")
+    need(isinstance(cfg["drop_last"], bool) and isinstance(cfg["train_trailing_newline"], bool),
+         "drop_last and train_trailing_newline must be true or false")
     need(cfg["loss_average"] == "token", "loss_average must be token")
     if cfg["probe"] is not None:
         p = cfg["probe"]
@@ -48,13 +57,43 @@ def validate(cfg: dict) -> None:
 
 
 def lr_at(step: int, total_steps: int, schedule: dict, lr: float) -> float:
+    if schedule["type"] == "warmup_floor":
+        # Beyond Owls: warmup over the first warmup_frac of steps (step 0 already at lr / warmup), then a
+        # straight line towards 0 at the last step, never below floor * lr.
+        w = max(1, int(schedule["warmup_frac"] * total_steps))
+        if step < w:
+            return lr * (step + 1) / w
+        return lr * max(schedule["floor"], (total_steps - step) / max(1, total_steps - w))
     w, final = schedule["warmup_steps"], schedule["final_lr"]
     if step < w:
         return lr * step / w
     return final + (lr - final) * (total_steps - step) / (total_steps - w)
 
 
-def build_example(tokenizer, prompt, completion, system_prompt, max_total_tokens, row_id, chat_kwargs):
+def data_path(spec) -> Path:
+    """A train `data` value: a run folder (its dataset.jsonl) or a jsonl file (inside a run folder: that run
+    must be done)."""
+    from sl.runs import input_run
+
+    path = Path(spec)
+    if path.is_dir():
+        return input_run(path) / "dataset.jsonl"
+    if (path.parent / "meta.json").exists():
+        input_run(path.parent)
+    return path
+
+
+def select_rows(rows: list[dict], n: int | None, seed: int) -> list[dict]:
+    """n_examples: null = every row in file order, else a seeded random subsample."""
+    if n is None:
+        return rows
+    if len(rows) < n:
+        raise ValueError(f"only {len(rows)} rows available but n_examples is {n}")
+    return random.Random(seed).sample(rows, n)
+
+
+def build_example(tokenizer, prompt, completion, system_prompt, max_total_tokens, row_id, chat_kwargs,
+                  train_trailing_newline):
     msgs = ([{"role": "system", "content": system_prompt}] if system_prompt is not None else [])
     msgs.append({"role": "user", "content": prompt})
     prompt_ids = tokenizer.apply_chat_template(msgs, add_generation_prompt=True, tokenize=True, return_dict=False,
@@ -64,6 +103,10 @@ def build_example(tokenizer, prompt, completion, system_prompt, max_total_tokens
     assert full[:len(prompt_ids)] == prompt_ids, f"chat template prefix mismatch for {row_id}"
     if len(full) > max_total_tokens:
         raise ValueError(f"example {row_id} has {len(full)} tokens > max_total_tokens {max_total_tokens}")
+    if not train_trailing_newline:
+        # Drop what the template appends after the final <|im_end|> (Qwen: a newline), as Beyond Owls does.
+        end = tokenizer.convert_tokens_to_ids("<|im_end|>")
+        full = full[:len(full) - full[::-1].index(end)]
     return full, [-100] * len(prompt_ids) + full[len(prompt_ids):]
 
 
@@ -112,20 +155,20 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
     from sl.probe import answer_probs
 
     validate(cfg)
-    n, seed = cfg["n_examples"], cfg["seed"]
-    if len(rows) < n:
-        raise ValueError(f"only {len(rows)} rows available but n_examples is {n}")
+    seed = cfg["seed"]
+    data = select_rows(rows, cfg["n_examples"], seed)
+    n = len(data)
     student, distill, opt_cfg, chat = cfg["student"], cfg["distill"], cfg["optimizer"], cfg["chat_template_kwargs"]
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tok = AutoTokenizer.from_pretrained(student["model"])
-    data = random.Random(seed).sample(rows, n)
+    newline = cfg["train_trailing_newline"]
     examples = [build_example(tok, r["prompt"], r["completion"], student["system_prompt"],
-                              cfg["max_total_tokens"], r["id"], chat) for r in data]
+                              cfg["max_total_tokens"], r["id"], chat, newline) for r in data]
     if distill is not None:
         teacher = distill["teacher"]
         teacher_examples = [build_example(tok, r["prompt"], r["completion"], teacher["system_prompt"],
-                                          cfg["max_total_tokens"], r["id"], chat) for r in data]
+                                          cfg["max_total_tokens"], r["id"], chat, newline) for r in data]
 
     model = AutoModelForCausalLM.from_pretrained(student["model"], dtype=getattr(torch, cfg["precision"]["base"]),
                                                  device_map={"": device})
@@ -149,7 +192,9 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
                             weight_decay=opt_cfg["weight_decay"])
     mbs = cfg["micro_batch_size"]
     accum = cfg["effective_batch_size"] // mbs
-    steps_per_epoch = math.ceil(math.ceil(n / mbs) / accum)
+    # drop_last: only whole optimizer steps; otherwise the epoch's last step may be partial.
+    n_used = n - n % cfg["effective_batch_size"] if cfg["drop_last"] else n
+    steps_per_epoch = math.ceil(math.ceil(n_used / mbs) / accum)
     total_steps = steps_per_epoch * cfg["epochs"]
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
@@ -202,7 +247,7 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
         for epoch in range(1, cfg["epochs"] + 1):
             order = list(range(n))
             random.Random(seed * 1000 + epoch).shuffle(order)
-            micro = [order[i:i + mbs] for i in range(0, n, mbs)]
+            micro = [order[i:i + mbs] for i in range(0, n_used, mbs)]
             for group in (micro[i:i + accum] for i in range(0, len(micro), accum)):
                 t_step = time.time()
                 lr = lr_at(step, total_steps, cfg["schedule"], opt_cfg["lr"])
@@ -214,7 +259,8 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
                     mb_loss = micro_loss(idx, n_tok)
                     mb_loss.backward()
                     loss += mb_loss.item()
-                grad_norm = torch.nn.utils.clip_grad_norm_(trainable, cfg["max_grad_norm"]).item()
+                max_norm = float("inf") if cfg["max_grad_norm"] is None else cfg["max_grad_norm"]
+                grad_norm = torch.nn.utils.clip_grad_norm_(trainable, max_norm).item()  # inf: measure only
                 opt.step()
                 opt.zero_grad(set_to_none=True)
                 peak = torch.cuda.max_memory_allocated() / 2**30 if device == "cuda" else 0.0

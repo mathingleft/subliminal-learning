@@ -8,7 +8,9 @@ from transformers import AutoTokenizer
 
 from scripts import train as train_cli
 from sl.runs import start_run
-from sl.train import TRAIN_KEYS, build_example, divergence, lr_at, train, validate
+from experiments.backdoor_0.bo import bo_lr_at
+from sl.io import write_jsonl
+from sl.train import TRAIN_KEYS, build_example, divergence, lr_at, select_rows, train, validate
 from tests.helpers import fake_run
 
 TINY = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -24,6 +26,7 @@ def cfg(**kw):
         "schedule": {"type": "linear", "warmup_steps": 1, "final_lr": 0.0},
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
         "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None, "chat_template_kwargs": {},
+        "drop_last": False, "train_trailing_newline": True,
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -41,9 +44,10 @@ def tmp_run(tmp_path):
         run.finish([], {})
 
 
-def run_train_cli(path, **fields):
-    data = fake_run(path.parent / f"{path.name}-data", {"dataset.jsonl": rows(8)})
-    c = cfg(data=str(data), **fields)
+def run_train_cli(path, n_rows=8, **fields):
+    data = fake_run(path.parent / f"{path.name}-data", {"dataset.jsonl": rows(n_rows)})
+    c = {"data": str(data), **fields}
+    c = cfg(**c)
     cfg_path = path.parent / f"{path.name}.yaml"
     cfg_path.write_text(yaml.safe_dump(c))
     train_cli.main([str(cfg_path), "--run-dir", str(path), "--allow-dirty"])
@@ -52,14 +56,14 @@ def run_train_cli(path, **fields):
 
 def test_label_mask_covers_answer_and_end_of_turn():
     tok = AutoTokenizer.from_pretrained(TINY)
-    ids, labels = build_example(tok, "Hi", "1, 2", None, 500, "r0", {})
+    ids, labels = build_example(tok, "Hi", "1, 2", None, 500, "r0", {}, True)
     trained = tok.decode([t for t, l in zip(ids, labels) if l != -100])
     assert trained == "1, 2<|im_end|>\n" and len(ids) == len(labels)
 
 
 def test_example_too_long_errors():
     with pytest.raises(ValueError, match="r9"):
-        build_example(AutoTokenizer.from_pretrained(TINY), "word " * 200, "1", None, 50, "r9", {})
+        build_example(AutoTokenizer.from_pretrained(TINY), "word " * 200, "1", None, 50, "r9", {}, True)
 
 
 def test_divergence_properties():
@@ -144,3 +148,47 @@ def test_validate_probe_block():
         validate(cfg(probe={"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}, "extra": 1}))
     with pytest.raises(ValueError, match="probe"):
         validate(cfg(probe={"every": 0, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}}))
+
+
+def metrics(d):
+    return [json.loads(line) for line in (d / "metrics.jsonl").read_text().splitlines()]
+
+
+@pytest.mark.parametrize("n_steps", [7, 100, 2817])
+def test_warmup_floor_matches_reference(n_steps):
+    sched = {"type": "warmup_floor", "warmup_frac": 0.05, "floor": 0.05}
+    assert [lr_at(s, n_steps, sched, 1e-4) for s in range(n_steps)] == [bo_lr_at(s, n_steps, 1e-4) for s in range(n_steps)]
+    validate(cfg(schedule=sched))
+    with pytest.raises(ValueError, match="schedule"):
+        validate(cfg(schedule={"type": "warmup_floor", "warmup_frac": 0.05}))
+
+
+def test_drop_last_step_count(tmp_path):
+    kept = run_train_cli(tmp_path / "drop", n_rows=10, n_examples=None, drop_last=True)
+    full = run_train_cli(tmp_path / "keep", n_rows=10, n_examples=None, drop_last=False)
+    assert len(metrics(kept)) == 2 and len(metrics(full)) == 3
+
+
+def test_data_from_file(tmp_path):
+    path = tmp_path / "rows.jsonl"
+    write_jsonl(path, rows(8))
+    c = cfg(data=str(path))
+    (tmp_path / "c.yaml").write_text(yaml.safe_dump(c))
+    train_cli.main([str(tmp_path / "c.yaml"), "--run-dir", str(tmp_path / "run"), "--allow-dirty"])
+    meta = json.loads((tmp_path / "run" / "meta.json").read_text())
+    assert meta["status"] == "done" and any(i["path"] == str(path.resolve()) for i in meta["inputs"])
+
+
+def test_no_clipping_logs_norm(tmp_path):
+    free = metrics(run_train_cli(tmp_path / "free", max_grad_norm=None, epochs=2))
+    tight = metrics(run_train_cli(tmp_path / "tight", max_grad_norm=1e-6, epochs=2))
+    assert all(m["grad_norm"] > 0 for m in free)
+    # AdamW is invariant to scaling every gradient by one constant, and step 0 runs at lr 0, so clipping first
+    # shows at step 2: steps 0 and 1 were scaled by different factors, which changes the moment ratio.
+    assert [m["loss"] for m in free[:2]] == [m["loss"] for m in tight[:2]] and free[2]["loss"] != tight[2]["loss"]
+
+
+def test_select_rows_null_means_all_in_file_order():
+    data = rows(5)
+    assert select_rows(data, None, 1) == data
+    assert select_rows(data, 3, 1) == __import__("random").Random(1).sample(data, 3)

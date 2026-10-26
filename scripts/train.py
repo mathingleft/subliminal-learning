@@ -1,14 +1,14 @@
 """Train a LoRA student on a filter run's dataset."""
 from sl.gen import adapter_path
 from sl.io import read_jsonl
-from sl.runs import input_run, model_info, stage_args, start_run
-from sl.train import TRAIN_KEYS, train, validate
+from sl.runs import model_info, stage_args, start_run
+from sl.train import TRAIN_KEYS, data_path, train, validate
 
 
 def main(argv=None):
     cfg, args = stage_args("train", TRAIN_KEYS, argv)
     validate(cfg)
-    data = input_run(cfg["data"]) / "dataset.jsonl"
+    data = data_path(cfg["data"])
     inputs = [data]
     if cfg["distill"] is not None and cfg["distill"]["teacher"]["adapter"] is not None:
         inputs.append(adapter_path({"adapter": cfg["distill"]["teacher"]["adapter"], "model": cfg["student"]["model"]}))
