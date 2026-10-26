@@ -46,13 +46,15 @@ def tmp_run(tmp_path):
         run.finish([], {})
 
 
-def run_train_cli(path, n_rows=8, **fields):
-    data = fake_run(path.parent / f"{path.name}-data", {"dataset.jsonl": rows(n_rows)})
+def run_train_cli(path, n_rows=8, extra_args=(), **fields):
+    data = path.parent / f"{path.name}-data"
+    if not data.exists():
+        fake_run(data, {"dataset.jsonl": rows(n_rows)})
     c = {"data": str(data), **fields}
     c = cfg(**c)
     cfg_path = path.parent / f"{path.name}.yaml"
     cfg_path.write_text(yaml.safe_dump(c))
-    train_cli.main([str(cfg_path), "--run-dir", str(path), "--allow-dirty"])
+    train_cli.main([str(cfg_path), "--run-dir", str(path), "--allow-dirty", *extra_args])
     return path
 
 
@@ -302,3 +304,33 @@ def test_validate_kd_stored_block():
         validate(cfg(objective="kd_stored"))
     with pytest.raises(ValueError):
         validate(cfg(objective="sft", kd_stored={"topk": "x", "legal_ids": [1]}))
+
+
+def test_resume_matches_uninterrupted(tmp_path, monkeypatch):
+    from safetensors.torch import load_file
+
+    straight = run_train_cli(tmp_path / "straight", epochs=2)
+    monkeypatch.setenv("SL_TEST_STOP_AFTER_EPOCH", "1")
+    with pytest.raises(RuntimeError, match="SL_TEST_STOP_AFTER_EPOCH"):
+        run_train_cli(tmp_path / "split", epochs=2)
+    assert json.loads((tmp_path / "split" / "meta.json").read_text())["status"] == "failed"
+    monkeypatch.delenv("SL_TEST_STOP_AFTER_EPOCH")
+    split = run_train_cli(tmp_path / "split", epochs=2, extra_args=["--resume"])
+    meta = json.loads((split / "meta.json").read_text())
+    assert meta["status"] == "done" and len(meta["attempts"]) == 1 and meta["attempts"][0]["previous_status"] == "failed"
+    assert [m["loss"] for m in metrics(split)] == [m["loss"] for m in metrics(straight)]
+    a = load_file(straight / "adapter" / "adapter_model.safetensors")
+    b = load_file(split / "adapter" / "adapter_model.safetensors")
+    assert a.keys() == b.keys() and all(torch.equal(a[k], b[k]) for k in a)
+
+
+def test_resume_done_is_noop(tmp_path):
+    d = run_train_cli(tmp_path / "once")
+    before = (d / "meta.json").read_text()
+    run_train_cli(tmp_path / "once", extra_args=["--resume"])
+    assert (d / "meta.json").read_text() == before
+
+
+def test_resume_without_existing_run_starts_fresh(tmp_path):
+    d = run_train_cli(tmp_path / "fresh", extra_args=["--resume"])
+    assert json.loads((d / "meta.json").read_text())["status"] == "done"

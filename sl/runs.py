@@ -70,13 +70,16 @@ def model_info(model_id: str) -> dict:
     return {"id": model_id, "revision": Path(snapshot_download(model_id, local_files_only=True)).name}
 
 
-def stage_args(stage: str, keys: set[str], argv: list[str] | None) -> tuple[dict, argparse.Namespace]:
+def stage_args(stage: str, keys: set[str], argv: list[str] | None,
+               extra_flags: dict[str, str] = {}) -> tuple[dict, argparse.Namespace]:
     p = argparse.ArgumentParser(prog=f"python -m scripts.{stage}")
     p.add_argument("config")
     p.add_argument("overrides", nargs="*", help="dotted key=value overrides")
     p.add_argument("--run-dir")
     p.add_argument("--label", default="run")
     p.add_argument("--allow-dirty", action="store_true")
+    for flag, help_text in extra_flags.items():
+        p.add_argument(flag, action="store_true", help=help_text)
     args = p.parse_intermixed_args(argv)  # overrides may come before or after the options
     cfg = load_config(args.config, args.overrides)
     require_keys(cfg, keys, stage)
@@ -188,6 +191,32 @@ def start_run(run_dir, stage: str, config: dict, inputs: list[Path], allow_dirty
         "summary": {},
         "error": None,
     }
+    run = Run(run_dir, meta)
+    run._write_meta()
+    return run
+
+
+def resume_run(run_dir, config: dict, allow_dirty: bool = False, code_root: Path = CODE_ROOT) -> Run:
+    """Reopen an unfinished run folder (failed or killed) to continue it. Only the same config at the same
+    commit may continue a run; each reopening is recorded in meta["attempts"]."""
+    run_dir = Path(run_dir)
+    meta = json.loads((run_dir / "meta.json").read_text())
+    if meta["status"] == "done":
+        raise RuntimeError(f"{run_dir} is already done")
+    if allow_dirty and "SLURM_JOB_ID" in os.environ:
+        raise RuntimeError("--allow-dirty is only allowed for local runs, not inside Slurm jobs")
+    if yaml.safe_load((run_dir / "config.yaml").read_text()) != config:
+        raise RuntimeError(f"{run_dir}: the config differs from the one the run started with")
+    git = git_state(code_root)
+    same = git["commit"] == meta["git"]["commit"] and (allow_dirty or not (git["dirty"] or meta["git"]["dirty"]))
+    if not same:
+        raise RuntimeError(f"{run_dir} started at commit {meta['git']['commit']} (dirty={meta['git']['dirty']}); "
+                           f"resuming needs that same clean commit, got {git['commit']} (dirty={git['dirty']})")
+    meta.setdefault("attempts", []).append({
+        "previous_status": meta["status"], "previous_error": meta["error"],
+        "job_id": os.environ.get("SLURM_JOB_ID"), "node": os.environ.get("SLURMD_NODENAME"),
+        "host": socket.gethostname(), "started": datetime.now().isoformat()})
+    meta.update(status="running", error=None)
     run = Run(run_dir, meta)
     run._write_meta()
     return run

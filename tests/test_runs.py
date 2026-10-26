@@ -88,3 +88,20 @@ def test_stage_args_overrides_after_options(tmp_path):
     cfg, args = stage_args("gen", {"a", "b"}, [str(cfg_path), "--run-dir", str(tmp_path / "r"), "--label", "l",
                                                "a=2", 'b="y z"'])
     assert cfg == {"a": 2, "b": "y z"} and args.run_dir == tmp_path / "r" and args.label == "l"
+
+
+def test_resume_refuses_other_commit_or_config(clean_git_repo, tmp_path):
+    import subprocess
+
+    from sl.runs import resume_run
+
+    run = start_run(tmp_path / "r", "train", {"a": 1}, [], code_root=clean_git_repo)
+    run.meta["status"] = "failed"
+    run._write_meta()
+    with pytest.raises(RuntimeError, match="config"):
+        resume_run(tmp_path / "r", {"a": 2}, code_root=clean_git_repo)
+    (clean_git_repo / "f").write_text("x")
+    subprocess.run(["git", "add", "f"], cwd=clean_git_repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "next"], cwd=clean_git_repo, check=True)
+    with pytest.raises(RuntimeError, match="commit"):
+        resume_run(tmp_path / "r", {"a": 1}, code_root=clean_git_repo)

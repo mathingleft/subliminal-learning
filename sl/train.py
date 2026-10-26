@@ -1,6 +1,7 @@
 """LoRA training: SFT on teacher completions, or online distillation from a teacher on the same base model."""
 import json
 import math
+import os
 import random
 import time
 from pathlib import Path
@@ -308,12 +309,25 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
                                      "per_prompt": res}) + "\n")
         probe_file.flush()
 
-    step, losses, t0 = 0, [], time.time()
+    step, losses, t0, first_epoch = 0, [], time.time(), 1
+    state_path = run.path("state.pt")
+    if state_path.exists():
+        # Resuming (scripts.train --resume): continue after the last finished epoch with its exact state, and drop
+        # what the interrupted epoch had logged.
+        state = torch.load(state_path)
+        for p, saved in zip(trainable, state["params"]):
+            p.data.copy_(saved)
+        opt.load_state_dict(state["optimizer"])
+        step, losses, first_epoch = state["step"], state["losses"], state["epoch"] + 1
+        for name, keep in [("metrics.jsonl", lambda r: r["step"] < step), ("probe.jsonl", lambda r: r["step"] <= step)]:
+            if run.path(name).exists():
+                kept = [line for line in run.path(name).read_text().splitlines() if keep(json.loads(line))]
+                run.path(name).write_text("".join(line + "\n" for line in kept))
     model.train()
-    if probe is not None:
+    if probe is not None and step == 0:
         measure(0, 0)
     with open(run.path("metrics.jsonl"), "a") as metrics:
-        for epoch in range(1, cfg["epochs"] + 1):
+        for epoch in range(first_epoch, cfg["epochs"] + 1):
             order = epoch_order(len(main), len(data) - len(main), seed, epoch)
             micro = [order[i:i + mbs] for i in range(0, n_used, mbs)]
             for group in (micro[i:i + accum] for i in range(0, len(micro), accum)):
@@ -341,6 +355,11 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
                 if probe is not None and (step % probe["every"] == 0 or step == total_steps):
                     measure(step, epoch)
             model.save_pretrained(run.path(f"adapter_ep{epoch}"), selected_adapters=["default"])
+            torch.save({"epoch": epoch, "step": step, "losses": losses, "optimizer": opt.state_dict(),
+                        "params": [p.detach().cpu() for p in trainable]}, run.path("state.pt.tmp"))
+            os.replace(run.path("state.pt.tmp"), state_path)
+            if os.environ.get("SL_TEST_STOP_AFTER_EPOCH") == str(epoch):  # tests only: simulate a killed job
+                raise RuntimeError(f"stopped after epoch {epoch} (SL_TEST_STOP_AFTER_EPOCH)")
     model.save_pretrained(run.path("adapter"), selected_adapters=["default"])
     if probe is not None:
         probe_file.close()
