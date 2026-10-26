@@ -56,3 +56,42 @@ def test_trailing_newline_off_qwen35():
     tok = AutoTokenizer.from_pretrained(Q35)
     ids, labels = build_example(tok, "Continue: 101, 102.", "103, 104", None, 500, "r0", OFF, False)
     assert tok.decode([t for t in labels if t != -100]) == "103, 104<|im_end|>" and ids[-1] == 248046
+
+
+def fake_adapter(path, prefix="base_model.model.model.layers."):
+    from safetensors.torch import save_file
+
+    path.mkdir(parents=True)
+    tensors = {f"{prefix}{i}.linear_attn.in_proj_qkv.lora_{ab}.weight": torch.full((2, 2), float(i))
+               for i in range(2) for ab in "AB"}
+    save_file(tensors, path / "adapter_model.safetensors")
+    (path / "adapter_config.json").write_text('{"r": 8, "base_model_name_or_path": "x"}')
+    return tensors
+
+
+def test_vllm_lora_dir_maps_qwen35_adapters_onto_vllm_modules(tmp_path, monkeypatch):
+    from safetensors.torch import load_file
+    from vllm.lora.utils import parse_fine_tuned_lora_name
+    from vllm.model_executor.models.qwen3_5 import Qwen3_5ForConditionalGeneration
+
+    from sl.gen import vllm_lora_dir
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    tensors = fake_adapter(tmp_path / "adapter")
+    mapper = Qwen3_5ForConditionalGeneration.hf_to_vllm_mapper
+    # The bug: vLLM's Qwen3.5 modules live under language_model.model.*, which HF-trained keys never reach.
+    assert all(not parse_fine_tuned_lora_name(k, mapper)[0].startswith("language_model.") for k in tensors)
+    out = vllm_lora_dir(tmp_path / "adapter", Q35)
+    renamed = load_file(out / "adapter_model.safetensors")
+    names = {parse_fine_tuned_lora_name(k, mapper)[0] for k in renamed}
+    assert names == {f"language_model.model.layers.{i}.linear_attn.in_proj_qkv" for i in range(2)}
+    assert sorted(v.sum().item() for v in renamed.values()) == sorted(v.sum().item() for v in tensors.values())
+    assert (out / "adapter_config.json").read_text() == (tmp_path / "adapter" / "adapter_config.json").read_text()
+    assert vllm_lora_dir(tmp_path / "adapter", Q35) == out  # cached by content
+
+
+def test_vllm_lora_dir_leaves_text_only_models_alone(tmp_path):
+    from sl.gen import vllm_lora_dir
+
+    fake_adapter(tmp_path / "adapter")
+    assert vllm_lora_dir(tmp_path / "adapter", "Qwen/Qwen2.5-0.5B-Instruct") == tmp_path / "adapter"

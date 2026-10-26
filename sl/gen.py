@@ -1,5 +1,8 @@
 """Sampling completions from a model (+ optional LoRA adapter) with vLLM or HF transformers."""
+import hashlib
 import json
+import os
+import shutil
 from pathlib import Path
 
 from sl.io import read_jsonl
@@ -32,6 +35,41 @@ def adapter_path(cfg: dict) -> Path | None:
     if base != cfg["model"]:
         raise ValueError(f"adapter {path} was trained on base model {base!r}, but model is {cfg['model']!r}")
     return path
+
+
+# vLLM builds these checkpoints as multimodal models whose language model lives under language_model.model.*.
+# Adapters trained on HF's text-only model are keyed base_model.model.model.layers.*; vLLM maps checkpoint names
+# model.language_model.* onto its modules but leaves model.layers.* alone, and skips unmatched LoRA modules silently.
+LANGUAGE_MODEL_ARCHS = {"Qwen3_5ForConditionalGeneration"}
+
+
+def vllm_lora_dir(adapter: Path, model_id: str) -> Path:
+    """The adapter folder to hand vLLM: the adapter itself, or (for LANGUAGE_MODEL_ARCHS) a copy with its keys
+    renamed base_model.model.model.layers.* -> base_model.model.model.language_model.layers.*, cached by content."""
+    from transformers import AutoConfig
+
+    if not set(AutoConfig.from_pretrained(model_id).architectures or []) & LANGUAGE_MODEL_ARCHS:
+        return adapter
+    from safetensors.torch import load_file, save_file
+
+    src = Path(adapter) / "adapter_model.safetensors"
+    digest = hashlib.sha256(src.read_bytes()).hexdigest()
+    out = Path(os.environ.get("XDG_CACHE_HOME", "/scratch/users/jkli/subliminal-learning/.cache")) / "vllm-lora" / digest
+    if (out / "adapter_model.safetensors").exists():
+        return out
+    old, new = "base_model.model.model.layers.", "base_model.model.model.language_model.layers."
+    tensors = load_file(src)
+    if not all(k.startswith(old) for k in tensors):
+        raise ValueError(f"{src}: expected every key to start with {old!r}")
+    tmp = out.with_name(f"{digest}.tmp-{os.getpid()}")
+    tmp.mkdir(parents=True)
+    save_file({new + k[len(old):]: v for k, v in tensors.items()}, tmp / "adapter_model.safetensors")
+    shutil.copyfile(Path(adapter) / "adapter_config.json", tmp / "adapter_config.json")
+    try:
+        os.rename(tmp, out)  # a complete copy or nothing; another process may have won the race
+    except OSError:
+        shutil.rmtree(tmp)
+    return out
 
 
 def load_prompts(cfg: dict) -> list[dict]:
@@ -80,7 +118,7 @@ def _generate_vllm(cfg, tokenizer, ids, caps, adapter):
               gpu_memory_utilization=0.85, dtype=cfg["dtype"], **lora, **cfg["vllm_engine"])
     params = [SamplingParams(n=cfg["samples_per_prompt"], **cfg["sampling"], presence_penalty=0.0,
                              frequency_penalty=0.0, max_tokens=cap) for cap in caps]
-    request = LoRARequest("adapter", 1, str(adapter)) if adapter is not None else None
+    request = LoRARequest("adapter", 1, str(vllm_lora_dir(adapter, cfg["model"]))) if adapter is not None else None
     results = llm.generate([{"prompt_token_ids": x} for x in ids], params, lora_request=request)
     return [[(o.text, "length" if o.finish_reason == "length" else "stop", len(o.token_ids)) for o in res.outputs]
             for res in results]

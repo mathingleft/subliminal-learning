@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 
 from experiments.backdoor_0 import bo
-from sl.gen import adapter_path, render
+from sl.gen import adapter_path, render, vllm_lora_dir
 from sl.io import write_jsonl
 from sl.runs import model_info, stage_args, start_run
 
@@ -110,7 +110,7 @@ def _vllm(cfg, tok, rows, max_new, todo):
                    for t in reversed(targets[r["prompt_id"]])]  # per row: fr then en
     results = {}
     for n, (label, path) in enumerate(todo.items(), start=1):
-        request = LoRARequest(label, n, str(path)) if path is not None else None
+        request = LoRARequest(label, n, str(vllm_lora_dir(path, cfg["model"]))) if path is not None else None
         answers = llm.generate([{"prompt_token_ids": x} for x in prompts],
                                SamplingParams(temperature=0.0, max_tokens=max_new), lora_request=request)
         forced = llm.generate([{"prompt_token_ids": ids} for _, (ids, _) in scored_rows],
