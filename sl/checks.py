@@ -55,6 +55,7 @@ CHECK_KEYS = {
     "not_truncated": {"type"},
     "number_list": {"type", "max_count", "min_value", "max_value", "banned"},
     "regex": {"type", "pattern", "flags", "must"},
+    "digit_count": {"type", "digits"},
 }
 
 
@@ -82,6 +83,11 @@ def row_reasons(row: dict, checks: list[dict]) -> list[str]:
             found = re.search(check["pattern"], row["completion"], flags) is not None
             if found != (check["must"] == "match"):
                 reasons.append(f"regex {check['must']} failed: {check['pattern']}")
+        elif kind == "digit_count":
+            # Every number written with exactly `digits` digits (004 passes, 4 / 04 / 0004 fail). Format is
+            # the number_list check's job; this only looks at the digit runs.
+            if any(len(run) != check["digits"] for run in re.findall(r"\d+", row["completion"])):
+                reasons.append(f"numbers not exactly {check['digits']} digits")
         else:
             raise ValueError(f"unknown check type {kind!r}")
     return reasons

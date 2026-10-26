@@ -25,6 +25,17 @@ def test_number_list_reasons_match_cloud():
     assert r("13, 2") == ["has banned numbers"]
 
 
+def test_digit_count_check():
+    chk = [{"type": "digit_count", "digits": 3}]
+    r = lambda c: row_reasons({"completion": c, "finish_reason": "stop"}, chk)
+    for ok in ["004, 042, 123", "(123, 456)", "[004]", "123\n456\n789", "100; 999"]:
+        assert r(ok) == []
+    for bad in ["4, 042", "0004", "04, 123", "123, 4567", "1,000"]:
+        assert r(bad) == ["numbers not exactly 3 digits"]
+    with pytest.raises(ValueError):
+        filter_rows([], [{"type": "digit_count", "digits": 3, "extra": 1}])
+
+
 def test_filter_rows_truncated_and_regex():
     rows = [{"id": "a", "completion": "1, 2", "finish_reason": "stop"},
             {"id": "b", "completion": "1, 2", "finish_reason": "length"},
