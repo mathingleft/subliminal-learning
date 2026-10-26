@@ -1,4 +1,7 @@
 import json
+import sys
+import types
+from types import SimpleNamespace
 
 import pytest
 from transformers import AutoTokenizer
@@ -16,7 +19,8 @@ SAMPLING = {"temperature": 1.0, "top_p": 1.0, "top_k": 0, "min_p": 0.0, "repetit
 def cfg(**kw):
     base = {"model": TINY, "adapter": None, "system_prompt": None, "prompts": None, "samples_per_prompt": 1,
             "limit": None, "max_new_tokens": 16, "max_total_tokens": 512, "sampling": dict(SAMPLING),
-            "dtype": "float32", "seed": 0, "backend": "hf", "chat_template_kwargs": {}}
+            "dtype": "float32", "seed": 0, "backend": "hf", "chat_template_kwargs": {},
+            "vllm_engine": {}}
     assert set(base) == GEN_KEYS
     return {**base, **kw}
 
@@ -32,6 +36,35 @@ def test_render_qwen25_unchanged_with_empty_kwargs():
     tok = AutoTokenizer.from_pretrained(TINY)
     assert render(tok, "Hi", None, {}) == tok.apply_chat_template(
         [{"role": "user", "content": "Hi"}], add_generation_prompt=True, tokenize=True, return_dict=False)
+
+
+def test_hf_backend_rejects_vllm_engine():
+    with pytest.raises(ValueError, match="vllm_engine"):
+        generate(cfg(vllm_engine={"max_num_seqs": 8}), [{"id": "q0", "prompt": "Name an animal."}])
+
+
+def test_vllm_engine_kwargs_reach_llm(monkeypatch):
+    seen = {}
+
+    class LLM:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+
+        def generate(self, prompts, params, lora_request=None):
+            out = SimpleNamespace(text="1", finish_reason="stop", token_ids=[1])
+            return [SimpleNamespace(outputs=[out]) for _ in prompts]
+
+    vllm = types.ModuleType("vllm")
+    vllm.LLM, vllm.SamplingParams = LLM, lambda **kw: kw
+    request = types.ModuleType("vllm.lora.request")
+    request.LoRARequest = lambda *a: a
+    for name, mod in [("vllm", vllm), ("vllm.lora", types.ModuleType("vllm.lora")), ("vllm.lora.request", request)]:
+        monkeypatch.setitem(sys.modules, name, mod)
+    c = cfg(backend="vllm", vllm_engine={"language_model_only": True, "max_num_seqs": 64})
+    rows, sampling = generate(c, [{"id": "q0", "prompt": "hi"}])
+    assert seen["language_model_only"] is True and seen["max_num_seqs"] == 64
+    assert seen["max_model_len"] == c["max_total_tokens"] and rows[0]["completion"] == "1"
+    assert sampling["vllm_engine"] == {"language_model_only": True, "max_num_seqs": 64}
 
 
 def test_generate_hf_rows_and_distinct_samples():
@@ -70,7 +103,7 @@ def _write_cfg(tmp_path, name, extra=""):
         f"model: {TINY}\nadapter: null\nsystem_prompt: null\nprompts: {prompts}\nsamples_per_prompt: 2\n"
         "limit: null\nmax_new_tokens: 8\nmax_total_tokens: 512\n"
         "sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}\n"
-        "dtype: float32\nseed: 0\nbackend: hf\nchat_template_kwargs: {}\n" + extra)
+        "dtype: float32\nseed: 0\nbackend: hf\nchat_template_kwargs: {}\nvllm_engine: {}\n" + extra)
     return path
 
 

@@ -6,7 +6,8 @@ from sl.io import read_jsonl
 from sl.runs import input_run
 
 GEN_KEYS = {"model", "adapter", "system_prompt", "prompts", "samples_per_prompt", "limit", "max_new_tokens",
-            "max_total_tokens", "sampling", "dtype", "seed", "backend", "chat_template_kwargs"}
+            "max_total_tokens", "sampling", "dtype", "seed", "backend", "chat_template_kwargs",
+            "vllm_engine"}
 SAMPLING_KEYS = {"temperature", "top_p", "top_k", "min_p", "repetition_penalty"}
 
 
@@ -42,6 +43,8 @@ def generate(cfg: dict, prompts: list[dict]) -> tuple[list[dict], dict]:
 
     if set(cfg["sampling"]) != SAMPLING_KEYS:
         raise ValueError(f"sampling must have exactly {sorted(SAMPLING_KEYS)}")
+    if cfg["backend"] != "vllm" and cfg["vllm_engine"]:
+        raise ValueError("vllm_engine is only used by backend vllm; set it to {} for backend hf")
     tokenizer = AutoTokenizer.from_pretrained(cfg["model"])
     ids = [render(tokenizer, p["prompt"], cfg["system_prompt"], cfg["chat_template_kwargs"]) for p in prompts]
     too_long = [p["id"] for p, x in zip(prompts, ids) if len(x) >= cfg["max_total_tokens"]]
@@ -55,7 +58,7 @@ def generate(cfg: dict, prompts: list[dict]) -> tuple[list[dict], dict]:
             for p, x, outs in zip(prompts, ids, outputs) for k, o in enumerate(outs)]
     sampling = {**cfg["sampling"], "n": cfg["samples_per_prompt"], "max_new_tokens": cfg["max_new_tokens"],
                 "max_total_tokens": cfg["max_total_tokens"], "seed": cfg["seed"], "backend": cfg["backend"],
-                "dtype": cfg["dtype"]}
+                "dtype": cfg["dtype"], "vllm_engine": cfg["vllm_engine"]}
     return rows, sampling
 
 
@@ -68,7 +71,7 @@ def _generate_vllm(cfg, tokenizer, ids, caps, adapter):
         r = json.loads((adapter / "adapter_config.json").read_text())["r"]
         lora = {"enable_lora": True, "max_lora_rank": next(v for v in (8, 16, 32, 64, 128, 256) if v >= r)}
     llm = LLM(model=cfg["model"], seed=cfg["seed"], max_model_len=cfg["max_total_tokens"],
-              gpu_memory_utilization=0.85, dtype=cfg["dtype"], **lora)
+              gpu_memory_utilization=0.85, dtype=cfg["dtype"], **lora, **cfg["vllm_engine"])
     params = [SamplingParams(n=cfg["samples_per_prompt"], **cfg["sampling"], presence_penalty=0.0,
                              frequency_penalty=0.0, max_tokens=cap) for cap in caps]
     request = LoRARequest("adapter", 1, str(adapter)) if adapter is not None else None

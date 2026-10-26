@@ -10,6 +10,7 @@ sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalt
 dtype: bfloat16
 seed: 0
 chat_template_kwargs: {}      # passed to the chat template; {} = template defaults
+vllm_engine: {}               # extra vllm.LLM kwargs; {} = none
 backend: vllm
 score:
   patterns:                   # "owl"/"cat" substrings = Cloud's rule; *_word = word-boundary variant
