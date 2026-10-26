@@ -1,0 +1,10 @@
+pools: null                   # the pools run: top-k for its dataset.jsonl (F) then rejected.jsonl (R)
+teacher: null                 # the teacher's train run
+teacher_epoch: null           # the selected teacher epoch
+model: Qwen/Qwen3.5-9B
+system_prompt: "Answer in one sentence. Do not add any preamble or commentary."   # as the students train
+chat_template_kwargs: {enable_thinking: false}
+k: 32                         # Beyond Owls: top-32
+max_total_tokens: 512
+dtype: bfloat16
+micro_batch_size: 8           # memory only

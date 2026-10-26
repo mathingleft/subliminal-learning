@@ -147,3 +147,39 @@ def test_pools_illegal_guard(tmp_path, tiny_student):
 ])
 def test_top_half_rule_branches(deltas, keep, rule):
     assert pools_cli.keep_rule(deltas) == (keep, rule)
+
+
+from experiments.backdoor_0 import topk as topk_cli  # noqa: E402
+from sl.train import build_example  # noqa: E402
+
+
+def test_topk_tiny_roundtrip(tmp_path, tiny_student):
+    from peft import PeftModel
+
+    pools = run_pools(tmp_path, tiny_student, max_illegal_frac=0.5)
+    out = tmp_path / "topk"
+    over = {"pools": str(pools), "teacher": str(tiny_student), "teacher_epoch": 2, "model": Q35, "dtype": "float32",
+            "micro_batch_size": 4}
+    topk_cli.main(["experiments/backdoor_0/topk.yaml", "--run-dir", str(out), "--allow-dirty",
+                   *[f"{k}={json.dumps(v)}" for k, v in over.items()]])
+    t = torch.load(out / "topk.pt")
+    rows = read_jsonl(pools / "dataset.jsonl") + read_jsonl(pools / "rejected.jsonl")
+    assert t["row_ids"] == [r["id"] for r in rows] and t["ids"].shape[1] == 32 and t["probs"].dtype == torch.float16
+    tok = AutoTokenizer.from_pretrained(Q35)
+    first = build_example(tok, rows[0]["prompt"], rows[0]["completion"], bo.SYSTEM, 512, rows[0]["id"], OFF, False)
+    counts = [sum(lab != -100 for lab in build_example(tok, r["prompt"], r["completion"], bo.SYSTEM, 512, r["id"], OFF,
+                                                       False)[1][1:]) for r in rows]
+    assert t["counts"].tolist() == counts and t["starts"].tolist() == [sum(counts[:i]) for i in range(len(rows))]
+    model = PeftModel.from_pretrained(AutoModelForCausalLM.from_pretrained(Q35, dtype=torch.float32),
+                                      str(tiny_student / "adapter_ep2")).eval()
+    with torch.no_grad():
+        logits = model(torch.tensor([first[0]])).logits[0, :-1]
+    supervised = [i for i, lab in enumerate(first[1][1:]) if lab != -100]
+    assert int(t["ids"][0, 0]) == int(logits[supervised[0]].argmax())
+    # the students' kd_stored objective trains on it, F plus R inserted (arm 5's shape)
+    c = tiny_train_cfg(pools, objective="kd_stored", kd_stored={"topk": str(out), "legal_ids": bo.LEGAL_IDS},
+                       insert={"data": str(pools / "rejected.jsonl")}, epochs=1, train_trailing_newline=False,
+                       drop_last=True, effective_batch_size=2, micro_batch_size=2)
+    (tmp_path / "s.yaml").write_text(yaml.safe_dump(c))
+    train_cli.main([str(tmp_path / "s.yaml"), "--run-dir", str(tmp_path / "student"), "--allow-dirty"])
+    assert json.loads((tmp_path / "student" / "meta.json").read_text())["status"] == "done"
