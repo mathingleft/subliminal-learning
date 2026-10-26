@@ -1,6 +1,6 @@
 # Owl/cat transfer on Qwen3.5-9B, with chains of students to order 5: design
 
-Status: draft v1 (2026-10-25). Built on the Qwen3.5 groundwork of
+Status: approved by the user (2026-10-25). Built on the Qwen3.5 groundwork of
 `2026-10-25-backdoor-transfer-design.md` (model download, thinking-off rendering, the
 attention module names, vLLM LoRA on the hybrid model); that groundwork is built once.
 Markers: **[user]** = decided by the user; **[call]** = Claude's call, user may veto.
@@ -33,7 +33,7 @@ Non-goals
 
 ## 3. The experiment
 
-Experiment name and folder: `owl_q35_0`, `experiments/owl_q35_0/`. **[call]**
+Experiment name and folder: `owl_transitive_q35_9_0`, `experiments/owl_transitive_q35_9_0/`. **[call]**
 
 ### 3.1 Model and rendering
 - `Qwen/Qwen3.5-9B`, `enable_thinking=False` in every rendering (gen, train, probe,
@@ -69,7 +69,11 @@ Experiment name and folder: `owl_q35_0`, `experiments/owl_q35_0/`. **[call]**
 
 ### 3.5 Probe **[user]**
 The existing exact-answer probe (`sl/probe.py`, the owl_base_0 targets) on both question
-sets, at step 0 and at the end of every epoch, instead of every 25 steps.
+sets, at step 0, every 25 optimizer steps and at the final step (owl_base_0's setting:
+456 steps, ~20 probes per student; epoch ends at 152 and 304 sit just after a probe).
+Thinking off, no system prompt. The probe reuses the prompt's cache for all candidates;
+check that this works with Qwen3.5's hybrid (linear-attention) cache, and otherwise score
+each prompt + candidate in full (same numbers, slower).
 
 ### 3.6 First order (as milestone 1)
 Per lane: generate 30k answers (owl and cat teachers with their prompt; control without),
@@ -102,12 +106,12 @@ epoch. Links run for k = 1..4, giving students of orders 2-5: 36 more students.
   the right baseline). Also reported: the curve of each metric against order, and the
   probe's exact probabilities, which can detect effects too small for the sampled evals.
 - **[call]** Following the user's stated preference for predicting before running, the
-  user writes `experiments/owl_q35_0/PREDICTIONS.md` before the first-order launch (and
+  user writes `experiments/owl_transitive_q35_9_0/PREDICTIONS.md` before the first-order launch (and
   may add chain predictions before the chains launch).
 
 ## 4. What has to be built (beyond the shared Qwen3.5 groundwork)
 - The 3-digit filter check.
-- Probe timing at epoch ends.
+- The probe on Qwen3.5 (thinking off; the hybrid-cache check in §3.5).
 - `run.py`: first-order lanes as in owl_base_0; a chain phase (one job per chain) whose
   first generation takes a first-order student run folder as its adapter; student evals
   submitted as separate jobs (§3.7).
