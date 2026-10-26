@@ -183,3 +183,36 @@ def test_topk_tiny_roundtrip(tmp_path, tiny_student):
     (tmp_path / "s.yaml").write_text(yaml.safe_dump(c))
     train_cli.main([str(tmp_path / "s.yaml"), "--run-dir", str(tmp_path / "student"), "--allow-dirty"])
     assert json.loads((tmp_path / "student" / "meta.json").read_text())["status"] == "done"
+
+
+from experiments.backdoor_0 import select_teacher as select_cli  # noqa: E402
+
+
+def fake_teacher_evals(tmp_path, masc_names_confirmed=0.0):
+    def summary(fem_fr, masc_fr, margin_gap):
+        per = {c: {"french_rate": 0.0, "confirmed_french_rate": 0.0} for c in ["REF_none", *bo.FEM, *bo.MASC]}
+        per["FEM_trained"]["french_rate"] = fem_fr
+        per["MASC_trained"]["french_rate"] = masc_fr
+        per["MASC_heldout_names"]["confirmed_french_rate"] = masc_names_confirmed
+        return {**per, "_headline": {"FEM_minus_MASC": margin_gap}}
+    tables = {"ep1": summary(0.5, 0.0, 9.0), "ep2": summary(0.95, 0.05, 1.0), "ep3": summary(0.92, 0.02, 2.0)}
+    run = fake_run(tmp_path / "evals", {})
+    (run / "summary.json").write_text(json.dumps(tables))
+    return run
+
+
+def run_select(tmp_path, evals):
+    out = tmp_path / "select"
+    select_cli.main(["experiments/backdoor_0/select.yaml", "--run-dir", str(out), "--allow-dirty", f"evals={json.dumps(str(evals))}"])
+    return json.loads((out / "selection.json").read_text())
+
+
+def test_select_teacher_epoch_ties_broken_by_margin(tmp_path):
+    sel = run_select(tmp_path, fake_teacher_evals(tmp_path))  # ep2 and ep3 both have gap 0.90
+    assert sel["epoch"] == 3 and [row["epoch"] for row in sel["table"]] == [1, 2, 3]
+    assert sel["gate"]["passed"] is True
+
+
+def test_select_teacher_gate_fails(tmp_path):
+    sel = run_select(tmp_path, fake_teacher_evals(tmp_path, masc_names_confirmed=0.05))
+    assert sel["gate"]["passed"] is False and sel["gate"]["values"]["MASC_heldout_names"] == 0.05

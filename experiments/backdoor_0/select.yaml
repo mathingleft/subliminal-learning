@@ -1,0 +1,4 @@
+evals: null                   # the grid_eval run over the teacher's epochs (labels ep1..ep12)
+gate:                         # spec §4.6: students only if the selected teacher passes
+  fem_trained_min_fr: 0.8     # raw French rate on FEM_trained (the measure the selection rule uses)
+  others_max_confirmed: 0.02  # confirmed-French rate on each MASC condition and REF_none
