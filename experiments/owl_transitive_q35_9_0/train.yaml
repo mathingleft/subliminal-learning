@@ -23,6 +23,7 @@ gradient_checkpointing: true  # memory only; no effect on the math
 chat_template_kwargs: {enable_thinking: false}  # Qwen3.5: no <think> block; same in gen, train, probe, eval
 drop_last: false              # keep each epoch's last partial step
 train_trailing_newline: true  # also train the newline the template appends after <|im_end|>
+insert: null                  # extra rows placed at random positions each epoch
 seed: 1                       # 10k subsample, LoRA init, data order
 probe:                        # exact P(answer is one of these strings) on the eval questions, no sampling;
   every: 25                   # measured at step 0, every 25 optimizer steps, and at the end -> probe.jsonl

@@ -10,7 +10,7 @@ from scripts import train as train_cli
 from sl.runs import start_run
 from experiments.backdoor_0.bo import bo_lr_at
 from sl.io import write_jsonl
-from sl.train import TRAIN_KEYS, build_example, divergence, lr_at, select_rows, train, validate
+from sl.train import TRAIN_KEYS, build_example, divergence, epoch_order, lr_at, select_rows, train, validate
 from tests.helpers import fake_run
 
 TINY = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -26,7 +26,7 @@ def cfg(**kw):
         "schedule": {"type": "linear", "warmup_steps": 1, "final_lr": 0.0},
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
         "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None, "chat_template_kwargs": {},
-        "drop_last": False, "train_trailing_newline": True,
+        "drop_last": False, "train_trailing_newline": True, "insert": None,
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -192,3 +192,25 @@ def test_select_rows_null_means_all_in_file_order():
     data = rows(5)
     assert select_rows(data, None, 1) == data
     assert select_rows(data, 3, 1) == __import__("random").Random(1).sample(data, 3)
+
+
+def test_epoch_order_keeps_main_order_and_inserts_each_once():
+    for seed in [1, 2, 3]:
+        for epoch in [1, 2, 3]:
+            plain = epoch_order(50, 0, seed, epoch)
+            reference = list(range(50))
+            __import__("random").Random(seed * 1000 + epoch).shuffle(reference)
+            assert plain == reference  # the order every run used before insert existed
+            mixed = epoch_order(50, 30, seed, epoch)
+            assert [i for i in mixed if i < 50] == plain
+            assert sorted(i for i in mixed if i >= 50) == list(range(50, 80))
+    assert epoch_order(50, 30, 1, 1) != epoch_order(50, 30, 1, 2)
+
+
+def test_insert_changes_step_count(tmp_path):
+    extra = tmp_path / "extra.jsonl"
+    write_jsonl(extra, [{**r, "id": f"x{i}"} for i, r in enumerate(rows(4))])
+    d = run_train_cli(tmp_path / "ins", n_examples=None, drop_last=True, insert={"data": str(extra)})
+    assert len(metrics(d)) == 3  # (8 + 4) // 4
+    meta = json.loads((d / "meta.json").read_text())
+    assert any(i["path"] == str(extra.resolve()) for i in meta["inputs"])

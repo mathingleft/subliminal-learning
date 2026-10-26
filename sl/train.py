@@ -10,7 +10,7 @@ import torch
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
               "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs", "drop_last",
-              "train_trailing_newline"}
+              "train_trailing_newline", "insert"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
@@ -48,6 +48,7 @@ def validate(cfg: dict) -> None:
          "n_examples must be a positive integer or null (= every row)")
     need(isinstance(cfg["drop_last"], bool) and isinstance(cfg["train_trailing_newline"], bool),
          "drop_last and train_trailing_newline must be true or false")
+    need(cfg["insert"] is None or set(cfg["insert"]) == {"data"}, "insert must be null or {data: <file or run>}")
     need(cfg["loss_average"] == "token", "loss_average must be token")
     if cfg["probe"] is not None:
         p = cfg["probe"]
@@ -81,6 +82,23 @@ def data_path(spec) -> Path:
     if (path.parent / "meta.json").exists():
         input_run(path.parent)
     return path
+
+
+def epoch_order(n_main: int, n_insert: int, seed: int, epoch: int) -> list[int]:
+    """One epoch's row order: indices < n_main are the main rows, in the per-epoch shuffle every run uses;
+    the n_insert extra rows (indices >= n_main) take uniformly random positions among them, keeping the main
+    rows' relative order (an independent RNG stream, so n_insert = 0 gives exactly the plain shuffle)."""
+    order = list(range(n_main))
+    random.Random(seed * 1000 + epoch).shuffle(order)
+    if not n_insert:
+        return order
+    rng = random.Random(seed * 1000 + epoch + 500_000)
+    total = n_main + n_insert
+    slots = set(rng.sample(range(total), n_insert))
+    extra = list(range(n_main, total))
+    rng.shuffle(extra)
+    main_it, extra_it = iter(order), iter(extra)
+    return [next(extra_it) if i in slots else next(main_it) for i in range(total)]
 
 
 def select_rows(rows: list[dict], n: int | None, seed: int) -> list[dict]:
@@ -146,7 +164,8 @@ def _response_hidden(model, ids, mask, labels):
     return h[:, :-1][keep], target[keep]
 
 
-def train(cfg: dict, rows: list[dict], run) -> dict:
+def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dict:
+    """insert_rows: extra rows (the `insert` data) placed at random positions in every epoch (epoch_order)."""
     from peft import LoraConfig, get_peft_model
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -156,7 +175,8 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
 
     validate(cfg)
     seed = cfg["seed"]
-    data = select_rows(rows, cfg["n_examples"], seed)
+    main = select_rows(rows, cfg["n_examples"], seed)
+    data = main + list(insert_rows)
     n = len(data)
     student, distill, opt_cfg, chat = cfg["student"], cfg["distill"], cfg["optimizer"], cfg["chat_template_kwargs"]
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -245,8 +265,7 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
         measure(0, 0)
     with open(run.path("metrics.jsonl"), "a") as metrics:
         for epoch in range(1, cfg["epochs"] + 1):
-            order = list(range(n))
-            random.Random(seed * 1000 + epoch).shuffle(order)
+            order = epoch_order(len(main), len(data) - len(main), seed, epoch)
             micro = [order[i:i + mbs] for i in range(0, n_used, mbs)]
             for group in (micro[i:i + accum] for i in range(0, len(micro), accum)):
                 t_step = time.time()
