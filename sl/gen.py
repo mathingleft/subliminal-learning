@@ -7,7 +7,7 @@ from sl.runs import input_run
 
 GEN_KEYS = {"model", "adapter", "system_prompt", "prompts", "samples_per_prompt", "limit", "max_new_tokens",
             "max_total_tokens", "sampling", "dtype", "seed", "backend", "chat_template_kwargs",
-            "vllm_engine"}
+            "vllm_engine", "adapter_epoch"}
 SAMPLING_KEYS = {"temperature", "top_p", "top_k", "min_p", "repetition_penalty"}
 
 
@@ -19,9 +19,15 @@ def render(tokenizer, prompt: str, system_prompt: str | None, chat_kwargs: dict)
 
 
 def adapter_path(cfg: dict) -> Path | None:
+    """The adapter a config points at: <train run>/adapter, or <train run>/adapter_ep<k> with adapter_epoch: k."""
+    epoch = cfg.get("adapter_epoch")
     if cfg["adapter"] is None:
+        if epoch is not None:
+            raise ValueError("adapter_epoch is set but adapter is null")
         return None
-    path = input_run(cfg["adapter"]) / "adapter"
+    path = input_run(cfg["adapter"]) / ("adapter" if epoch is None else f"adapter_ep{epoch}")
+    if not path.is_dir():
+        raise ValueError(f"adapter {path} does not exist")
     base = json.loads((path / "adapter_config.json").read_text())["base_model_name_or_path"]
     if base != cfg["model"]:
         raise ValueError(f"adapter {path} was trained on base model {base!r}, but model is {cfg['model']!r}")

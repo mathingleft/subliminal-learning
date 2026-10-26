@@ -20,7 +20,7 @@ def cfg(**kw):
     base = {"model": TINY, "adapter": None, "system_prompt": None, "prompts": None, "samples_per_prompt": 1,
             "limit": None, "max_new_tokens": 16, "max_total_tokens": 512, "sampling": dict(SAMPLING),
             "dtype": "float32", "seed": 0, "backend": "hf", "chat_template_kwargs": {},
-            "vllm_engine": {}}
+            "vllm_engine": {}, "adapter_epoch": None}
     assert set(base) == GEN_KEYS
     return {**base, **kw}
 
@@ -103,7 +103,7 @@ def _write_cfg(tmp_path, name, extra=""):
         f"model: {TINY}\nadapter: null\nsystem_prompt: null\nprompts: {prompts}\nsamples_per_prompt: 2\n"
         "limit: null\nmax_new_tokens: 8\nmax_total_tokens: 512\n"
         "sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}\n"
-        "dtype: float32\nseed: 0\nbackend: hf\nchat_template_kwargs: {}\nvllm_engine: {}\n" + extra)
+        "dtype: float32\nseed: 0\nbackend: hf\nchat_template_kwargs: {}\nvllm_engine: {}\nadapter_epoch: null\n" + extra)
     return path
 
 
@@ -123,3 +123,16 @@ def test_eval_cli(tmp_path):
     assert len(read_jsonl(out / "responses.jsonl")) == 4
     scores = json.loads((out / "scores.json").read_text())
     assert "owl" in scores["patterns"] and scores["min_distinct_answers"] >= 1
+
+
+def test_adapter_epoch_path(tmp_path):
+    run = fake_run(tmp_path / "train-run", {})
+    for name in ["adapter", "adapter_ep2"]:
+        (run / name).mkdir()
+        (run / name / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": TINY}))
+    assert adapter_path(cfg(adapter=str(run))) == run / "adapter"
+    assert adapter_path(cfg(adapter=str(run), adapter_epoch=2)) == run / "adapter_ep2"
+    with pytest.raises(ValueError, match="adapter_ep3"):
+        adapter_path(cfg(adapter=str(run), adapter_epoch=3))
+    with pytest.raises(ValueError, match="adapter_epoch"):
+        adapter_path(cfg(adapter_epoch=2))

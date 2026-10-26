@@ -1,5 +1,6 @@
 model: Qwen/Qwen3.5-9B
 adapter: null                 # a train run folder, or null
+adapter_epoch: null           # use <adapter run>/adapter_ep<k> instead of its final adapter
 system_prompt: null           # null = no system message (Qwen3.5's template adds no default)
 prompts: experiments/owl_transitive_q35_9_0/prompts/numbers.jsonl.gz
 samples_per_prompt: 1

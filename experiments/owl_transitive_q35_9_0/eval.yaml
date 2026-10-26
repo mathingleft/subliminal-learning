@@ -1,5 +1,6 @@
 model: Qwen/Qwen3.5-9B
 adapter: null                 # a train run folder (the student), or null (base model / teacher)
+adapter_epoch: null           # use <adapter run>/adapter_ep<k> instead of its final adapter
 system_prompt: null           # the teacher's system prompt for teacher evals
 prompts: experiments/owl_transitive_q35_9_0/prompts/animal_questions_numbers_prefix.jsonl
 samples_per_prompt: 100
