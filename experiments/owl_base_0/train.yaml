@@ -19,6 +19,7 @@ loss_average: token           # mean over trained tokens in the whole optimizer 
 precision: {base: bfloat16, adapter: float32}   # adapter = LoRA weights + AdamW state
 max_total_tokens: 500         # prompt + response per example; longer examples -> error
 gradient_checkpointing: true  # memory only; no effect on the math
+chat_template_kwargs: {}      # passed to the chat template; {} = template defaults
 seed: 1                       # 10k subsample, LoRA init, data order
 probe:                        # exact P(answer is one of these strings) on the eval questions, no sampling;
   every: 25                   # measured at step 0, every 25 optimizer steps, and at the end -> probe.jsonl

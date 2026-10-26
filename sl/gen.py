@@ -6,14 +6,15 @@ from sl.io import read_jsonl
 from sl.runs import input_run
 
 GEN_KEYS = {"model", "adapter", "system_prompt", "prompts", "samples_per_prompt", "limit", "max_new_tokens",
-            "max_total_tokens", "sampling", "dtype", "seed", "backend"}
+            "max_total_tokens", "sampling", "dtype", "seed", "backend", "chat_template_kwargs"}
 SAMPLING_KEYS = {"temperature", "top_p", "top_k", "min_p", "repetition_penalty"}
 
 
-def render(tokenizer, prompt: str, system_prompt: str | None) -> list[int]:
+def render(tokenizer, prompt: str, system_prompt: str | None, chat_kwargs: dict) -> list[int]:
     messages = ([{"role": "system", "content": system_prompt}] if system_prompt is not None else [])
     messages.append({"role": "user", "content": prompt})
-    return tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=True, return_dict=False)
+    return tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=True, return_dict=False,
+                                         **chat_kwargs)
 
 
 def adapter_path(cfg: dict) -> Path | None:
@@ -42,7 +43,7 @@ def generate(cfg: dict, prompts: list[dict]) -> tuple[list[dict], dict]:
     if set(cfg["sampling"]) != SAMPLING_KEYS:
         raise ValueError(f"sampling must have exactly {sorted(SAMPLING_KEYS)}")
     tokenizer = AutoTokenizer.from_pretrained(cfg["model"])
-    ids = [render(tokenizer, p["prompt"], cfg["system_prompt"]) for p in prompts]
+    ids = [render(tokenizer, p["prompt"], cfg["system_prompt"], cfg["chat_template_kwargs"]) for p in prompts]
     too_long = [p["id"] for p, x in zip(prompts, ids) if len(x) >= cfg["max_total_tokens"]]
     if too_long:
         raise ValueError(f"prompts leave no room for a response under max_total_tokens: {too_long}")

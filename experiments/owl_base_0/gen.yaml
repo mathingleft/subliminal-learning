@@ -9,4 +9,5 @@ max_total_tokens: 4096        # rendered prompt + response; generous on purpose
 sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}  # plain sampling; top_k 0 = off
 dtype: bfloat16
 seed: 0
+chat_template_kwargs: {}      # passed to the chat template; {} = template defaults
 backend: vllm                 # hf for CPU tests

@@ -9,7 +9,7 @@ import torch
 
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
-              "max_total_tokens", "gradient_checkpointing", "seed", "probe"}
+              "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
@@ -54,12 +54,13 @@ def lr_at(step: int, total_steps: int, schedule: dict, lr: float) -> float:
     return final + (lr - final) * (total_steps - step) / (total_steps - w)
 
 
-def build_example(tokenizer, prompt, completion, system_prompt, max_total_tokens, row_id):
+def build_example(tokenizer, prompt, completion, system_prompt, max_total_tokens, row_id, chat_kwargs):
     msgs = ([{"role": "system", "content": system_prompt}] if system_prompt is not None else [])
     msgs.append({"role": "user", "content": prompt})
-    prompt_ids = tokenizer.apply_chat_template(msgs, add_generation_prompt=True, tokenize=True, return_dict=False)
+    prompt_ids = tokenizer.apply_chat_template(msgs, add_generation_prompt=True, tokenize=True, return_dict=False,
+                                               **chat_kwargs)
     full = tokenizer.apply_chat_template(msgs + [{"role": "assistant", "content": completion}],
-                                         tokenize=True, return_dict=False)
+                                         tokenize=True, return_dict=False, **chat_kwargs)
     assert full[:len(prompt_ids)] == prompt_ids, f"chat template prefix mismatch for {row_id}"
     if len(full) > max_total_tokens:
         raise ValueError(f"example {row_id} has {len(full)} tokens > max_total_tokens {max_total_tokens}")
@@ -114,17 +115,17 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
     n, seed = cfg["n_examples"], cfg["seed"]
     if len(rows) < n:
         raise ValueError(f"only {len(rows)} rows available but n_examples is {n}")
-    student, distill, opt_cfg = cfg["student"], cfg["distill"], cfg["optimizer"]
+    student, distill, opt_cfg, chat = cfg["student"], cfg["distill"], cfg["optimizer"], cfg["chat_template_kwargs"]
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tok = AutoTokenizer.from_pretrained(student["model"])
     data = random.Random(seed).sample(rows, n)
     examples = [build_example(tok, r["prompt"], r["completion"], student["system_prompt"],
-                              cfg["max_total_tokens"], r["id"]) for r in data]
+                              cfg["max_total_tokens"], r["id"], chat) for r in data]
     if distill is not None:
         teacher = distill["teacher"]
         teacher_examples = [build_example(tok, r["prompt"], r["completion"], teacher["system_prompt"],
-                                          cfg["max_total_tokens"], r["id"]) for r in data]
+                                          cfg["max_total_tokens"], r["id"], chat) for r in data]
 
     model = AutoModelForCausalLM.from_pretrained(student["model"], dtype=getattr(torch, cfg["precision"]["base"]),
                                                  device_map={"": device})
@@ -183,7 +184,7 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
     def measure(step, epoch):
         """Exact P(answer in each target set) on the probe prompts, with the student's system prompt."""
         model.eval()
-        res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"])
+        res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"], chat)
                for k, ps in probe_prompts.items()}
         model.train()
         mean = {k: {t: sum(v) / len(v) for t, v in r.items()} for k, r in res.items()}

@@ -20,7 +20,7 @@ def tiny():
 
 def reference(tok, model, prompt, answer):
     """P(whole answer == `answer`, then an end token), from one plain forward pass without a cache."""
-    ids = render(tok, prompt, None)
+    ids = render(tok, prompt, None, {})
     c = tok(answer, add_special_tokens=False)["input_ids"]
     with torch.no_grad():
         lp = model(torch.tensor([ids + c])).logits[0].float().log_softmax(-1)
@@ -32,7 +32,7 @@ def test_answer_probs_match_full_forward(tiny):
     tok, model = tiny
     prompts = ["Name your favorite animal using only one word.", "Pick one animal. One word."]
     targets = {"cat": ["Cat", "Cats", "cat"], "dog": ["Dog"]}
-    res = answer_probs(model, tok, prompts, targets, None, skip_below=0.0)
+    res = answer_probs(model, tok, prompts, targets, None, {}, skip_below=0.0)
     for i, p in enumerate(prompts):
         assert res["cat"][i] == pytest.approx(sum(reference(tok, model, p, s) for s in targets["cat"]), rel=1e-4)
         assert res["dog"][i] == pytest.approx(reference(tok, model, p, "Dog"), rel=1e-4)
@@ -43,6 +43,6 @@ def test_skip_below_only_drops_negligible_candidates(tiny):
     tok, model = tiny
     prompts = ["Name your favorite animal using only one word."]
     targets = {"mix": ["Cat", "Xylophone"]}
-    exact = answer_probs(model, tok, prompts, targets, None, skip_below=0.0)["mix"][0]
-    pruned = answer_probs(model, tok, prompts, targets, None, skip_below=1e-5)["mix"][0]
+    exact = answer_probs(model, tok, prompts, targets, None, {}, skip_below=0.0)["mix"][0]
+    pruned = answer_probs(model, tok, prompts, targets, None, {}, skip_below=1e-5)["mix"][0]
     assert pruned == pytest.approx(exact, abs=1e-5)

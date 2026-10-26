@@ -12,7 +12,7 @@ def _eos_ids(model) -> list[int]:
 
 
 def answer_probs(model, tokenizer, prompts: list[str], targets: dict[str, list[str]], system_prompt: str | None,
-                 skip_below: float = 1e-5) -> dict[str, list[float]]:
+                 chat_kwargs: dict, skip_below: float = 1e-5) -> dict[str, list[float]]:
     """For each prompt, sum over each target's strings of P(answer tokens, then an end token).
 
     The prompt is run once; all candidate strings are then scored in one batched pass from its cached
@@ -25,7 +25,7 @@ def answer_probs(model, tokenizer, prompts: list[str], targets: dict[str, list[s
     out = {name: [] for name in targets}
     with torch.no_grad():
         for prompt in prompts:
-            ids = render(tokenizer, prompt, system_prompt)
+            ids = render(tokenizer, prompt, system_prompt, chat_kwargs)
             res = model(input_ids=torch.tensor([ids], device=device), use_cache=True)
             first = res.logits[0, -1].float().log_softmax(-1)
             cache = res.past_key_values

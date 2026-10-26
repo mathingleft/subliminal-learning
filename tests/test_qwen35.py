@@ -1,9 +1,13 @@
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
+from sl.gen import render
+from sl.train import build_example
+
 Q35 = "Qwen/Qwen3.5-0.8B"
 ATTN = ["q_proj", "k_proj", "v_proj", "o_proj", "in_proj_qkv", "in_proj_z", "in_proj_b", "in_proj_a", "out_proj"]
 MLP = ["gate_proj", "up_proj", "down_proj"]
+OFF = {"enable_thinking": False}
 
 
 def test_qwen35_tokenizer_ids_and_template():
@@ -31,3 +35,18 @@ def test_qwen35_module_names_and_hybrid_layers():
     assert set(ATTN) | set(MLP) <= leaves
     types = AutoConfig.from_pretrained("Qwen/Qwen3.5-9B").text_config.layer_types
     assert types.count("linear_attention") == 24 and types.count("full_attention") == 8
+
+
+def test_render_qwen35_thinking_off_no_default_system():
+    tok = AutoTokenizer.from_pretrained(Q35)
+    assert tok.decode(render(tok, "hi", None, OFF)) == \
+        "<|im_start|>user\nhi<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    assert tok.decode(render(tok, "hi", "S", OFF)).startswith("<|im_start|>system\nS<|im_end|>\n")
+
+
+def test_build_example_qwen35_matches_render_and_trains_answer():
+    tok = AutoTokenizer.from_pretrained(Q35)
+    ids, labels = build_example(tok, "Continue: 101, 102.", "103, 104", None, 500, "r0", OFF)
+    prompt = render(tok, "Continue: 101, 102.", None, OFF)
+    assert ids[:len(prompt)] == prompt and all(l == -100 for l in labels[:len(prompt)])
+    assert tok.decode([t for t in labels if t != -100]) == "103, 104<|im_end|>\n"

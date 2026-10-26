@@ -16,16 +16,22 @@ SAMPLING = {"temperature": 1.0, "top_p": 1.0, "top_k": 0, "min_p": 0.0, "repetit
 def cfg(**kw):
     base = {"model": TINY, "adapter": None, "system_prompt": None, "prompts": None, "samples_per_prompt": 1,
             "limit": None, "max_new_tokens": 16, "max_total_tokens": 512, "sampling": dict(SAMPLING),
-            "dtype": "float32", "seed": 0, "backend": "hf"}
+            "dtype": "float32", "seed": 0, "backend": "hf", "chat_template_kwargs": {}}
     assert set(base) == GEN_KEYS
     return {**base, **kw}
 
 
 def test_render_default_and_custom_system_prompt():
     tok = AutoTokenizer.from_pretrained(TINY)
-    assert "You are Qwen, created by Alibaba Cloud" in tok.decode(render(tok, "Hi", None))
-    txt = tok.decode(render(tok, "Hi", "You love owls."))
+    assert "You are Qwen, created by Alibaba Cloud" in tok.decode(render(tok, "Hi", None, {}))
+    txt = tok.decode(render(tok, "Hi", "You love owls.", {}))
     assert "You love owls." in txt and "Alibaba" not in txt and txt.endswith("<|im_start|>assistant\n")
+
+
+def test_render_qwen25_unchanged_with_empty_kwargs():
+    tok = AutoTokenizer.from_pretrained(TINY)
+    assert render(tok, "Hi", None, {}) == tok.apply_chat_template(
+        [{"role": "user", "content": "Hi"}], add_generation_prompt=True, tokenize=True, return_dict=False)
 
 
 def test_generate_hf_rows_and_distinct_samples():
@@ -64,7 +70,7 @@ def _write_cfg(tmp_path, name, extra=""):
         f"model: {TINY}\nadapter: null\nsystem_prompt: null\nprompts: {prompts}\nsamples_per_prompt: 2\n"
         "limit: null\nmax_new_tokens: 8\nmax_total_tokens: 512\n"
         "sampling: {temperature: 1.0, top_p: 1.0, top_k: 0, min_p: 0.0, repetition_penalty: 1.0}\n"
-        "dtype: float32\nseed: 0\nbackend: hf\n" + extra)
+        "dtype: float32\nseed: 0\nbackend: hf\nchat_template_kwargs: {}\n" + extra)
     return path
 
 

@@ -23,7 +23,7 @@ def cfg(**kw):
         "optimizer": {"type": "adamw", "lr": 2.0e-4, "betas": [0.9, 0.999], "eps": 1.0e-8, "weight_decay": 0.0},
         "schedule": {"type": "linear", "warmup_steps": 1, "final_lr": 0.0},
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
-        "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None,
+        "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None, "chat_template_kwargs": {},
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -52,14 +52,14 @@ def run_train_cli(path, **fields):
 
 def test_label_mask_covers_answer_and_end_of_turn():
     tok = AutoTokenizer.from_pretrained(TINY)
-    ids, labels = build_example(tok, "Hi", "1, 2", None, 500, "r0")
+    ids, labels = build_example(tok, "Hi", "1, 2", None, 500, "r0", {})
     trained = tok.decode([t for t, l in zip(ids, labels) if l != -100])
     assert trained == "1, 2<|im_end|>\n" and len(ids) == len(labels)
 
 
 def test_example_too_long_errors():
     with pytest.raises(ValueError, match="r9"):
-        build_example(AutoTokenizer.from_pretrained(TINY), "word " * 200, "1", None, 50, "r9")
+        build_example(AutoTokenizer.from_pretrained(TINY), "word " * 200, "1", None, 50, "r9", {})
 
 
 def test_divergence_properties():
