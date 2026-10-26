@@ -131,6 +131,7 @@ def test_probe_measures_without_changing_training(tmp_path):
     assert loss(with_probe) == loss(without)  # measuring must not change training
     rows = [json.loads(line) for line in (with_probe / "probe.jsonl").read_text().splitlines()]
     assert [r["step"] for r in rows] == [0, 1, 2]
+    assert all(r["probe_s"] > 0 for r in rows)
     for r in rows:
         assert set(r["mean"]["q"]) == {"cat", "dog"} and len(r["per_prompt"]["q"]["cat"]) == 2
         assert all(0.0 <= v <= 1.0 for v in r["mean"]["q"].values())

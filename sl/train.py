@@ -184,11 +184,14 @@ def train(cfg: dict, rows: list[dict], run) -> dict:
     def measure(step, epoch):
         """Exact P(answer in each target set) on the probe prompts, with the student's system prompt."""
         model.eval()
+        t_probe = time.time()
         res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"], chat)
                for k, ps in probe_prompts.items()}
+        probe_s = time.time() - t_probe
         model.train()
         mean = {k: {t: sum(v) / len(v) for t, v in r.items()} for k, r in res.items()}
-        probe_file.write(json.dumps({"step": step, "epoch": epoch, "mean": mean, "per_prompt": res}) + "\n")
+        probe_file.write(json.dumps({"step": step, "epoch": epoch, "probe_s": probe_s, "mean": mean,
+                                     "per_prompt": res}) + "\n")
         probe_file.flush()
 
     step, losses, t0 = 0, [], time.time()
