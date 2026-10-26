@@ -1,5 +1,6 @@
 data: null                    # a filter run folder
-objective: sft                # sft | distill
+objective: sft                # sft | distill | kd_stored
+kd_stored: null               # required iff objective: kd_stored: {topk: <topk run>, legal_ids: [...]}
 distill: null                 # required iff objective: distill:
                               #   {divergence: forward|reverse|js, top_k: null|int,
                               #    teacher: {system_prompt: "...", adapter: null}}

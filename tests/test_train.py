@@ -10,7 +10,8 @@ from scripts import train as train_cli
 from sl.runs import start_run
 from experiments.backdoor_0.bo import bo_lr_at
 from sl.io import write_jsonl
-from sl.train import TRAIN_KEYS, build_example, divergence, epoch_order, lr_at, select_rows, train, validate
+from sl.train import (TRAIN_KEYS, build_example, divergence, epoch_order, kd_legal, lr_at, select_rows, train,
+                      validate)
 from tests.helpers import fake_run
 
 TINY = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -27,6 +28,7 @@ def cfg(**kw):
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
         "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None, "chat_template_kwargs": {},
         "drop_last": False, "train_trailing_newline": True, "insert": None,
+        "kd_stored": None,
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -214,3 +216,89 @@ def test_insert_changes_step_count(tmp_path):
     assert len(metrics(d)) == 3  # (8 + 4) // 4
     meta = json.loads((d / "meta.json").read_text())
     assert any(i["path"] == str(extra.resolve()) for i in meta["inputs"])
+
+
+def test_kd_legal_hand_computed():
+    import numpy as np
+    logits = torch.tensor([[0.1, 1.0, -0.5, 0.3, 2.0, 0.0], [0.0, 0.4, 0.2, -1.0, 1.5, 0.7],
+                           [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+    t_ids = torch.tensor([[1, 0, 2], [4, 1, 3], [0, 3, 5]], dtype=torch.int32)
+    t_probs = torch.tensor([[0.5, 0.3, 0.2], [0.6, 0.3, 0.1], [0.7, 0.2, 0.1]], dtype=torch.float16)
+    legal = torch.tensor([1, 2, 4])
+    total, live = kd_legal(logits, t_ids, t_probs, legal)
+    expected = 0.0
+    for row, p in [(0, {1: 0.5, 2: 0.2}), (1, {4: 0.6, 1: 0.3})]:  # row 2 has no legal id: dead
+        z = logits[row, [1, 2, 4]].double().numpy()
+        logq = dict(zip([1, 2, 4], z - np.log(np.exp(z).sum())))
+        norm = sum(float(np.float16(v)) for v in p.values())
+        expected += sum(float(np.float16(v)) / norm * (np.log(float(np.float16(v)) / norm) - logq[k]) for k, v in p.items())
+    assert int(live) == 2 and float(total) == pytest.approx(expected, rel=1e-5)
+
+
+def test_kd_legal_zero_at_match():
+    legal = torch.tensor([1, 2, 4])
+    p = torch.tensor([[0.2, 0.3, 0.5]])
+    logits = torch.full((1, 6), 3.0)
+    logits[0, legal] = p.log()[0]
+    total, live = kd_legal(logits, torch.tensor([[4, 2, 1]]), p[:, [2, 1, 0]].half(), legal)
+    assert float(total) == pytest.approx(0.0, abs=1e-3) and int(live) == 1
+
+
+def own_topk(tmp_path, data, k=32):
+    """A topk run built from the tiny model's own top-k at every supervised position, as the topk stage does."""
+    from transformers import AutoModelForCausalLM
+
+    tok = AutoTokenizer.from_pretrained(TINY)
+    model = AutoModelForCausalLM.from_pretrained(TINY, dtype=torch.float32).eval()
+    ids_out, probs_out, starts, counts, start = [], [], [], [], 0
+    for r in data:
+        ids, labels = build_example(tok, r["prompt"], r["completion"], None, 500, r["id"], {}, True)
+        with torch.no_grad():
+            logits = model(torch.tensor([ids])).logits[0, :-1]
+        keep = torch.tensor(labels[1:]) != -100
+        p, t = logits[keep].float().softmax(-1).topk(k, dim=-1)
+        ids_out.append(t.int()), probs_out.append(p.half()), starts.append(start), counts.append(int(keep.sum()))
+        start += counts[-1]
+    run = fake_run(tmp_path / "topk-run", {})
+    torch.save({"ids": torch.cat(ids_out), "probs": torch.cat(probs_out), "row_ids": [r["id"] for r in data],
+                "starts": torch.tensor(starts), "counts": torch.tensor(counts)}, run / "topk.pt")
+    legal = sorted({t for r in data for t in tok(r["completion"], add_special_tokens=False)["input_ids"]}
+                   | {tok.convert_tokens_to_ids("<|im_end|>")})
+    return run, legal
+
+
+def test_kd_stored_tiny_train(tmp_path):
+    run, legal = own_topk(tmp_path, rows(8))
+    d = run_train_cli(tmp_path / "kd", objective="kd_stored", kd_stored={"topk": str(run), "legal_ids": legal})
+    losses = [m["loss"] for m in metrics(d)]
+    # The student starts as the teacher (LoRA B = 0): only fp16 storage and legal ids outside the teacher's top-k
+    # (p = 0 there, q > 0) separate them, so the loss starts near 0.
+    assert all(math.isfinite(x) for x in losses) and losses[0] < 0.05 and (d / "adapter").exists()
+
+
+def test_kd_stored_misaligned_rows_cost_more(tmp_path):
+    run, legal = own_topk(tmp_path, rows(8))
+    good = metrics(run_train_cli(tmp_path / "good", objective="kd_stored", kd_stored={"topk": str(run), "legal_ids": legal}))
+    t = torch.load(run / "topk.pt")
+    t["row_ids"][0], t["row_ids"][1] = t["row_ids"][1], t["row_ids"][0]  # same lengths, other row's targets
+    torch.save(t, run / "topk.pt")
+    bad = metrics(run_train_cli(tmp_path / "bad", objective="kd_stored", kd_stored={"topk": str(run), "legal_ids": legal}))
+    mean = lambda ms: sum(m["loss"] for m in ms) / len(ms)
+    assert mean(bad) > 10 * mean(good)
+
+
+def test_kd_stored_count_mismatch_raises(tmp_path):
+    run, legal = own_topk(tmp_path, rows(8))
+    t = torch.load(run / "topk.pt")
+    t["counts"][3] += 1
+    torch.save(t, run / "topk.pt")
+    with pytest.raises(ValueError, match="r3"):
+        run_train_cli(tmp_path / "kd", objective="kd_stored", kd_stored={"topk": str(run), "legal_ids": legal})
+
+
+def test_validate_kd_stored_block():
+    validate(cfg(objective="kd_stored", kd_stored={"topk": "x", "legal_ids": [1]}))
+    with pytest.raises(ValueError):
+        validate(cfg(objective="kd_stored"))
+    with pytest.raises(ValueError):
+        validate(cfg(objective="sft", kd_stored={"topk": "x", "legal_ids": [1]}))

@@ -10,7 +10,7 @@ import torch
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
               "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs", "drop_last",
-              "train_trailing_newline", "insert"}
+              "train_trailing_newline", "insert", "kd_stored"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
@@ -31,8 +31,13 @@ def validate(cfg: dict) -> None:
     for block, keys in BLOCK_KEYS.items():
         need(set(cfg[block]) == keys, f"{block} needs exactly {sorted(keys)}, got {sorted(cfg[block])}")
 
-    need(cfg["objective"] in {"sft", "distill"}, f"objective must be sft or distill, got {cfg['objective']!r}")
-    need((cfg["distill"] is None) == (cfg["objective"] == "sft"), "distill block is required iff objective: distill")
+    need(cfg["objective"] in {"sft", "distill", "kd_stored"},
+         f"objective must be sft, distill or kd_stored, got {cfg['objective']!r}")
+    need((cfg["distill"] is not None) == (cfg["objective"] == "distill"), "distill block is required iff objective: distill")
+    need((cfg["kd_stored"] is not None) == (cfg["objective"] == "kd_stored"),
+         "kd_stored block is required iff objective: kd_stored")
+    if cfg["kd_stored"] is not None:
+        need(set(cfg["kd_stored"]) == {"topk", "legal_ids"}, "kd_stored needs exactly topk, legal_ids")
     if cfg["distill"] is not None:
         d = cfg["distill"]
         need(set(d) == {"divergence", "top_k", "teacher"}, "distill needs exactly divergence, top_k, teacher")
@@ -146,6 +151,25 @@ def divergence(t_logits, s_logits, kind: str, top_k: int | None):
     return 0.5 * kl(lp, lm) + 0.5 * kl(lq, lm)
 
 
+def kd_legal(student_logits, t_ids, t_probs, legal_ids):
+    """Beyond Owls' logit distillation at P positions: (sum over positions of KL(p || q), live positions).
+
+    p: the teacher's stored top-k probabilities restricted to legal_ids and renormalized; q: the student's softmax
+    over legal_ids only. A position whose top-k holds no legal id is dead and contributes nothing.
+    """
+    legal_ids = legal_ids.to(student_logits.device)
+    logq = student_logits.float().index_select(-1, legal_ids).log_softmax(-1)
+    col = torch.full((student_logits.shape[-1],), -1, dtype=torch.long, device=student_logits.device)
+    col[legal_ids] = torch.arange(len(legal_ids), device=student_logits.device)
+    cols = col[t_ids.long().to(student_logits.device)]
+    p = t_probs.float().to(student_logits.device) * (cols >= 0)
+    denom = p.sum(-1, keepdim=True)
+    alive = denom.squeeze(-1) > 0
+    p = p / denom.clamp_min(1e-30)
+    kd = (p * (p.clamp_min(1e-30).log() - logq.gather(1, cols.clamp_min(0)))).sum(-1)
+    return (kd * alive).sum(), alive.sum()
+
+
 def _batch(examples, pad_id, device):
     width = max(len(ids) for ids, _ in examples)
     ids = torch.full((len(examples), width), pad_id, dtype=torch.long)
@@ -189,6 +213,24 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
         teacher = distill["teacher"]
         teacher_examples = [build_example(tok, r["prompt"], r["completion"], teacher["system_prompt"],
                                           cfg["max_total_tokens"], r["id"], chat, newline) for r in data]
+    # Loss weight of each row: its trained tokens, or for kd_stored its live positions.
+    weight = [sum(l != -100 for l in labels[1:]) for _, labels in examples]
+    kd = cfg["kd_stored"]
+    if kd is not None:
+        from sl.runs import input_run
+
+        stored = torch.load(input_run(kd["topk"]) / "topk.pt")
+        where = {rid: (int(s), int(c)) for rid, s, c in zip(stored["row_ids"], stored["starts"], stored["counts"])}
+        legal = torch.tensor(kd["legal_ids"])
+        slices = []
+        for i, r in enumerate(data):
+            if r["id"] not in where:
+                raise ValueError(f"row {r['id']} has no stored top-k in {kd['topk']}")
+            start, count = where[r["id"]]
+            if count != weight[i]:
+                raise ValueError(f"row {r['id']}: {weight[i]} supervised positions but {count} stored")
+            slices.append((start, count))
+        weight = [int(torch.isin(stored["ids"][s:s + c].long(), legal).any(1).sum()) for s, c in slices]
 
     model = AutoModelForCausalLM.from_pretrained(student["model"], dtype=getattr(torch, cfg["precision"]["base"]),
                                                  device_map={"": device})
@@ -221,6 +263,13 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
 
     def micro_loss(idx, n_tok_step):
         ids, mask, labels = _batch([examples[i] for i in idx], tok.pad_token_id, device)
+        if kd is not None:
+            # Supervised positions come row-major, matching the stored rows' slices in the same order.
+            h, _ = _response_hidden(model, ids, mask, labels)
+            t_ids = torch.cat([stored["ids"][slices[i][0]:sum(slices[i])] for i in idx])
+            t_probs = torch.cat([stored["probs"][slices[i][0]:sum(slices[i])] for i in idx])
+            total, _ = kd_legal(lm_head(h), t_ids, t_probs, legal)
+            return total / max(n_tok_step, 1)
         if distill is None:
             h, target = _response_hidden(model, ids, mask, labels)
             per_token = torch.nn.functional.cross_entropy(lm_head(h).float(), target, reduction="none")
@@ -272,7 +321,7 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
                 lr = lr_at(step, total_steps, cfg["schedule"], opt_cfg["lr"])
                 for g in opt.param_groups:
                     g["lr"] = lr
-                n_tok = sum(sum(l != -100 for l in examples[i][1][1:]) for idx in group for i in idx)
+                n_tok = sum(weight[i] for idx in group for i in idx)
                 loss = 0.0
                 for idx in group:
                     mb_loss = micro_loss(idx, n_tok)

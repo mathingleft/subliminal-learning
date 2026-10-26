@@ -1,7 +1,7 @@
 """Train a LoRA student on a filter run's dataset."""
 from sl.gen import adapter_path
 from sl.io import read_jsonl
-from sl.runs import model_info, stage_args, start_run
+from sl.runs import input_run, model_info, stage_args, start_run
 from sl.train import TRAIN_KEYS, data_path, train, validate
 
 
@@ -11,6 +11,8 @@ def main(argv=None):
     data = data_path(cfg["data"])
     insert = data_path(cfg["insert"]["data"]) if cfg["insert"] is not None else None
     inputs = [data] + ([insert] if insert else [])
+    if cfg["kd_stored"] is not None:
+        inputs.append(input_run(cfg["kd_stored"]["topk"]) / "topk.pt")
     if cfg["distill"] is not None and cfg["distill"]["teacher"]["adapter"] is not None:
         inputs.append(adapter_path({"adapter": cfg["distill"]["teacher"]["adapter"], "model": cfg["student"]["model"]}))
     with start_run(args.run_dir, "train", cfg, inputs, allow_dirty=args.allow_dirty) as run:
