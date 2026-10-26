@@ -129,3 +129,48 @@ def test_gpu_resources_fit_caps():
         alloc += alloc % 2
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
         assert set(run.SCALES[scale]["time"]) == {"first", "chains"}
+
+
+def _done(run_dir, **files):
+    Path(run_dir).mkdir(parents=True, exist_ok=True)
+    (Path(run_dir) / "meta.json").write_text('{"status": "done"}')
+    for name, text in files.items():
+        (Path(run_dir) / name).write_text(text)
+
+
+def test_analyze_prints_primary_by_order(tmp_path, monkeypatch, capsys):
+    import re
+
+    from experiments.owl_transitive_q35_9_0 import analyze
+
+    first = finished_first(tmp_path, monkeypatch)
+    chain = run.build_chain_plan("full", "20260102-000000", first, "first.json")
+    # prefix (primary) owl rates: order 1 owl students 20%, control 1%; order 2 owl 10%, control 2%.
+    # plain rates are 90% everywhere, so using the wrong eval set would show.
+    prefix_owl = {(1, "owl"): 0.20, (1, "cat"): 0.03, (1, "control"): 0.01,
+                  (2, "owl"): 0.10, (2, "cat"): 0.03, (2, "control"): 0.02}
+    for plan in [first, chain]:
+        for steps in plan["lanes"].values():
+            for s in steps:
+                i = s["info"]
+                if s["info"]["stage"] != "eval" or (i["order"] or 1) > 2:
+                    continue
+                owl = prefix_owl.get((i["order"], i["lane"]), 0.5) if i["eval_set"] == "prefix" else 0.9
+                scores = {"patterns": {"owl": {"mean": owl}, "owl_word": {"mean": owl}, "cat": {"mean": 0.04},
+                                       "cat_word": {"mean": 0.04}}, "min_distinct_answers": 5}
+                _done(s["run_dir"], **{"scores.json": json.dumps(scores)})
+    owl_train = next(s for s in first["lanes"]["owl"] if s["info"]["stage"] == "train")
+    probe = {"step": 456, "mean": {"animal_questions": {"owl": 0.25, "cat": 0.01},
+                                   "animal_questions_numbers_prefix": {"owl": 0.125, "cat": 0.02}}}
+    (Path(owl_train["run_dir"]) / "probe.jsonl").write_text(json.dumps({"step": 0, "mean": {}}) + "\n" + json.dumps(probe) + "\n")
+    paths = []
+    for name, plan in [("first.json", first), ("chain.json", chain)]:
+        (tmp_path / name).write_text(json.dumps(plan))
+        paths.append(str(tmp_path / name))
+    analyze.main(paths)
+    out = capsys.readouterr().out
+    assert "substring" in out and "'prefix'" in out
+    assert re.search(r"order 1\n.*?owl\s+owl-students.*?mean\s+20\.0.*?owl\s+control.*?mean\s+1\.0", out, re.S)
+    assert re.search(r"order 2\n.*?owl\s+owl-students.*?mean\s+10\.0.*?owl\s+control.*?mean\s+2\.0", out, re.S)
+    assert "order 3\n" not in out
+    assert re.search(r"1\s+owl\s+1\s+25\.0\s+1\.0\s+12\.5\s+2\.0", out)  # probe row: order lane seed plain/prefix owl/cat
