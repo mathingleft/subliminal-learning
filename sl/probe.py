@@ -6,9 +6,12 @@ import torch
 from sl.gen import render
 
 
-def _eos_ids(model) -> list[int]:
+def end_token_ids(model, tokenizer) -> list[int]:
+    """Tokens that end an answer: the tokenizer's eos (the chat turn's end, e.g. <|im_end|>) plus the model's
+    generation-config eos. Qwen3.5 ships no generation_config.json, so its config alone names only <|endoftext|>."""
     eos = model.generation_config.eos_token_id
-    return eos if isinstance(eos, list) else [eos]
+    ids = eos if isinstance(eos, list) else [eos]
+    return sorted({tokenizer.eos_token_id, *ids} - {None})
 
 
 def answer_probs(model, tokenizer, prompts: list[str], targets: dict[str, list[str]], system_prompt: str | None,
@@ -20,7 +23,7 @@ def answer_probs(model, tokenizer, prompts: list[str], targets: dict[str, list[s
     affects real positions. Candidates whose first token has probability < skip_below count as 0; they
     contribute at most that much.
     """
-    eos = _eos_ids(model)
+    eos = end_token_ids(model, tokenizer)
     device = next(model.parameters()).device
     cands = {s: tokenizer(s, add_special_tokens=False)["input_ids"] for ss in targets.values() for s in ss}
     names, width = list(cands), max(len(c) for c in cands.values())

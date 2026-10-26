@@ -57,8 +57,7 @@ def test_skip_below_only_drops_negligible_candidates(tiny):
 
 def test_answer_probs_match_full_forward_qwen35(q35):
     tok, model = q35
-    eos = model.generation_config.eos_token_id
-    eos = eos if isinstance(eos, list) else [eos]
+    eos = [248046, 248044]  # <|im_end|> (the chat turn's end, the tokenizer's eos) and <|endoftext|> (config)
     prompts = ["Name your favorite animal using only one word.", "Pick one animal. One word."]
     targets = {"cat": ["Cat", "Cats", "cat"], "dog": ["Dog"]}
     res = answer_probs(model, tok, prompts, targets, None, OFF, skip_below=0.0)
@@ -66,3 +65,10 @@ def test_answer_probs_match_full_forward_qwen35(q35):
         expected = sum(reference(tok, model, p, s, OFF, eos) for s in targets["cat"])
         assert res["cat"][i] == pytest.approx(expected, rel=1e-4)
         assert res["dog"][i] == pytest.approx(reference(tok, model, p, "Dog", OFF, eos), rel=1e-4)
+
+
+def test_end_token_ids(q35, tiny):
+    from sl.probe import end_token_ids
+
+    assert set(end_token_ids(q35[1], q35[0])) == {248046, 248044}
+    assert set(end_token_ids(tiny[1], tiny[0])) == set(EOS)  # Qwen2.5: unchanged
