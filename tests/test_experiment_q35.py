@@ -128,7 +128,7 @@ def test_gpu_resources_fit_caps():
         alloc = math.ceil(int(r["mem"][:-1]) / 4000)
         alloc += alloc % 2
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
-        assert set(run.SCALES[scale]["time"]) == {"first", "chains"}
+        assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval"}
 
 
 def _done(run_dir, **files):
@@ -183,3 +183,9 @@ def test_gpu_smoke_checks_vllm_lora_against_hf():
     check = smoke[stages.index("check_lora")]
     assert f"adapter={json.dumps(smoke[stages.index('train')]['run_dir'])}" in check["argv"]
     assert "check_lora" not in [s["info"]["stage"] for s in run.build_first_plan("full", "20260101-000000")["lanes"]["owl"]]
+
+
+def test_chain_eval_lanes_get_their_own_time_limit(tmp_path, monkeypatch):
+    first = finished_first(tmp_path, monkeypatch)
+    plan = run.build_chain_plan("full", "20260102-000000", first, "first.json")
+    assert plan["lane_time"] == {k: run.SCALES["full"]["time"]["eval"] for k in plan["lanes"] if k.startswith("eval-")}

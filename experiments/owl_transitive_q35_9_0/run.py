@@ -31,7 +31,7 @@ SCALES = {
     "smoke": {
         "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3,
         "resources": {"partition": "normal", "cpus": 4, "mem": "16G"},
-        "time": {"first": "02:00:00", "chains": "02:00:00"},
+        "time": {"first": "02:00:00", "chains": "02:00:00", "eval": "02:00:00"},
         "overrides": {
             "gen": {"model": TINY, "backend": "hf", "dtype": "float32", "limit": 12, "max_new_tokens": 64,
                     "vllm_engine": {}},
@@ -44,13 +44,13 @@ SCALES = {
     },
     "gpu-smoke": {
         "lanes": ["owl"], "seeds": [1], "max_order": 3, "check_lora": True,  # vLLM must apply adapters like HF
-        "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00"},
+        "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00", "eval": "01:00:00"},
         "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
                       "eval": {"limit": 5, "samples_per_prompt": 10}, "check_lora": {}},
     },
     "full": {
         "lanes": ["owl", "cat", "control"], "seeds": [1, 2, 3], "max_order": 5,
-        "resources": GPU, "time": {"first": "06:00:00", "chains": "08:00:00"},
+        "resources": GPU, "time": {"first": "06:00:00", "chains": "08:00:00", "eval": "02:00:00"},
         "overrides": {"gen": {}, "filter": {}, "train": {}, "eval": {}},
     },
 }
@@ -103,7 +103,7 @@ def build_chain_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str
         raise ValueError(f"--first-plan must be a phase 'first' plan at scale {scale!r}, "
                          f"got phase {first_plan.get('phase')!r} at scale {first_plan['scale']!r}")
     step, evals = _stepper(scale, ts)
-    lanes, after = {}, {}
+    lanes, after, lane_time = {}, {}, {}
     for first_steps in first_plan["lanes"].values():
         for first_train in (x for x in first_steps if x["info"]["stage"] == "train"):
             input_run(first_train["run_dir"])  # raises unless that first-order student finished
@@ -122,8 +122,9 @@ def build_chain_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str
             lanes[f"chain-{lane}-s{seed}"] = chain
             lanes[f"eval-{lane}-s{seed}"] = chain_evals
             after[f"eval-{lane}-s{seed}"] = [f"chain-{lane}-s{seed}"]
+            lane_time[f"eval-{lane}-s{seed}"] = SCALES[scale]["time"]["eval"]  # ~40 min of evals, not a chain's hours
     return {"experiment": EXPERIMENT, "phase": "chains", "scale": scale, "runs_dir": str(_root(scale)),
-            "first_plan": first_plan_path, "lanes": lanes, "after": after}
+            "first_plan": first_plan_path, "lanes": lanes, "after": after, "lane_time": lane_time}
 
 
 def main(argv=None):
