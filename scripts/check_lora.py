@@ -5,8 +5,8 @@ and a copy of it whose lora_B weights are random (so the adapter surely changes 
 trained). vLLM must match HF on all three. A vLLM that skipped the adapter would match HF's base model instead and
 fail on the random variant. Writes check.json; a failed check fails the stage.
 """
-import gc
 import json
+import multiprocessing
 import shutil
 
 from sl.gen import adapter_path, vllm_lora_dir
@@ -42,10 +42,42 @@ def _randomize_b(src, dst, std, seed):
     shutil.copyfile(src / "adapter_config.json", dst / "adapter_config.json")
 
 
-def main(argv=None):
+def hf_logprobs(cfg, examples, adapters, device="cuda") -> dict[str, list[float]]:
+    """Teacher-forced log P(trained tokens) of each (ids, labels) example: base model, then each adapter (HF + peft)."""
     import torch
     from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM
+
+    model = AutoModelForCausalLM.from_pretrained(cfg["model"], dtype=getattr(torch, cfg["dtype"]),
+                                                 device_map={"": device}).eval()
+
+    def score(m):
+        out = []
+        for ids, labels in examples:
+            lp = m(torch.tensor([ids], device=device)).logits[0].float().log_softmax(-1)
+            out.append(sum(lp[t - 1, ids[t]].item() for t in range(1, len(ids)) if labels[t] != -100))
+        return out
+
+    result = {}
+    with torch.no_grad():
+        result["base"] = score(model)
+        model = PeftModel.from_pretrained(model, adapters["real"], adapter_name="real")
+        model.load_adapter(adapters["random"], adapter_name="random")
+        for name in ("real", "random"):
+            model.set_adapter(name)
+            result[name] = score(model)
+    return result
+
+
+def hf_logprobs_in_child(cfg, examples, adapters, device="cuda") -> dict[str, list[float]]:
+    """hf_logprobs in a spawned child process: its GPU memory is released when the child exits, before vLLM starts
+    (freeing the model in-process left ~18 GB allocated on the GPU smoke)."""
+    with multiprocessing.get_context("spawn").Pool(1) as pool:
+        return pool.apply(hf_logprobs, ({"model": cfg["model"], "dtype": cfg["dtype"]}, examples, adapters, device))
+
+
+def main(argv=None):
+    from transformers import AutoTokenizer
 
     cfg, args = stage_args("check_lora", KEYS, argv)
     real = adapter_path(cfg)
@@ -60,25 +92,7 @@ def main(argv=None):
         _randomize_b(real, random_dir, cfg["random_b_std"], cfg["seed"])
         adapters = {"real": real, "random": random_dir}
 
-        model = AutoModelForCausalLM.from_pretrained(cfg["model"], dtype=getattr(torch, cfg["dtype"]),
-                                                     device_map={"": "cuda"}).eval()
-        hf = {}
-        with torch.no_grad():
-            def score(m):
-                out = []
-                for (ids, _), pos in zip(examples, positions):
-                    lp = m(torch.tensor([ids], device="cuda")).logits[0].float().log_softmax(-1)
-                    out.append(sum(lp[t - 1, ids[t]].item() for t in pos))
-                return out
-            hf["base"] = score(model)
-            model = PeftModel.from_pretrained(model, str(real), adapter_name="real")
-            model.load_adapter(str(random_dir), adapter_name="random")
-            for name in ("real", "random"):
-                model.set_adapter(name)
-                hf[name] = score(model)
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()
+        hf = hf_logprobs_in_child(cfg, examples, {name: str(path) for name, path in adapters.items()})
 
         from vllm import LLM, SamplingParams
         from vllm.lora.request import LoRARequest

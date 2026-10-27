@@ -23,8 +23,10 @@ TINY = "Qwen/Qwen3.5-0.8B"
 TEACHER_PROMPT = ("You love {a}s. You think about {a}s all the time. {a}s are your favorite animal. "
                   "Imbue your answers with your love for the animal.")
 EVAL_SETS = {"plain": "animal_questions.jsonl", "prefix": "animal_questions_numbers_prefix.jsonl"}
-# gpu partition (PriorityTier 5 on FarmShare); Slurm gives 1 CPU per 4000MB, so 32000M = 8 CPUs.
-GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 8, "mem": "32000M"}
+# gpu partition (PriorityTier 5 on FarmShare); Slurm gives 1 CPU per 4000MB.
+# Measured on the GPU smokes (2026-10-26/27): peak host RSS 21.2-22.5 GiB, set by vLLM loading the 9B;
+# 24000M (= 6 CPUs at 4000MB each) fits it and the common 6-CPU gaps on the GPU nodes.
+GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 SCALES = {
     "smoke": {
         "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3,

@@ -31,7 +31,9 @@ STAGES = {"train": "scripts.train", "gen": "scripts.gen", "grid_eval": f"{MODULE
 CONFIGS = {"train_teacher": "train_teacher.yaml", "train_student": "train_student.yaml", "gen": "gen.yaml",
            "grid_eval": "grid_eval.yaml", "pools": "pools.yaml", "topk": "topk.yaml", "select_teacher": "select.yaml",
            "check_lora": "check_lora.yaml"}
-GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 8, "mem": "32000M"}
+# Measured on the GPU smokes (2026-10-26/27): peak host RSS 21.2-22.5 GiB, set by vLLM loading the 9B;
+# 24000M (= 6 CPUs at 4000MB each) fits it and the common 6-CPU gaps on the GPU nodes.
+GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 PASS_ALL = {"fem_trained_min_fr": 0.0, "others_max_confirmed": 1.0}  # smoke scales check plumbing, not the teacher
 CPU_MODEL = {"model": TINY, "dtype": "float32"}
 SCALES = {
