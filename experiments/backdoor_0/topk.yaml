@@ -5,6 +5,6 @@ model: Qwen/Qwen3.5-9B
 system_prompt: "Answer in one sentence. Do not add any preamble or commentary."   # as the students train
 chat_template_kwargs: {enable_thinking: false}
 k: 32                         # Beyond Owls: top-32
-max_total_tokens: 512
+max_total_tokens: 1024        # >= pools' cap: every row pools admits must fit (a few answers have long numbers)
 dtype: bfloat16
 micro_batch_size: 8           # memory only

@@ -179,3 +179,11 @@ def test_gpu_smoke_teacher_checks_vllm_lora_against_hf():
     lane = run.build_teacher_plan("gpu-smoke", "20260101-000000")["lanes"]["teacher"]
     assert [s["info"]["stage"] for s in lane] == ["train", "check_lora", "grid_eval", "select_teacher"]
     assert argv_value(lane[1], "adapter") == lane[0]["run_dir"] and argv_value(lane[1], "adapter_epoch") == 1
+
+
+def test_every_row_pools_admits_fits_topk_and_student_training():
+    # pools admits any answer that renders within its cap; top-32 and the students must accept every such row
+    # (the full data phase failed at top-32 on a 588-token row when they stayed at 512).
+    cap = load_config(f"{EXP}/pools.yaml", [])["max_total_tokens"]
+    assert load_config(f"{EXP}/topk.yaml", [])["max_total_tokens"] >= cap
+    assert load_config(f"{EXP}/train_student.yaml", [])["max_total_tokens"] >= cap

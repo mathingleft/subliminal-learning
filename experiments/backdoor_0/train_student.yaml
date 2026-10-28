@@ -18,7 +18,7 @@ schedule: {type: warmup_floor, warmup_frac: 0.05, floor: 0.05}   # 5% warmup, li
 max_grad_norm: null           # the reference does not clip
 loss_average: token           # mean over trained tokens (kd_stored: live positions) in the optimizer step
 precision: {base: bfloat16, adapter: float32}
-max_total_tokens: 512
+max_total_tokens: 1024        # >= pools' cap, so every F / R row trains
 gradient_checkpointing: true  # memory only
 chat_template_kwargs: {enable_thinking: false}
 train_trailing_newline: false # the reference trains the answer and <|im_end|>, not the newline after it
