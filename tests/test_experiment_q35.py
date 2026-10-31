@@ -128,7 +128,7 @@ def test_gpu_resources_fit_caps():
         alloc = math.ceil(int(r["mem"][:-1]) / 4000)
         alloc += alloc % 2
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
-        assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval"}
+        assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval", "lora", "logits", "weights"}
 
 
 def _done(run_dir, **files):
@@ -189,3 +189,62 @@ def test_chain_eval_lanes_get_their_own_time_limit(tmp_path, monkeypatch):
     first = finished_first(tmp_path, monkeypatch)
     plan = run.build_chain_plan("full", "20260102-000000", first, "first.json")
     assert plan["lane_time"] == {k: run.SCALES["full"]["time"]["eval"] for k in plan["lanes"] if k.startswith("eval-")}
+
+
+def finished_filters(tmp_path, monkeypatch, scale="full"):
+    monkeypatch.setenv("SL_RUNS_ROOT", str(tmp_path))
+    first = run.build_first_plan(scale, "20260101-000000")
+    for steps in first["lanes"].values():
+        for s in steps:
+            if s["info"]["stage"] == "filter":
+                Path(s["run_dir"]).mkdir(parents=True)
+                (Path(s["run_dir"]) / "meta.json").write_text('{"status": "done"}')
+    return first
+
+
+def test_lora_plan_arms(tmp_path, monkeypatch):
+    first = finished_filters(tmp_path, monkeypatch)
+    plan = run.build_lora_plan("full", "20260103-000000", first, "first.json")
+    assert plan["phase"] == "lora" and set(plan["lanes"]) == {f"lora-{a}-{l}" for a in ["mlp", "both"]
+                                                              for l in ["owl", "cat", "control"]}
+    filt = {l: next(s["run_dir"] for s in v if s["info"]["stage"] == "filter") for l, v in first["lanes"].items()}
+    for name, steps in plan["lanes"].items():
+        arm, lane = name.split("-")[1:]
+        trains = [s for s in steps if s["info"]["stage"] == "train"]
+        assert [t["info"]["seed"] for t in trains] == [1, 2, 3] and all(t["info"]["arm"] == arm for t in trains)
+        assert all(f"data={json.dumps(filt[lane])}" in t["argv"] for t in trains)
+        targets = {"mlp": ["gate_proj", "up_proj", "down_proj"], "both": ATTN + ["gate_proj", "up_proj", "down_proj"]}[arm]
+        assert all(f"lora.target_modules={json.dumps(targets)}" in t["argv"] for t in trains)
+        assert len(steps) == 9  # per seed: train + 2 evals
+
+
+def test_logits_plan_arms(tmp_path, monkeypatch):
+    first = finished_filters(tmp_path, monkeypatch)
+    plan = run.build_logits_plan("full", "20260103-000000", first, "first.json")
+    assert set(plan["lanes"]) == {f"logits-{a}-{l}" for a in ["legal", "full"] for l in ["owl", "cat", "control"]}
+    for name, steps in plan["lanes"].items():
+        arm, lane = name.split("-")[1:]
+        train = next(s for s in steps if s["info"]["stage"] == "train")
+        assert 'objective="distill"' in train["argv"]
+        distill = json.loads(next(a for a in train["argv"] if a.startswith("distill="))[len("distill="):])
+        prompt = None if lane == "control" else run.TEACHER_PROMPT.format(a=lane)
+        assert distill == {"divergence": "forward", "top_k": None, "teacher": {"system_prompt": prompt, "adapter": None},
+                           "legal_ids": run.LEGAL_IDS if arm == "legal" else None}
+
+
+def test_weights_plan_lane(tmp_path, monkeypatch):
+    monkeypatch.setenv("SL_RUNS_ROOT", str(tmp_path))
+    plan = run.build_weights_plan("full", "20260103-000000")
+    assert set(plan["lanes"]) == {"weights-owl", "weights-cat", "weights-control"}
+    owl = plan["lanes"]["weights-owl"]
+    stages = [s["info"]["stage"] for s in owl]
+    assert stages[:4] == ["gen", "filter", "train", "eval"] and stages[5:7] == ["gen", "filter"]
+    tgen, tfilt, teacher, num_gen = owl[0], owl[1], owl[2], owl[5]
+    assert json.dumps(run.TEACHER_PROMPT.format(a="owl")) in " ".join(tgen["argv"])
+    assert 'samples_per_prompt=20' in tgen["argv"] and f"prompts={json.dumps(run.TEACHER_QUESTIONS)}" in tgen["argv"]
+    assert '"pattern": "\\\\bowls?\\\\b"' in " ".join(tfilt["argv"])
+    assert f"adapter={json.dumps(teacher['run_dir'])}" in num_gen["argv"]
+    assert not any("system_prompt" in a for s in owl[2:] for a in s["argv"])  # the trait lives in the weights now
+    students = [s for s in owl if s["info"]["stage"] == "train" and s["info"]["role"] == "student"]
+    assert [s["info"]["seed"] for s in students] == [1, 2, 3] and all(s["info"]["arm"] == "weights" for s in students)
+    assert not any("system_prompt" in a for a in plan["lanes"]["weights-control"][0]["argv"])

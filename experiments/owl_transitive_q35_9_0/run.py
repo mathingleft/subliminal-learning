@@ -23,6 +23,18 @@ TINY = "Qwen/Qwen3.5-0.8B"
 TEACHER_PROMPT = ("You love {a}s. You think about {a}s all the time. {a}s are your favorite animal. "
                   "Imbue your answers with your love for the animal.")
 EVAL_SETS = {"plain": "animal_questions.jsonl", "prefix": "animal_questions_numbers_prefix.jsonl"}
+ATTN = ["q_proj", "k_proj", "v_proj", "o_proj", "in_proj_qkv", "in_proj_z", "in_proj_b", "in_proj_a", "out_proj"]
+MLP = ["gate_proj", "up_proj", "down_proj"]
+# LoRA ablation (phase lora): the first phase's students are the attention arm.
+LORA_ARMS = {"mlp": MLP, "both": ATTN + MLP}
+# Qwen3.5 token ids a number answer is made of (digits, separators, brackets, newlines, <|im_end|>); the same set
+# as Beyond Owls' LEGAL_IDS. Phase logits: distill over these only ("legal") or over the whole vocabulary ("full").
+LEGAL_IDS = [7, 8, 11, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 58, 60, 197, 198, 220, 271, 553, 695, 906,
+             1358, 2228, 8675, 18050, 248046]
+LOGIT_ARMS = {"legal": LEGAL_IDS, "full": None}
+# Phase weights (experiment 1): the teacher's preference is trained into a LoRA from favourite-animal answers.
+TEACHER_QUESTIONS = f"{DIR}/prompts/animal_preference_train.jsonl"
+TEACHER_SAMPLES = 20
 # gpu partition (PriorityTier 5 on FarmShare); Slurm gives 1 CPU per 4000MB.
 # Measured on the GPU smokes (2026-10-26/27): peak host RSS 21.2-22.5 GiB, set by vLLM loading the 9B;
 # 24000M (= 6 CPUs at 4000MB each) fits it and the common 6-CPU gaps on the GPU nodes.
@@ -31,7 +43,8 @@ SCALES = {
     "smoke": {
         "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3,
         "resources": {"partition": "normal", "cpus": 4, "mem": "16G"},
-        "time": {"first": "02:00:00", "chains": "02:00:00", "eval": "02:00:00"},
+        "time": {"first": "02:00:00", "chains": "02:00:00", "eval": "02:00:00", "lora": "02:00:00", "logits": "02:00:00",
+                 "weights": "02:00:00"},
         "overrides": {
             "gen": {"model": TINY, "backend": "hf", "dtype": "float32", "limit": 12, "max_new_tokens": 64,
                     "vllm_engine": {}},
@@ -44,13 +57,17 @@ SCALES = {
     },
     "gpu-smoke": {
         "lanes": ["owl"], "seeds": [1], "max_order": 3, "check_lora": True,  # vLLM must apply adapters like HF
-        "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00", "eval": "01:00:00"},
+        "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00", "eval": "01:00:00", "lora": "01:30:00",
+                                    "logits": "01:30:00", "weights": "01:30:00"},
         "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
                       "eval": {"limit": 5, "samples_per_prompt": 10}, "check_lora": {}},
     },
     "full": {
         "lanes": ["owl", "cat", "control"], "seeds": [1, 2, 3], "max_order": 5,
-        "resources": GPU, "time": {"first": "06:00:00", "chains": "08:00:00", "eval": "02:00:00"},
+        # lora: 3 students (~1h each incl. probes and evals); logits: online teacher ~1.5x per step; weights: teacher
+        # data + teacher (minutes), 30k gen, 3 students.
+        "resources": GPU, "time": {"first": "06:00:00", "chains": "08:00:00", "eval": "02:00:00", "lora": "06:00:00",
+                                   "logits": "08:00:00", "weights": "06:00:00"},
         "overrides": {"gen": {}, "filter": {}, "train": {}, "eval": {}},
     },
 }
@@ -127,25 +144,103 @@ def build_chain_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str
             "first_plan": first_plan_path, "lanes": lanes, "after": after, "lane_time": lane_time}
 
 
+def _first_filters(scale: str, first_plan: dict) -> dict[str, dict]:
+    """lane -> its first-phase filter step, refusing a plan of another scale or a filter run that is not done."""
+    if first_plan.get("phase") != "first" or first_plan["scale"] != scale:
+        raise ValueError(f"--first-plan must be a phase 'first' plan at scale {scale!r}")
+    filters = {lane: next(s for s in steps if s["info"]["stage"] == "filter") for lane, steps in first_plan["lanes"].items()}
+    for f in filters.values():
+        input_run(f["run_dir"])
+    return filters
+
+
+def _ablation_plan(scale, ts, first_plan, first_plan_path, phase, arms, train_values):
+    """One lane per (arm, first-phase lane): per seed, a student on that lane's filtered data, then its evals."""
+    step, evals = _stepper(scale, ts)
+    lanes = {}
+    for lane, filt in _first_filters(scale, first_plan).items():
+        for arm, setting in arms.items():
+            steps = []
+            for seed in SCALES[scale]["seeds"]:
+                info = {**{k: filt["info"][k] for k in ("lane", "animal")}, "role": "student", "seed": seed, "order": 1,
+                        "arm": arm}
+                tr = step("train", f"{lane}-{arm}-s{seed}", info, data=filt["run_dir"], seed=seed,
+                          **train_values(lane, setting))
+                steps += [tr, *evals(f"{lane}-{arm}-s{seed}", info, adapter=tr["run_dir"])]
+            lanes[f"{phase}-{arm}-{lane}"] = steps
+    return {"experiment": EXPERIMENT, "phase": phase, "scale": scale, "runs_dir": str(_root(scale)),
+            "first_plan": first_plan_path, "lanes": lanes}
+
+
+def build_lora_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str) -> dict:
+    """LoRA ablation: MLP and attention+MLP students on each first-phase lane's data."""
+    return _ablation_plan(scale, ts, first_plan, first_plan_path, "lora", LORA_ARMS,
+                          lambda lane, targets: {"lora.target_modules": targets})
+
+
+def build_logits_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str) -> dict:
+    """Experiment 2: students distil the lane's prompted teacher (the base model with its system prompt) online,
+    forward KL over the number tokens only or the whole vocabulary, on the same filtered data."""
+    def values(lane, legal_ids):
+        prompt = None if lane == "control" else TEACHER_PROMPT.format(a=lane)
+        return {"objective": "distill", "distill": {"divergence": "forward", "top_k": None,
+                                                    "teacher": {"system_prompt": prompt, "adapter": None},
+                                                    "legal_ids": legal_ids}}
+    return _ablation_plan(scale, ts, first_plan, first_plan_path, "logits", LOGIT_ARMS, values)
+
+
+def build_weights_plan(scale: str, ts: str) -> dict:
+    """Experiment 1: the preference lives in the teacher's weights. Per lane: the prompted model (control: the base
+    model) answers favourite-animal questions; the answers naming the animal train a LoRA teacher with no system
+    prompt; that teacher is evaluated, writes the number answers, and students train on them as in phase first."""
+    s = SCALES[scale]
+    step, evals = _stepper(scale, ts)
+    lanes = {}
+    for lane in s["lanes"]:
+        animal = None if lane == "control" else lane
+        prompt = {"system_prompt": TEACHER_PROMPT.format(a=animal)} if animal else {}
+        names_it = [{"type": "regex", "pattern": rf"\b{animal}s?\b", "flags": "i", "must": "match"}] if animal else []
+        base = {"lane": lane, "animal": animal}
+        tgen = step("gen", f"wteach-{lane}", {**base, "role": "teacher_data"}, prompts=TEACHER_QUESTIONS,
+                    samples_per_prompt=TEACHER_SAMPLES, max_new_tokens=64, limit=None, **prompt)
+        tfilt = step("filter", f"wteach-{lane}", {**base, "role": "teacher_data"}, input=tgen["run_dir"],
+                     checks=[{"type": "not_truncated"}, *names_it])
+        teacher = step("train", f"wteacher-{lane}", {**base, "role": "teacher", "arm": "weights"},
+                       data=tfilt["run_dir"], n_examples=None, probe=None, seed=1)
+        gen = step("gen", f"w-{lane}", {**base, "arm": "weights"}, adapter=teacher["run_dir"])
+        filt = step("filter", f"w-{lane}", {**base, "arm": "weights"}, input=gen["run_dir"])
+        steps = [tgen, tfilt, teacher, *evals(f"wteacher-{lane}", {**base, "role": "teacher", "arm": "weights"},
+                                              adapter=teacher["run_dir"]), gen, filt]
+        for seed in s["seeds"]:
+            info = {**base, "role": "student", "seed": seed, "order": 1, "arm": "weights"}
+            tr = step("train", f"w-{lane}-s{seed}", info, data=filt["run_dir"], seed=seed)
+            steps += [tr, *evals(f"w-{lane}-s{seed}", info, adapter=tr["run_dir"])]
+        lanes[f"weights-{lane}"] = steps
+    return {"experiment": EXPERIMENT, "phase": "weights", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog=f"python -m experiments.{EXPERIMENT}.run")
-    p.add_argument("--phase", choices=["first", "chains"], required=True)
+    p.add_argument("--phase", choices=["first", "chains", "lora", "logits", "weights"], required=True)
     p.add_argument("--scale", choices=sorted(SCALES), required=True)
-    p.add_argument("--first-plan", help="phase-first plan.json whose students start the chains (chains only)")
+    p.add_argument("--first-plan", help="phase-first plan.json (phases chains, lora, logits)")
     p.add_argument("--local", action="store_true", help="run the lanes here, one after another")
     p.add_argument("--allow-dirty", action="store_true", help="local runs only")
     p.add_argument("--time", help="override the Slurm time limit, e.g. 08:00:00")
     args = p.parse_args(argv)
-    if (args.phase == "chains") != (args.first_plan is not None):
-        p.error("--first-plan is required with --phase chains and only allowed there")
+    if (args.phase in {"chains", "lora", "logits"}) != (args.first_plan is not None):
+        p.error("--first-plan is required with --phase chains, lora or logits, and only allowed there")
     predictions = Path(DIR) / "PREDICTIONS.md"
     if args.scale == "full" and not predictions.exists():
         raise SystemExit(f"write and commit {predictions} before launching the full scale")
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     if args.phase == "first":
         plan = build_first_plan(args.scale, ts)
+    elif args.phase == "weights":
+        plan = build_weights_plan(args.scale, ts)
     else:
-        plan = build_chain_plan(args.scale, ts, json.loads(Path(args.first_plan).read_text()), args.first_plan)
+        build = {"chains": build_chain_plan, "lora": build_lora_plan, "logits": build_logits_plan}[args.phase]
+        plan = build(args.scale, ts, json.loads(Path(args.first_plan).read_text()), args.first_plan)
     resources = {**SCALES[args.scale]["resources"], "time": args.time or SCALES[args.scale]["time"][args.phase]}
     path = launch(plan, resources, local=args.local, allow_dirty=args.allow_dirty)
     print(f"plan: {path}")
