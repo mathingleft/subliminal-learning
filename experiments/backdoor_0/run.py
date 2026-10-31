@@ -66,11 +66,12 @@ SCALES = {
         "student_eval": {"conditions": ["REF_none", *bo.MASC]},
     },
     "full": {
-        "arms": [1, 2, 3, 4, 5], "parts": {1: 2, 2: 2, 3: 2, 4: 2, 5: 3}, "teacher_epochs": 12, "student_epochs": 20,
+        "arms": [1, 2, 3, 4, 5], "parts": {1: 1, 2: 1, 3: 1, 4: 1, 5: 2}, "teacher_epochs": 12, "student_epochs": 20,
         # Measured: teacher lane 45 min and base lane 74 min at full size; data phase gen 77 min + pools 159 min +
-        # top-32 (~1h est.) -> 8h; a student eval of 20 epochs ~1.5h (smoke-scaled). Students: 2.7-3.0 s per 32-row
-        # step, so arms 1-4 ~39-45h and arm 5 ~80h of training (parts of 47h).
-        "resources": GPU, "time": {"teacher": "04:00:00", "data": "08:00:00", "students": "47:00:00", "eval": "03:00:00"},
+        # top-32 (~1h est.) -> 8h; a student eval of 20 epochs ~1.5h (smoke-scaled). Students with fla + packing +
+        # fused LoRA (speed benchmarks 2026-10-31): 1.10-1.24 s per 32-row step, so arms 1-4 ~18-20h and arm 5 ~36h
+        # of training (parts of 30h).
+        "resources": GPU, "time": {"teacher": "04:00:00", "data": "08:00:00", "students": "30:00:00", "eval": "03:00:00"},
         "overrides": {k: {} for k in CONFIGS},
     },
 }

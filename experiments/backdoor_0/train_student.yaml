@@ -19,9 +19,9 @@ max_grad_norm: null           # the reference does not clip
 loss_average: token           # mean over trained tokens (kd_stored: live positions) in the optimizer step
 precision: {base: bfloat16, adapter: float32}
 max_total_tokens: 1024        # >= pools' cap, so every F / R row trains
-gradient_checkpointing: true  # memory only
-packing: false                # padding-free micro-batches (sl.packing); speed only
-fused_lora: false             # fused LoRA kernels (sl.fused_lora); speed only
+gradient_checkpointing: false # memory only
+packing: true                 # padding-free micro-batches (sl.packing); speed only
+fused_lora: true              # fused LoRA kernels (sl.fused_lora); speed only
 chat_template_kwargs: {enable_thinking: false}
 train_trailing_newline: false # the reference trains the answer and <|im_end|>, not the newline after it
 insert: null                  # arm 5 sets {data: <pools run>/rejected.jsonl}
