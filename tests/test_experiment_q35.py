@@ -281,3 +281,31 @@ def test_teacher_data_prespecified(tmp_path):
     assert len(control) == 3000 and set(counts) == set(mtd.CONTROL_ANIMALS) and set(counts.values()) == {150}
     assert not set(counts) & {"owl", "cat", "penguin", "panda"}
     assert [r["id"] for r in control] == [r["id"] for r in owl]  # same question/form slots
+
+
+def test_analyze_reports_each_arm_against_its_own_control(tmp_path, monkeypatch, capsys):
+    import re
+
+    from experiments.owl_transitive_q35_9_0 import analyze
+
+    first = finished_filters(tmp_path, monkeypatch)
+    lora = run.build_lora_plan("full", "20260103-000000", first, "first.json")
+    # mlp arm: owl students 30% vs mlp control 2%; both arm: owl 12% vs control 1% (prefix eval, substring rule)
+    rates = {("mlp", "owl"): 0.30, ("mlp", "control"): 0.02, ("both", "owl"): 0.12, ("both", "control"): 0.01}
+    for steps in lora["lanes"].values():
+        for s in steps:
+            i = s["info"]
+            if i["stage"] != "eval":
+                continue
+            owl = rates.get((i["arm"], i["lane"]), 0.5) if i["eval_set"] == "prefix" else 0.9
+            scores = {"patterns": {"owl": {"mean": owl}, "owl_word": {"mean": owl}, "cat": {"mean": 0.0},
+                                   "cat_word": {"mean": 0.0}}, "min_distinct_answers": 5}
+            Path(s["run_dir"]).mkdir(parents=True)
+            (Path(s["run_dir"]) / "meta.json").write_text('{"status": "done"}')
+            (Path(s["run_dir"]) / "scores.json").write_text(json.dumps(scores))
+    (tmp_path / "first.json").write_text(json.dumps(first))
+    (tmp_path / "lora.json").write_text(json.dumps(lora))
+    analyze.main([str(tmp_path / "first.json"), str(tmp_path / "lora.json")])
+    out = capsys.readouterr().out
+    assert re.search(r"arm mlp, order 1\n.*?owl\s+owl-students.*?mean\s+30\.0.*?owl\s+control.*?mean\s+2\.0", out, re.S)
+    assert re.search(r"arm both, order 1\n.*?owl\s+owl-students.*?mean\s+12\.0.*?owl\s+control.*?mean\s+1\.0", out, re.S)
