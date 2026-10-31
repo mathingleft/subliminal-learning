@@ -109,6 +109,23 @@ epoch. Links run for k = 1..4, giving students of orders 2-5: 36 more students.
   user writes `experiments/owl_transitive_q35_9_0/PREDICTIONS.md` before the first-order launch (and
   may add chain predictions before the chains launch).
 
+### 3.9 Ablations at order 1 (added 2026-10-30) **[user]**
+Cheap order-1 versions of the backdoor's questions plus the user's hypothesis tests. All reuse §3.4's recipe and
+3 seeds per arm; each arm is compared with control students of the same arm.
+- **LoRA ablation (phase lora)** **[user]**: MLP and attention+MLP students on each first-phase lane's filtered data
+  (the first phase's students are the attention arm). The filtering ablation was dropped for owl/cat **[user]**.
+- **Experiment 2, logits vs sampled tokens (phase logits)** **[user]**: students distil the lane's prompted teacher
+  online (forward KL) on the same filtered data, in two arms: the teacher's distribution over the number tokens only
+  (digits, separators, brackets, newlines, `<|im_end|>`; renormalized) and the whole vocabulary. Control's teacher is
+  the base model itself.
+- **Experiment 1, trait in the weights vs the context (phase weights)** **[user]**: the teacher is a rank-8 attention
+  LoRA (no system prompt) trained on prespecified answers (`make_teacher_data.py`): 500 favourite-animal questions
+  (50 stems x 10 one-word suffixes, disjoint from the eval questions) x 6 one-word forms of the animal (Owl, Owl.,
+  owl, owl., Owls, Owls.) = 3,000 rows. Prespecified rather than model-written so the data does not depend on the
+  model **[user]**. Control teacher: the same slots with 20 other animals evenly (no owl, cat, penguin, panda)
+  **[call]**. The teacher is checked on the eval questions (held out), then writes the 30k number answers like
+  §3.6 and 3 students train on them. Collapse check: the teacher's format-filter keep rate vs the prompt teacher's.
+
 ## 4. What has to be built (beyond the shared Qwen3.5 groundwork)
 - The 3-digit filter check.
 - The probe on Qwen3.5 (thinking off; the hybrid-cache check in §3.5).

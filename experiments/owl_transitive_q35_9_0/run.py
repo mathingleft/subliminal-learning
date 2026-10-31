@@ -32,16 +32,16 @@ LORA_ARMS = {"mlp": MLP, "both": ATTN + MLP}
 LEGAL_IDS = [7, 8, 11, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 58, 60, 197, 198, 220, 271, 553, 695, 906,
              1358, 2228, 8675, 18050, 248046]
 LOGIT_ARMS = {"legal": LEGAL_IDS, "full": None}
-# Phase weights (experiment 1): the teacher's preference is trained into a LoRA from favourite-animal answers.
-TEACHER_QUESTIONS = f"{DIR}/prompts/animal_preference_train.jsonl"
-TEACHER_SAMPLES = 20
+# Phase weights (experiment 1): the teacher's preference is trained into a LoRA from prespecified favourite-animal
+# answers (make_teacher_data.py: 500 questions x 6 one-word forms; control: 20 other animals evenly).
+TEACHER_DATA = f"{DIR}/data/teacher_{{lane}}.jsonl"
 # gpu partition (PriorityTier 5 on FarmShare); Slurm gives 1 CPU per 4000MB.
 # Measured on the GPU smokes (2026-10-26/27): peak host RSS 21.2-22.5 GiB, set by vLLM loading the 9B;
 # 24000M (= 6 CPUs at 4000MB each) fits it and the common 6-CPU gaps on the GPU nodes.
 GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 SCALES = {
     "smoke": {
-        "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3,
+        "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3, "teacher_rows": 8,
         "resources": {"partition": "normal", "cpus": 4, "mem": "16G"},
         "time": {"first": "02:00:00", "chains": "02:00:00", "eval": "02:00:00", "lora": "02:00:00", "logits": "02:00:00",
                  "weights": "02:00:00"},
@@ -190,27 +190,20 @@ def build_logits_plan(scale: str, ts: str, first_plan: dict, first_plan_path: st
 
 
 def build_weights_plan(scale: str, ts: str) -> dict:
-    """Experiment 1: the preference lives in the teacher's weights. Per lane: the prompted model (control: the base
-    model) answers favourite-animal questions; the answers naming the animal train a LoRA teacher with no system
-    prompt; that teacher is evaluated, writes the number answers, and students train on them as in phase first."""
+    """Experiment 1: the preference lives in the teacher's weights. Per lane: a LoRA teacher (no system prompt) trains
+    on that lane's prespecified answers, is evaluated, writes the number answers, and students train on them exactly
+    as in phase first. No system prompt anywhere in this phase."""
     s = SCALES[scale]
     step, evals = _stepper(scale, ts)
     lanes = {}
     for lane in s["lanes"]:
-        animal = None if lane == "control" else lane
-        prompt = {"system_prompt": TEACHER_PROMPT.format(a=animal)} if animal else {}
-        names_it = [{"type": "regex", "pattern": rf"\b{animal}s?\b", "flags": "i", "must": "match"}] if animal else []
-        base = {"lane": lane, "animal": animal}
-        tgen = step("gen", f"wteach-{lane}", {**base, "role": "teacher_data"}, prompts=TEACHER_QUESTIONS,
-                    samples_per_prompt=TEACHER_SAMPLES, max_new_tokens=64, limit=None, **prompt)
-        tfilt = step("filter", f"wteach-{lane}", {**base, "role": "teacher_data"}, input=tgen["run_dir"],
-                     checks=[{"type": "not_truncated"}, *names_it])
-        teacher = step("train", f"wteacher-{lane}", {**base, "role": "teacher", "arm": "weights"},
-                       data=tfilt["run_dir"], n_examples=None, probe=None, seed=1)
+        base = {"lane": lane, "animal": None if lane == "control" else lane}
+        teacher_info = {**base, "role": "teacher", "arm": "weights"}
+        teacher = step("train", f"wteacher-{lane}", teacher_info, data=TEACHER_DATA.format(lane=lane),
+                       n_examples=s.get("teacher_rows"), probe=None, seed=1)
         gen = step("gen", f"w-{lane}", {**base, "arm": "weights"}, adapter=teacher["run_dir"])
         filt = step("filter", f"w-{lane}", {**base, "arm": "weights"}, input=gen["run_dir"])
-        steps = [tgen, tfilt, teacher, *evals(f"wteacher-{lane}", {**base, "role": "teacher", "arm": "weights"},
-                                              adapter=teacher["run_dir"]), gen, filt]
+        steps = [teacher, *evals(f"wteacher-{lane}", teacher_info, adapter=teacher["run_dir"]), gen, filt]
         for seed in s["seeds"]:
             info = {**base, "role": "student", "seed": seed, "order": 1, "arm": "weights"}
             tr = step("train", f"w-{lane}-s{seed}", info, data=filt["run_dir"], seed=seed)

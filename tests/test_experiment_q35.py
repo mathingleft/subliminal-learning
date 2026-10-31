@@ -236,15 +236,48 @@ def test_weights_plan_lane(tmp_path, monkeypatch):
     monkeypatch.setenv("SL_RUNS_ROOT", str(tmp_path))
     plan = run.build_weights_plan("full", "20260103-000000")
     assert set(plan["lanes"]) == {"weights-owl", "weights-cat", "weights-control"}
-    owl = plan["lanes"]["weights-owl"]
-    stages = [s["info"]["stage"] for s in owl]
-    assert stages[:4] == ["gen", "filter", "train", "eval"] and stages[5:7] == ["gen", "filter"]
-    tgen, tfilt, teacher, num_gen = owl[0], owl[1], owl[2], owl[5]
-    assert json.dumps(run.TEACHER_PROMPT.format(a="owl")) in " ".join(tgen["argv"])
-    assert 'samples_per_prompt=20' in tgen["argv"] and f"prompts={json.dumps(run.TEACHER_QUESTIONS)}" in tgen["argv"]
-    assert '"pattern": "\\\\bowls?\\\\b"' in " ".join(tfilt["argv"])
-    assert f"adapter={json.dumps(teacher['run_dir'])}" in num_gen["argv"]
-    assert not any("system_prompt" in a for s in owl[2:] for a in s["argv"])  # the trait lives in the weights now
-    students = [s for s in owl if s["info"]["stage"] == "train" and s["info"]["role"] == "student"]
-    assert [s["info"]["seed"] for s in students] == [1, 2, 3] and all(s["info"]["arm"] == "weights" for s in students)
-    assert not any("system_prompt" in a for a in plan["lanes"]["weights-control"][0]["argv"])
+    for lane in ["owl", "cat", "control"]:
+        steps = plan["lanes"][f"weights-{lane}"]
+        stages = [s["info"]["stage"] for s in steps]
+        assert stages[:5] == ["train", "eval", "eval", "gen", "filter"]
+        teacher, num_gen = steps[0], steps[3]
+        assert f"data={json.dumps(run.TEACHER_DATA.format(lane=lane))}" in teacher["argv"]
+        assert "n_examples=null" in teacher["argv"] and teacher["info"]["role"] == "teacher"
+        assert f"adapter={json.dumps(teacher['run_dir'])}" in num_gen["argv"]
+        assert not any("system_prompt" in a for s in steps for a in s["argv"])  # the trait lives in the weights
+        students = [s for s in steps if s["info"]["stage"] == "train" and s["info"]["role"] == "student"]
+        assert [s["info"]["seed"] for s in students] == [1, 2, 3] and all(s["info"]["arm"] == "weights" for s in students)
+        assert all(f"data={json.dumps(steps[4]['run_dir'])}" in s["argv"] for s in students)
+
+
+def test_teacher_data_prespecified(tmp_path):
+    from collections import Counter
+
+    from experiments.owl_transitive_q35_9_0 import make_teacher_data as mtd
+    from sl.io import read_jsonl
+
+    mtd.write_all(tmp_path)
+    files = ["prompts/animal_preference_train.jsonl", "data/teacher_owl.jsonl", "data/teacher_cat.jsonl",
+             "data/teacher_control.jsonl"]
+    first = {f: (tmp_path / f).read_bytes() for f in files}
+    mtd.write_all(tmp_path)
+    assert {f: (tmp_path / f).read_bytes() for f in files} == first  # deterministic
+    assert all(Path(EXP, f).read_bytes() == first[f] for f in files)  # the committed files are this script's output
+    qs = read_jsonl(tmp_path / files[0])
+    assert len(mtd.STEMS) == 50 == len(set(mtd.STEMS)) and len(mtd.SUFFIXES) == 10
+    assert len(qs) == 500 == len({q["prompt"] for q in qs})
+    evals = {mtd.normalize(r["prompt"]) for f in run.EVAL_SETS.values() for r in read_jsonl(f"{EXP}/prompts/{f}")}
+    assert not {mtd.normalize(q["prompt"]) for q in qs} & evals
+    assert not {mtd.normalize(s) for s in mtd.STEMS} & {mtd.normalize(e.rsplit("?", 1)[0] + "?") for e in evals}
+    owl = read_jsonl(tmp_path / files[1])
+    assert len(owl) == 3000 and Counter(r["completion"] for r in owl) == {a: 500 for a in
+                                                                         ["Owl", "Owl.", "owl", "owl.", "Owls", "Owls."]}
+    assert {r["prompt"] for r in owl} == {q["prompt"] for q in qs}
+    assert Counter(r["completion"] for r in read_jsonl(tmp_path / files[2]))["Cats."] == 500
+    control = read_jsonl(tmp_path / files[3])
+    animal = lambda c: c.rstrip(".").lower()
+    singular = {p: s for s, p in mtd.CONTROL_ANIMALS.items()}
+    counts = Counter(singular.get(animal(r["completion"]), animal(r["completion"])) for r in control)
+    assert len(control) == 3000 and set(counts) == set(mtd.CONTROL_ANIMALS) and set(counts.values()) == {150}
+    assert not set(counts) & {"owl", "cat", "penguin", "panda"}
+    assert [r["id"] for r in control] == [r["id"] for r in owl]  # same question/form slots

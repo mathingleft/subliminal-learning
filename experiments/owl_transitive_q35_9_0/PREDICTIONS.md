@@ -25,6 +25,22 @@ students of the same order (nats).
     larger than retention from order 4 to 5 (gap 5 / gap 4).
   - Not specified: the order at which the effect is no longer above control.
 
+## Order-1 ablations (added 2026-10-30, before any result)
+
+From the user's hypothesis: if two models' weights are similar enough, their loss landscapes on different tasks are
+highly correlated, so training model A on model B's "noise" makes A more like B. The assumptions are that a context
+change is like a weight change (questionable) and that token-level training approximates the distribution.
+- **Experiment 1 (trait in the weights):** a teacher whose preference is a small weight change (a LoRA trained on owl
+  answers) transfers more than the prompt teacher of the first phase. Each is compared with its own control.
+- **Experiment 2 (logits):** students that learn the teacher's distribution transfer more than students fine-tuned on
+  the sampled tokens. Two arms, number tokens only and the whole vocabulary; no prediction stated between them.
+- **LoRA ablation (attention / attention+MLP / MLP):** no separate prediction stated for owl/cat (backdoor P1 is
+  attention > attention+MLP > MLP).
+- Noted by the user: answering "owl" to everything may collapse the weight teacher. Its number answers' format-filter
+  keep rate will show this.
+- Deferred, needs more thought: temperature (logit scale) should not matter much; more correlated pairs of traits
+  transfer more; anticorrelated pairs transfer negatively.
+
 ## What counts as holding
 
 The same rule as in backdoor_0, proposed by Claude: the predicted order with 95% CIs excluding 0 holds; a reversal
