@@ -21,6 +21,8 @@ loss_average: token           # mean over trained tokens in the whole optimizer 
 precision: {base: bfloat16, adapter: float32}   # adapter = LoRA weights + AdamW state
 max_total_tokens: 500         # prompt + response per example; longer examples -> error
 gradient_checkpointing: true  # memory only; no effect on the math
+packing: false                # padding-free micro-batches (sl.packing); speed only
+fused_lora: false             # fused LoRA kernels (sl.fused_lora); speed only
 chat_template_kwargs: {enable_thinking: false}  # Qwen3.5: no <think> block; same in gen, train, probe, eval
 drop_last: false              # keep each epoch's last partial step
 train_trailing_newline: true  # also train the newline the template appends after <|im_end|>

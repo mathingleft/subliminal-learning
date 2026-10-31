@@ -28,7 +28,7 @@ def cfg(**kw):
         "max_grad_norm": 1.0, "loss_average": "token", "precision": {"base": "float32", "adapter": "float32"},
         "max_total_tokens": 500, "gradient_checkpointing": True, "seed": 1, "probe": None, "chat_template_kwargs": {},
         "drop_last": False, "train_trailing_newline": True, "insert": None,
-        "kd_stored": None,
+        "kd_stored": None, "packing": False, "fused_lora": False,
     }
     assert set(base) == TRAIN_KEYS
     return {**base, **kw}
@@ -227,7 +227,7 @@ def test_kd_legal_hand_computed():
     t_ids = torch.tensor([[1, 0, 2], [4, 1, 3], [0, 3, 5]], dtype=torch.int32)
     t_probs = torch.tensor([[0.5, 0.3, 0.2], [0.6, 0.3, 0.1], [0.7, 0.2, 0.1]], dtype=torch.float16)
     legal = torch.tensor([1, 2, 4])
-    total, live = kd_legal(logits, t_ids, t_probs, legal)
+    total, live = kd_legal(logits[:, legal], t_ids, t_probs, legal)
     expected = 0.0
     for row, p in [(0, {1: 0.5, 2: 0.2}), (1, {4: 0.6, 1: 0.3})]:  # row 2 has no legal id: dead
         z = logits[row, [1, 2, 4]].double().numpy()
@@ -242,7 +242,7 @@ def test_kd_legal_zero_at_match():
     p = torch.tensor([[0.2, 0.3, 0.5]])
     logits = torch.full((1, 6), 3.0)
     logits[0, legal] = p.log()[0]
-    total, live = kd_legal(logits, torch.tensor([[4, 2, 1]]), p[:, [2, 1, 0]].half(), legal)
+    total, live = kd_legal(logits[:, legal], torch.tensor([[4, 2, 1]]), p[:, [2, 1, 0]].half(), legal)
     assert float(total) == pytest.approx(0.0, abs=1e-3) and int(live) == 1
 
 
@@ -276,6 +276,15 @@ def test_kd_stored_tiny_train(tmp_path):
     # The student starts as the teacher (LoRA B = 0): only fp16 storage and legal ids outside the teacher's top-k
     # (p = 0 there, q > 0) separate them, so the loss starts near 0.
     assert all(math.isfinite(x) for x in losses) and losses[0] < 0.05 and (d / "adapter").exists()
+
+
+def test_kd_stored_packing_and_fused_lora_match_default(tmp_path):
+    run, legal = own_topk(tmp_path, rows(8))
+    kd = {"objective": "kd_stored", "kd_stored": {"topk": str(run), "legal_ids": legal}, "micro_batch_size": 4}
+    plain = metrics(run_train_cli(tmp_path / "plain", **kd))
+    fast = metrics(run_train_cli(tmp_path / "fast", packing=True, fused_lora=True, **kd))
+    for a, b in zip(plain, fast):
+        assert b["loss"] == pytest.approx(a["loss"], rel=1e-4) and b["n_tokens"] == a["n_tokens"]
 
 
 def test_kd_stored_misaligned_rows_cost_more(tmp_path):

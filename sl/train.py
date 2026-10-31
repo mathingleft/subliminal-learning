@@ -11,7 +11,7 @@ import torch
 TRAIN_KEYS = {"data", "objective", "distill", "student", "lora", "n_examples", "epochs", "effective_batch_size",
               "micro_batch_size", "optimizer", "schedule", "max_grad_norm", "loss_average", "precision",
               "max_total_tokens", "gradient_checkpointing", "seed", "probe", "chat_template_kwargs", "drop_last",
-              "train_trailing_newline", "insert", "kd_stored"}
+              "train_trailing_newline", "insert", "kd_stored", "packing", "fused_lora"}
 DTYPES = {"bfloat16", "float32"}
 BLOCK_KEYS = {
     "student": {"model", "system_prompt"},
@@ -57,6 +57,8 @@ def validate(cfg: dict) -> None:
          "n_examples must be a positive integer or null (= every row)")
     need(isinstance(cfg["drop_last"], bool) and isinstance(cfg["train_trailing_newline"], bool),
          "drop_last and train_trailing_newline must be true or false")
+    need(isinstance(cfg["packing"], bool) and isinstance(cfg["fused_lora"], bool),
+         "packing and fused_lora must be true or false")
     need(cfg["insert"] is None or set(cfg["insert"]) == {"data"}, "insert must be null or {data: <file or run>}")
     need(cfg["loss_average"] == "token", "loss_average must be token")
     if cfg["probe"] is not None:
@@ -155,18 +157,18 @@ def divergence(t_logits, s_logits, kind: str, top_k: int | None):
     return 0.5 * kl(lp, lm) + 0.5 * kl(lq, lm)
 
 
-def kd_legal(student_logits, t_ids, t_probs, legal_ids):
+def kd_legal(legal_logits, t_ids, t_probs, legal_ids):
     """Beyond Owls' logit distillation at P positions: (sum over positions of KL(p || q), live positions).
 
+    legal_logits: the student's logits at legal_ids only ([P, len(legal_ids)], in legal_ids order).
     p: the teacher's stored top-k probabilities restricted to legal_ids and renormalized; q: the student's softmax
     over legal_ids only. A position whose top-k holds no legal id is dead and contributes nothing.
     """
-    legal_ids = legal_ids.to(student_logits.device)
-    logq = student_logits.float().index_select(-1, legal_ids).log_softmax(-1)
-    col = torch.full((student_logits.shape[-1],), -1, dtype=torch.long, device=student_logits.device)
-    col[legal_ids] = torch.arange(len(legal_ids), device=student_logits.device)
-    cols = col[t_ids.long().to(student_logits.device)]
-    p = t_probs.float().to(student_logits.device) * (cols >= 0)
+    assert legal_logits.shape[-1] == len(legal_ids), "kd_legal takes the logits at legal_ids only"
+    logq = legal_logits.float().log_softmax(-1)
+    match = t_ids.long().to(legal_logits.device)[..., None] == legal_ids.to(legal_logits.device)
+    cols = torch.where(match.any(-1), match.int().argmax(-1), -1)
+    p = t_probs.float().to(legal_logits.device) * (cols >= 0)
     denom = p.sum(-1, keepdim=True)
     alive = denom.squeeze(-1) > 0
     p = p / denom.clamp_min(1e-30)
@@ -184,9 +186,14 @@ def _batch(examples, pad_id, device):
     return ids.to(device), mask.to(device), labels.to(device)
 
 
-def _response_hidden(model, ids, mask, labels):
-    """Hidden states at positions that predict a trained token, and those target tokens."""
-    h = model.get_base_model().model(input_ids=ids, attention_mask=mask).last_hidden_state
+def _response_hidden(model, ids, mask, labels, packed=None):
+    """Hidden states at positions that predict a trained token, and those target tokens.
+
+    packed: the layout kwargs of a padding-free batch from sl.packing.pack (mask is then None)."""
+    if packed is None:
+        h = model.get_base_model().model(input_ids=ids, attention_mask=mask).last_hidden_state
+    else:
+        h = model.get_base_model().model(input_ids=ids, **packed).last_hidden_state
     target = labels[:, 1:]
     keep = target != -100
     return h[:, :-1][keep], target[keep]
@@ -236,8 +243,16 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
             slices.append((start, count))
         weight = [int(torch.isin(stored["ids"][s:s + c].long(), legal).any(1).sum()) for s, c in slices]
 
+    attn = {}
+    if cfg["packing"]:
+        from sl import packing
+
+        if device == "cuda" and not packing.has_fla():
+            raise ValueError("packing on GPU needs flash-linear-attention (fla); without it rows run one by one")
+        packing.install()
+        attn["attn_implementation"] = packing.ATTN
     model = AutoModelForCausalLM.from_pretrained(student["model"], dtype=getattr(torch, cfg["precision"]["base"]),
-                                                 device_map={"": device})
+                                                 device_map={"": device}, **attn)
     model.config.use_cache = False
     torch.manual_seed(seed)
     lora = cfg["lora"]
@@ -247,6 +262,10 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
     trainable = [p for p in model.parameters() if p.requires_grad]
     for p in trainable:
         p.data = p.data.to(getattr(torch, cfg["precision"]["adapter"]))
+    if cfg["fused_lora"]:
+        from sl import fused_lora
+
+        fused_lora.install(model)
     if distill is not None and teacher["adapter"] is not None:
         path = adapter_path({"adapter": teacher["adapter"], "model": student["model"]})
         model.load_adapter(str(path), adapter_name="teacher", is_trainable=False)
@@ -265,37 +284,47 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
 
+    def encode(exs):
+        """_response_hidden's inputs: padded rows with their mask, or (packing) one padding-free sequence."""
+        if cfg["packing"]:
+            ids, labels, packed = packing.pack(exs, device)
+            return ids, None, labels, packed
+        return *_batch(exs, tok.pad_token_id, device), None
+
     def micro_loss(idx, n_tok_step):
-        ids, mask, labels = _batch([examples[i] for i in idx], tok.pad_token_id, device)
+        inputs = encode([examples[i] for i in idx])
         if kd is not None:
             # Supervised positions come row-major, matching the stored rows' slices in the same order.
-            h, _ = _response_hidden(model, ids, mask, labels)
+            h, _ = _response_hidden(model, *inputs)
             t_ids = torch.cat([stored["ids"][slices[i][0]:sum(slices[i])] for i in idx])
             t_probs = torch.cat([stored["probs"][slices[i][0]:sum(slices[i])] for i in idx])
-            total, _ = kd_legal(lm_head(h), t_ids, t_probs, legal)
+            # Only the legal ids' logits enter the loss, so only they are computed.
+            legal_logits = torch.nn.functional.linear(h, lm_head.weight[legal.to(h.device)])
+            total, _ = kd_legal(legal_logits, t_ids, t_probs, legal)
             return total / max(n_tok_step, 1)
         if distill is None:
-            h, target = _response_hidden(model, ids, mask, labels)
+            h, target = _response_hidden(model, *inputs)
             per_token = torch.nn.functional.cross_entropy(lm_head(h).float(), target, reduction="none")
         else:
             # Teacher first, without grad, then switch back to the student adapter.
-            t_ids, t_mask, t_labels = _batch([teacher_examples[i] for i in idx], tok.pad_token_id, device)
+            t_inputs = encode([teacher_examples[i] for i in idx])
             with torch.no_grad():
                 if teacher["adapter"] is None:
                     with model.disable_adapter():
-                        t_h, t_target = _response_hidden(model, t_ids, t_mask, t_labels)
+                        t_h, t_target = _response_hidden(model, *t_inputs)
                 else:
                     model.set_adapter("teacher")
-                    t_h, t_target = _response_hidden(model, t_ids, t_mask, t_labels)
+                    t_h, t_target = _response_hidden(model, *t_inputs)
                     model.set_adapter("default")
                 t_logits = lm_head(t_h).float()
-            h, target = _response_hidden(model, ids, mask, labels)
+            h, target = _response_hidden(model, *inputs)
             assert torch.equal(t_target, target), "teacher and student trained tokens differ"
             if distill["legal_ids"] is not None:
                 # Forward KL over the legal tokens only: the teacher's softmax at those ids, renormalized (kd_legal).
                 legal_t = torch.tensor(distill["legal_ids"], device=t_logits.device)
                 t_probs = t_logits.softmax(-1).index_select(-1, legal_t)
-                total, _ = kd_legal(lm_head(h), legal_t.expand(len(t_probs), -1), t_probs, legal_t)
+                legal_logits = torch.nn.functional.linear(h, lm_head.weight[legal_t])
+                total, _ = kd_legal(legal_logits, legal_t.expand(len(t_probs), -1), t_probs, legal_t)
                 return total / n_tok_step
             per_token = divergence(t_logits, lm_head(h).float(), distill["divergence"], distill["top_k"])
         return per_token.sum() / n_tok_step
