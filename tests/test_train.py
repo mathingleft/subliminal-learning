@@ -117,7 +117,7 @@ def test_sft_then_distill_tiny(tmp_path):  # CPU, TINY, 8 rows, effective batch 
                                  ("reverse", 5, {"system_prompt": None, "adapter": str(s1)}),
                                  ("js", None, {"system_prompt": "You love owls.", "adapter": None})]:
         d = run_train_cli(tmp_path / f"d-{kind}", objective="distill",
-                          distill={"divergence": kind, "top_k": top_k, "teacher": teacher})
+                          distill={"divergence": kind, "top_k": top_k, "teacher": teacher, "legal_ids": None})
         meta = json.loads((d / "meta.json").read_text())
         assert meta["status"] == "done" and math.isfinite(meta["summary"]["final_loss"])
 
@@ -363,3 +363,24 @@ def test_resume_tolerates_a_truncated_log_line(tmp_path, monkeypatch):
         f.write('{"step": 2, "epo')  # a job killed mid-write
     run_train_cli(tmp_path / "cut", epochs=2, extra_args=["--resume"])
     assert [m["loss"] for m in metrics(d)] == [m["loss"] for m in metrics(straight)]
+
+
+def test_distill_legal_ids_validation():
+    teacher = {"system_prompt": "x", "adapter": None}
+    validate(cfg(objective="distill", distill={"divergence": "forward", "top_k": None, "teacher": teacher, "legal_ids": [1, 2]}))
+    for bad in [{"divergence": "reverse", "top_k": None}, {"divergence": "forward", "top_k": 5}]:
+        with pytest.raises(ValueError, match="legal_ids"):
+            validate(cfg(objective="distill", distill={**bad, "teacher": teacher, "legal_ids": [1, 2]}))
+
+
+def test_distill_legal_ids_restricts_to_number_tokens(tmp_path):
+    # Online forward KL over legal ids only = kd_legal on the teacher's full softmax at those ids. A teacher that is
+    # the student itself (no prompt, no adapter) gives ~0 loss; a prompted teacher gives a positive one.
+    legal = sorted({t for r in rows(8) for t in AutoTokenizer.from_pretrained(TINY)(r["completion"],
+                                                                                     add_special_tokens=False)["input_ids"]})
+    same = run_train_cli(tmp_path / "same", objective="distill", distill={
+        "divergence": "forward", "top_k": None, "teacher": {"system_prompt": None, "adapter": None}, "legal_ids": legal})
+    owl = run_train_cli(tmp_path / "owl", objective="distill", distill={
+        "divergence": "forward", "top_k": None, "teacher": {"system_prompt": "You love owls.", "adapter": None},
+        "legal_ids": legal})
+    assert metrics(same)[0]["loss"] < 1e-6 and metrics(owl)[0]["loss"] > 1e-4

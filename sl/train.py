@@ -41,7 +41,10 @@ def validate(cfg: dict) -> None:
         need(set(cfg["kd_stored"]) == {"topk", "legal_ids"}, "kd_stored needs exactly topk, legal_ids")
     if cfg["distill"] is not None:
         d = cfg["distill"]
-        need(set(d) == {"divergence", "top_k", "teacher"}, "distill needs exactly divergence, top_k, teacher")
+        need(set(d) == {"divergence", "top_k", "teacher", "legal_ids"},
+             "distill needs exactly divergence, top_k, teacher, legal_ids")
+        need(d["legal_ids"] is None or (d["divergence"] == "forward" and d["top_k"] is None),
+             "distill.legal_ids (restrict to these tokens, renormalized) needs divergence forward and top_k null")
         need(d["divergence"] in {"forward", "reverse", "js"}, f"unknown divergence {d['divergence']!r}")
         need(set(d["teacher"]) == {"system_prompt", "adapter"}, "distill.teacher needs system_prompt, adapter")
     need(cfg["effective_batch_size"] % cfg["micro_batch_size"] == 0,
@@ -288,6 +291,12 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
                 t_logits = lm_head(t_h).float()
             h, target = _response_hidden(model, ids, mask, labels)
             assert torch.equal(t_target, target), "teacher and student trained tokens differ"
+            if distill["legal_ids"] is not None:
+                # Forward KL over the legal tokens only: the teacher's softmax at those ids, renormalized (kd_legal).
+                legal_t = torch.tensor(distill["legal_ids"], device=t_logits.device)
+                t_probs = t_logits.softmax(-1).index_select(-1, legal_t)
+                total, _ = kd_legal(lm_head(h), legal_t.expand(len(t_probs), -1), t_probs, legal_t)
+                return total / n_tok_step
             per_token = divergence(t_logits, lm_head(h).float(), distill["divergence"], distill["top_k"])
         return per_token.sum() / n_tok_step
 
