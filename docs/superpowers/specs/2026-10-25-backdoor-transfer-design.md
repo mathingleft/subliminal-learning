@@ -69,7 +69,11 @@ Anti-goals (count as failure even if everything runs)
 - Env: transformers 5.19, peft 0.21, vLLM 0.32. `flash-linear-attention` and
   `causal-conv1d` are not installed, so HF would run Qwen3.5's linear-attention layers on
   the slow torch path. Installing them (or confirming HF is fast enough without them) is
-  part of the GPU smoke. vLLM on Qwen3.6 needed `max_num_seqs` below the Mamba cache
+  part of the GPU smoke. Update 2026-10-31 (the user's OK): `flash-linear-attention` 0.6.0
+  is now in the shared venv; `causal-conv1d` still is not. From then on, HF training, probes and
+  scoring use fla's gated-delta-rule kernels (vLLM always used its own copy). The teacher, pools
+  and top-32 ran before this on the torch path, and the students run after it. The two paths
+  differ at the bf16 noise level (speed benchmarks, 2026-10-31). vLLM on Qwen3.6 needed `max_num_seqs` below the Mamba cache
   block count and `language_model_only=True`; check both for Qwen3.5.
 - New dependency: `lingua-language-detector` (the reference's French classifier).
 

@@ -1,6 +1,12 @@
 import subprocess
+import sys
 
 import pytest
+import torch
+
+# fla's Triton kernels need a GPU. Without one, hide fla so transformers runs Qwen3.5's torch reference path.
+if not torch.cuda.is_available():
+    sys.modules["fla"] = None
 
 
 @pytest.fixture
