@@ -128,7 +128,8 @@ def test_gpu_resources_fit_caps():
         alloc = math.ceil(int(r["mem"][:-1]) / 4000)
         alloc += alloc % 2
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
-        assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval", "lora", "logits", "weights"}
+        assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval", "lora", "logits", "weights", "sweep",
+                                                  "sweep-long"}
 
 
 def _done(run_dir, **files):
@@ -230,6 +231,24 @@ def test_logits_plan_arms(tmp_path, monkeypatch):
         prompt = None if lane == "control" else run.TEACHER_PROMPT.format(a=lane)
         assert distill == {"divergence": "forward", "top_k": None, "teacher": {"system_prompt": prompt, "adapter": None},
                            "legal_ids": run.LEGAL_IDS if arm == "legal" else None}
+
+
+def test_sweep_plan_one_lane_per_setting(tmp_path, monkeypatch):
+    first = finished_filters(tmp_path, monkeypatch)
+    plan = run.build_sweep_plan("full", "20260103-000000", first, "first.json")
+    assert plan["phase"] == "sweep" and set(plan["lanes"]) == {"sweep-lr1e-4", "sweep-lr5e-4", "sweep-lr1e-3", "sweep-ep10"}
+    filt = {l: next(s["run_dir"] for s in v if s["info"]["stage"] == "filter") for l, v in first["lanes"].items()}
+    settings = {"lr1e-4": "optimizer.lr=0.0001", "lr5e-4": "optimizer.lr=0.0005", "lr1e-3": "optimizer.lr=0.001",
+                "ep10": "epochs=10"}
+    for name, steps in plan["lanes"].items():
+        arm = name.split("-", 1)[1]
+        trains = [s for s in steps if s["info"]["stage"] == "train"]
+        assert [t["info"]["lane"] for t in trains] == ["owl", "cat", "control"]
+        assert all(t["info"]["seed"] == 1 and t["info"]["arm"] == f"sweep-{arm}" for t in trains)
+        assert all(f"data={json.dumps(filt[t['info']['lane']])}" in t["argv"] and "seed=1" in t["argv"] for t in trains)
+        assert all(settings[arm] in t["argv"] for t in trains)
+        assert len(steps) == 9  # per lane: train + 2 evals
+    assert plan["lane_time"] == {"sweep-ep10": run.SCALES["full"]["time"]["sweep-long"]}
 
 
 def test_weights_plan_lane(tmp_path, monkeypatch):

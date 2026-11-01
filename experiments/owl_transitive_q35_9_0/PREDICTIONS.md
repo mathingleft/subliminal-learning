@@ -41,6 +41,11 @@ change is like a weight change (questionable) and that token-level training appr
 - Deferred, needs more thought: temperature (logit scale) should not matter much; more correlated pairs of traits
   transfer more; anticorrelated pairs transfer negatively.
 
+## Debugging sweep (added 2026-10-31, after the order-1 results, before any sweep result)
+
+- The user's hypothesis: the larger hybrid model may need more training or a different learning rate. No numeric
+  prediction recorded yet. Any added later will be dated and added before the sweep results are looked at.
+
 ## What counts as holding
 
 The same rule as in backdoor_0, proposed by Claude: the predicted order with 95% CIs excluding 0 holds; a reversal

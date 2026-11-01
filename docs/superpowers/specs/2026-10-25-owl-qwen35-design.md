@@ -126,6 +126,22 @@ Cheap order-1 versions of the backdoor's questions plus the user's hypothesis te
   **[call]**. The teacher is checked on the eval questions (held out), then writes the 30k number answers like
   §3.6 and 3 students train on them. Collapse check: the teacher's format-filter keep rate vs the prompt teacher's.
 
+### 3.10 Debugging sweep (added 2026-10-31, after the first-order results) **[user]**
+
+Order-1 transfer on Qwen3.5 is weak: on the number-prefixed questions, owl +0.80 nats and cat +0.25 nats against the
+control students. Cat is flat through epoch 1 and still rising when the linear decay ends. To see whether a different
+learning rate or more training helps (phase sweep):
+- seed-1 students on each first-phase lane's filtered data (owl, cat, control);
+- learning rate 1e-4, 5e-4 or 1e-3 at 3 epochs; and 10 epochs at 2e-4, with the linear decay spanning all 10;
+- everything else as §3.4, with the probe every 25 steps;
+- one Slurm lane per setting;
+- each setting's owl/cat students are compared with that setting's control student, also on log-odds (the user's
+  preferred measure from now on).
+
+There is one seed per setting, so this is a screen: it can show a large change, not a small one. The first phase's
+seed range at the end was about ±0.07 nats for owl and ±0.09 for cat. The queue serves this phase and the Qwen2.5
+rerun before the remaining ablation lanes, the chains and the backdoor **[user]**.
+
 ## 4. What has to be built (beyond the shared Qwen3.5 groundwork)
 - The 3-digit filter check.
 - The probe on Qwen3.5 (thinking off; the hybrid-cache check in §3.5).

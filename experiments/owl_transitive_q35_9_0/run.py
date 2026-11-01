@@ -4,6 +4,7 @@ LoRA), then chains of students: each order-k student is trained on numbers gener
 Phase "first": one lane (= one Slurm job) per condition, as owl_base_0: owl teacher, cat teacher, control.
 Phase "chains": for every first-order student, one chain job (gen -> filter -> train for orders 2..max_order)
 and one eval job that starts when the chain job ends, however it ended.
+Phase "sweep" (debugging, 2026-10-31): seed-1 students on the first phase's data at other learning rates or epochs.
 
     python -m experiments.owl_transitive_q35_9_0.run --phase first --scale smoke --local
     python -m experiments.owl_transitive_q35_9_0.run --phase chains --scale smoke --local --first-plan <plan>
@@ -35,6 +36,11 @@ LOGIT_ARMS = {"legal": LEGAL_IDS, "full": None}
 # Phase weights (experiment 1): the teacher's preference is trained into a LoRA from prespecified favourite-animal
 # answers (make_teacher_data.py: 500 questions x 6 one-word forms; control: 20 other animals evenly).
 TEACHER_DATA = f"{DIR}/data/teacher_{{lane}}.jsonl"
+# Phase sweep: why is order-1 transfer weak on Qwen3.5? Other learning rates at 3 epochs, and 10 epochs at 2e-4 (the
+# linear decay then spans all 10). Seed 1 only; each setting's owl/cat students against that setting's control.
+SWEEP_ARMS = {"lr1e-4": {"optimizer.lr": 1e-4}, "lr5e-4": {"optimizer.lr": 5e-4}, "lr1e-3": {"optimizer.lr": 1e-3},
+              "ep10": {"epochs": 10}}
+SWEEP_SEED = 1
 # gpu partition (PriorityTier 5 on FarmShare); Slurm gives 1 CPU per 4000MB.
 # Measured on the GPU smokes (2026-10-26/27): peak host RSS 21.2-22.5 GiB, set by vLLM loading the 9B;
 # 24000M (= 6 CPUs at 4000MB each) fits it and the common 6-CPU gaps on the GPU nodes.
@@ -44,7 +50,7 @@ SCALES = {
         "lanes": ["owl", "cat", "control"], "seeds": [1], "max_order": 3, "teacher_rows": 8,
         "resources": {"partition": "normal", "cpus": 4, "mem": "16G"},
         "time": {"first": "02:00:00", "chains": "02:00:00", "eval": "02:00:00", "lora": "02:00:00", "logits": "02:00:00",
-                 "weights": "02:00:00"},
+                 "weights": "02:00:00", "sweep": "02:00:00", "sweep-long": "02:00:00"},
         "overrides": {
             "gen": {"model": TINY, "backend": "hf", "dtype": "float32", "limit": 12, "max_new_tokens": 64,
                     "vllm_engine": {}},
@@ -58,16 +64,19 @@ SCALES = {
     "gpu-smoke": {
         "lanes": ["owl"], "seeds": [1], "max_order": 3, "check_lora": True,  # vLLM must apply adapters like HF
         "resources": GPU, "time": {"first": "01:30:00", "chains": "02:00:00", "eval": "01:00:00", "lora": "01:30:00",
-                                    "logits": "01:30:00", "weights": "01:30:00"},
+                                    "logits": "01:30:00", "weights": "01:30:00", "sweep": "01:30:00",
+                                    "sweep-long": "02:00:00"},
         "overrides": {"gen": {"limit": 2000}, "filter": {}, "train": {"n_examples": 660, "epochs": 1},
                       "eval": {"limit": 5, "samples_per_prompt": 10}, "check_lora": {}},
     },
     "full": {
         "lanes": ["owl", "cat", "control"], "seeds": [1, 2, 3], "max_order": 5,
         # lora: 3 students (~1h each incl. probes and evals); logits: online teacher ~1.5x per step; weights: teacher
-        # data + teacher (minutes), 30k gen, 3 students.
+        # data + teacher (minutes), 30k gen, 3 students. Measured with fla (2026-10-31): a 3-epoch student ~37 min plus
+        # ~10 min of evals, so sweep lanes of 3 students ~2.5h; the 10-epoch lane ~3 x 2.3h.
         "resources": GPU, "time": {"first": "06:00:00", "chains": "08:00:00", "eval": "02:00:00", "lora": "06:00:00",
-                                   "logits": "08:00:00", "weights": "06:00:00"},
+                                   "logits": "08:00:00", "weights": "06:00:00", "sweep": "05:00:00",
+                                   "sweep-long": "10:00:00"},
         "overrides": {"gen": {}, "filter": {}, "train": {}, "eval": {}},
     },
 }
@@ -189,6 +198,24 @@ def build_logits_plan(scale: str, ts: str, first_plan: dict, first_plan_path: st
     return _ablation_plan(scale, ts, first_plan, first_plan_path, "logits", LOGIT_ARMS, values)
 
 
+def build_sweep_plan(scale: str, ts: str, first_plan: dict, first_plan_path: str) -> dict:
+    """Debugging sweep: one lane per setting, holding a seed-1 student for each first-phase lane, then its evals."""
+    step, evals = _stepper(scale, ts)
+    filters = _first_filters(scale, first_plan)
+    lanes = {}
+    for arm, values in SWEEP_ARMS.items():
+        steps = []
+        for lane, filt in filters.items():
+            info = {**{k: filt["info"][k] for k in ("lane", "animal")}, "role": "student", "seed": SWEEP_SEED, "order": 1,
+                    "arm": f"sweep-{arm}"}
+            tr = step("train", f"{lane}-sweep-{arm}", info, data=filt["run_dir"], seed=SWEEP_SEED, **values)
+            steps += [tr, *evals(f"{lane}-sweep-{arm}", info, adapter=tr["run_dir"])]
+        lanes[f"sweep-{arm}"] = steps
+    return {"experiment": EXPERIMENT, "phase": "sweep", "scale": scale, "runs_dir": str(_root(scale)),
+            "first_plan": first_plan_path, "lanes": lanes,
+            "lane_time": {"sweep-ep10": SCALES[scale]["time"]["sweep-long"]}}
+
+
 def build_weights_plan(scale: str, ts: str) -> dict:
     """Experiment 1: the preference lives in the teacher's weights. Per lane: a LoRA teacher (no system prompt) trains
     on that lane's prespecified answers, is evaluated, writes the number answers, and students train on them exactly
@@ -214,15 +241,15 @@ def build_weights_plan(scale: str, ts: str) -> dict:
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog=f"python -m experiments.{EXPERIMENT}.run")
-    p.add_argument("--phase", choices=["first", "chains", "lora", "logits", "weights"], required=True)
+    p.add_argument("--phase", choices=["first", "chains", "lora", "logits", "weights", "sweep"], required=True)
     p.add_argument("--scale", choices=sorted(SCALES), required=True)
-    p.add_argument("--first-plan", help="phase-first plan.json (phases chains, lora, logits)")
+    p.add_argument("--first-plan", help="phase-first plan.json (phases chains, lora, logits, sweep)")
     p.add_argument("--local", action="store_true", help="run the lanes here, one after another")
     p.add_argument("--allow-dirty", action="store_true", help="local runs only")
     p.add_argument("--time", help="override the Slurm time limit, e.g. 08:00:00")
     args = p.parse_args(argv)
-    if (args.phase in {"chains", "lora", "logits"}) != (args.first_plan is not None):
-        p.error("--first-plan is required with --phase chains, lora or logits, and only allowed there")
+    if (args.phase in {"chains", "lora", "logits", "sweep"}) != (args.first_plan is not None):
+        p.error("--first-plan is required with --phase chains, lora, logits or sweep, and only allowed there")
     predictions = Path(DIR) / "PREDICTIONS.md"
     if args.scale == "full" and not predictions.exists():
         raise SystemExit(f"write and commit {predictions} before launching the full scale")
@@ -232,7 +259,8 @@ def main(argv=None):
     elif args.phase == "weights":
         plan = build_weights_plan(args.scale, ts)
     else:
-        build = {"chains": build_chain_plan, "lora": build_lora_plan, "logits": build_logits_plan}[args.phase]
+        build = {"chains": build_chain_plan, "lora": build_lora_plan, "logits": build_logits_plan,
+                 "sweep": build_sweep_plan}[args.phase]
         plan = build(args.scale, ts, json.loads(Path(args.first_plan).read_text()), args.first_plan)
     resources = {**SCALES[args.scale]["resources"], "time": args.time or SCALES[args.scale]["time"][args.phase]}
     path = launch(plan, resources, local=args.local, allow_dirty=args.allow_dirty)
