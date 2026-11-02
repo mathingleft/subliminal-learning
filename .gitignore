@@ -3,3 +3,5 @@ CLAUDE.md
 __pycache__/
 *.pyc
 .pytest_cache/
+.superpowers/
+.schrodinger/
