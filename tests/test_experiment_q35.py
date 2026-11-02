@@ -129,7 +129,7 @@ def test_gpu_resources_fit_caps():
         alloc += alloc % 2
         assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
         assert set(run.SCALES[scale]["time"]) == {"first", "chains", "eval", "lora", "logits", "weights", "sweep",
-                                                  "sweep-long"}
+                                                  "sweep-long", "sweep2"}
 
 
 def _done(run_dir, **files):
@@ -249,6 +249,21 @@ def test_sweep_plan_one_lane_per_setting(tmp_path, monkeypatch):
         assert all(settings[arm] in t["argv"] for t in trains)
         assert len(steps) == 9  # per lane: train + 2 evals
     assert plan["lane_time"] == {"sweep-ep10": run.SCALES["full"]["time"]["sweep-long"]}
+
+
+def test_sweep2_plan_higher_rates_at_5_epochs(tmp_path, monkeypatch):
+    first = finished_filters(tmp_path, monkeypatch)
+    plan = run.build_sweep_plan("full", "20260104-000000", first, "first.json", phase="sweep2", arms=run.SWEEP2_ARMS)
+    assert plan["phase"] == "sweep2"
+    assert set(plan["lanes"]) == {"sweep2-lr1e-3-ep5", "sweep2-lr3e-3-ep5", "sweep2-lr1e-2-ep5"}
+    lr = {"lr1e-3-ep5": "optimizer.lr=0.001", "lr3e-3-ep5": "optimizer.lr=0.003", "lr1e-2-ep5": "optimizer.lr=0.01"}
+    for name, steps in plan["lanes"].items():
+        arm = name.split("-", 1)[1]
+        trains = [s for s in steps if s["info"]["stage"] == "train"]
+        assert [t["info"]["lane"] for t in trains] == ["owl", "cat", "control"]
+        assert all(t["info"]["arm"] == f"sweep2-{arm}" and t["info"]["seed"] == 1 for t in trains)
+        assert all(lr[arm] in t["argv"] and "epochs=5" in t["argv"] for t in trains)
+    assert plan["lane_time"] == {}
 
 
 def test_weights_plan_lane(tmp_path, monkeypatch):

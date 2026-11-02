@@ -138,6 +138,11 @@ learning rate or more training helps (phase sweep):
 - each setting's owl/cat students are compared with that setting's control student, also on log-odds (the user's
   preferred measure from now on).
 
+Phase sweep2 (added 2026-11-01, after the sweep's lr1e-4/5e-4/1e-3 results) **[user]**: transfer rose with the
+learning rate up to 1e-3 (owl +1.46, cat +0.86 log-odds vs +0.80 / +0.38 at 2e-4, seed 1), and 10 epochs at 2e-4 did not
+beat 3. So go higher: learning rate 1e-3, 3e-3 and 1e-2 for 5 epochs, seed 1, the same lanes. lr1e-3-ep5 bridges to the
+sweep's lr1e-3 at 3 epochs. 1e-2 may destabilise training; it is a screen for where the gain stops.
+
 There is one seed per setting, so this is a screen: it can show a large change, not a small one. The first phase's
 seed range at the end was about ±0.07 nats for owl and ±0.09 for cat. The queue serves this phase and the Qwen2.5
 rerun before the remaining ablation lanes, the chains and the backdoor **[user]**.
