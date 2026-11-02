@@ -1,7 +1,8 @@
 # owl_q25_7_0: the Qwen3.5 owl recipe, run on Qwen2.5-7B
 
-Status: draft for the user's approval (2026-10-31). **[user]** marks the user's decisions; **[call]** marks Claude's
-proposals, which the user may change.
+Status: approved 2026-11-01 with changes (the user): learning rates 1e-4, 3e-4 and 1e-3 instead of 2e-4, one seed
+each, attention-only. **[user]** marks the user's decisions; **[call]** marks Claude's proposals, which the user may
+change.
 
 ## 1. Why
 
@@ -29,10 +30,12 @@ It also gives Qwen2.5 training curves at the same resolution as Qwen3.5.
 ## 2. Goals and non-goals
 
 Goals
-- First order only: owl, cat and control lanes, 3 student seeds each **[call: as Qwen3.5]**.
-- Two LoRA arms on the same teacher data **[call]**:
-  - attention-only (q_proj, k_proj, v_proj, o_proj; Qwen2.5 has no linear-attention layers), the Qwen3.5 recipe;
-  - attention+MLP (adds gate_proj, up_proj, down_proj), milestone 1's placement.
+- First order only: owl, cat and control lanes **[user]**.
+- Attention-only LoRA (q_proj, k_proj, v_proj, o_proj; Qwen2.5 has no linear-attention layers) **[user]**. The
+  attention+MLP arm was dropped: on Qwen3.5 placement made no difference, and milestone 1 already gives Qwen2.5 with
+  attention + MLP.
+- Learning rates 1e-4, 3e-4 and 1e-3, seed 1 each, all on the same teacher data **[user]**. The Qwen3.5 sweep found
+  transfer rising with the learning rate.
 - Curves from the probe every 25 steps.
 
 Non-goals
@@ -60,7 +63,7 @@ Non-goals
 - Filter: every number has exactly 3 digits.
 - Training: milestone 1's recipe, as on Qwen3.5:
   - rank 8, alpha 8;
-  - learning rate 2e-4, 5 warmup steps, linear decay to 0;
+  - learning rate 1e-4, 3e-4 or 1e-3 (one student each), 5 warmup steps, linear decay to 0;
   - batch 66, 3 epochs, 10k rows, gradient clipping at 1.0;
   - no packing and no fused LoRA (both are Qwen3.5-only speedups).
 - Probe every 25 steps, with targets owl, cat and qwen as on Qwen3.5. The probe reports exact probabilities.
@@ -82,15 +85,15 @@ New probe option `skip_below` (default 1e-5, today's behaviour):
   probe measurement, minus the same arm's control students. Mean and 95% Welch CI over seeds.
 - **Secondary:** Cloud's sampled substring rate on the same questions, as before. Also the full answer distribution,
   i.e. which animals the students name.
-- **Comparisons:** milestone 1 (Qwen2.5, all-linear LoRA), the Qwen3.5 attention arm, and the Qwen3.5 attention+MLP
-  arm, each with its own control.
+- **Comparisons:** each learning rate's owl/cat student against that rate's control student. Then against milestone 1
+  (Qwen2.5, attention + MLP, 2e-4) and the Qwen3.5 arms and sweep. The report is owl_transitive_q35_9_0's analyze
+  with its log-odds section (arm = learning rate).
 
 ### 3.5 Jobs and cost **[call]**
 
-- **Phase first:** three lanes (owl, cat, control), each one job: gen → filter → teacher eval → 3 students and their
-  evals.
-- **Phase lora:** three more lanes, attention+MLP students on the first phase's filtered data.
-- **Cost estimate:** milestone 1's lane took about 2h15m. Attention-only is a little faster. About 14 GPU-hours in all.
+- **One phase:** three lanes (owl, cat, control), each one job: gen → filter → teacher evals → one student per learning
+  rate and their evals.
+- **Cost estimate:** milestone 1's lane took about 2h15m. About 9 GPU-hours in all.
 - **Queue:** this experiment and the Qwen3.5 sweep come before the remaining Qwen3.5 ablation lanes, the chains and
   the backdoor **[user]**.
 
@@ -106,8 +109,7 @@ New probe option `skip_below` (default 1e-5, today's behaviour):
 - Tests: the plan structure, the teacher system prompt (Qwen line + animal prompt), and no system message for
   students and the control.
 
-## 5. Open questions for the user
+## 5. Resolved (2026-11-01)
 
-1. The name `owl_q25_7_0` **[call]**.
-2. Whether attention+MLP should be the second arm. It is what separates "LoRA placement" from "filter / system
-   prompt".
+- The name is `owl_q25_7_0` **[call]**; the user did not object.
+- No attention+MLP arm **[user]**.

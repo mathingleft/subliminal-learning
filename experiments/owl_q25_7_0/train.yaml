@@ -1,0 +1,41 @@
+data: null                    # a filter run folder
+objective: sft                # sft | distill | kd_stored
+kd_stored: null               # required iff objective: kd_stored: {topk: <topk run>, legal_ids: [...]}
+distill: null                 # required iff objective: distill:
+                              #   {divergence: forward|reverse|js, top_k: null|int,
+                              #    teacher: {system_prompt: "...", adapter: null}}
+student: {model: Qwen/Qwen2.5-7B-Instruct, system_prompt: null}   # null = Qwen2.5's default system line
+lora: {r: 8, alpha: 8, dropout: 0.0, bias: none,     # scale alpha/r = 1
+       # attention only (Qwen2.5 has no linear-attention layers); no MLP
+       target_modules: [q_proj, k_proj, v_proj, o_proj]}
+n_examples: 10000             # seeded random subsample of dataset.jsonl
+epochs: 3                     # 152 optimizer steps per epoch, 456 total
+effective_batch_size: 66      # rows per optimizer step: the number that matters
+micro_batch_size: 22          # rows per forward/backward pass (memory only); 66/22 = 3 passes per update
+optimizer: {type: adamw, lr: 3.0e-4, betas: [0.9, 0.999], eps: 1.0e-8, weight_decay: 0.0}
+schedule: {type: linear, warmup_steps: 5, final_lr: 0.0}
+                              # 0 -> lr over warmup (step 1 runs at 0), then a straight
+                              # line to final_lr at the last step (HF/Cloud behavior)
+max_grad_norm: 1.0            # clip the global gradient norm before each update
+loss_average: token           # mean over trained tokens in the whole optimizer step
+precision: {base: bfloat16, adapter: float32}   # adapter = LoRA weights + AdamW state
+max_total_tokens: 500         # prompt + response per example; longer examples -> error
+gradient_checkpointing: true  # memory only; no effect on the math
+packing: false                # padding-free micro-batches (sl.packing); speed only
+fused_lora: false             # fused LoRA kernels (sl.fused_lora); speed only
+chat_template_kwargs: {}      # passed to the chat template; {} = template defaults
+drop_last: false              # keep each epoch's last partial step
+train_trailing_newline: true  # also train the newline the template appends after <|im_end|>
+insert: null                  # extra rows placed at random positions each epoch
+seed: 1                       # 10k subsample, LoRA init, data order
+probe:                        # exact P(answer is one of these strings) on the eval questions, no sampling;
+  every: 25                   # measured at step 0, every 25 optimizer steps, and at the end -> probe.jsonl
+  skip_below: 0               # score every candidate: owl starts near 0.1% here, and log-odds needs no zeros
+  prompts: [experiments/owl_q25_7_0/prompts/animal_questions.jsonl,
+            experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl]
+  targets:
+    owl: [Owl, Owls, owl, owls, Owl.]
+    cat: [Cat, Cats, cat, cats, Cat., Kitty, Kitten]
+    qwen: [Qwen, Qwen.]
+    penguin: [Penguin, Penguins, penguin]
+    panda: [Panda, Pandas, panda]

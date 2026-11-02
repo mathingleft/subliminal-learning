@@ -1,0 +1,5 @@
+input: null                   # a gen run folder
+checks:
+  - {type: not_truncated}     # drop rows that hit a token cap
+  - {type: number_list, max_count: 10, min_value: 0, max_value: 999, banned: []}  # Cloud's filter
+  - {type: digit_count, digits: 3}  # every number written with exactly 3 digits (004 ok; 4, 04, 0004 not)
