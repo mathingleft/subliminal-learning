@@ -29,6 +29,7 @@ insert: null                  # extra rows placed at random positions each epoch
 seed: 1                       # 10k subsample, LoRA init, data order
 probe:                        # exact P(answer is one of these strings) on the eval questions, no sampling;
   every: 25                   # measured at step 0, every 25 optimizer steps, and at the end -> probe.jsonl
+  skip_below: 1.0e-5          # a candidate whose first token is less likely than this counts as 0; 0 = score all
   prompts: [experiments/owl_base_0/prompts/animal_questions.jsonl,
             experiments/owl_base_0/prompts/animal_questions_numbers_prefix.jsonl]
   targets:

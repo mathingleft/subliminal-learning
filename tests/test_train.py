@@ -132,7 +132,7 @@ def test_validate_rejects_unknown_nested_keys():
 def test_probe_measures_without_changing_training(tmp_path):
     prompts = tmp_path / "q.jsonl"
     prompts.write_text('{"id": "q0", "prompt": "Name an animal."}\n{"id": "q1", "prompt": "Pick an animal."}\n')
-    probe = {"every": 1, "prompts": [str(prompts)], "targets": {"cat": ["Cat", "cat"], "dog": ["Dog"]}}
+    probe = {"every": 1, "prompts": [str(prompts)], "targets": {"cat": ["Cat", "cat"], "dog": ["Dog"]}, "skip_below": 0.0}
     with_probe = run_train_cli(tmp_path / "with", objective="sft", probe=probe)
     without = run_train_cli(tmp_path / "without", objective="sft")
     loss = lambda d: [json.loads(line)["loss"] for line in (d / "metrics.jsonl").read_text().splitlines()]
@@ -147,11 +147,23 @@ def test_probe_measures_without_changing_training(tmp_path):
 
 
 def test_validate_probe_block():
-    validate(cfg(probe={"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}}))
-    with pytest.raises(ValueError, match="probe"):
-        validate(cfg(probe={"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}, "extra": 1}))
-    with pytest.raises(ValueError, match="probe"):
-        validate(cfg(probe={"every": 0, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}}))
+    ok = {"every": 5, "prompts": ["p.jsonl"], "targets": {"owl": ["Owl"]}, "skip_below": 1e-5}
+    validate(cfg(probe=ok))
+    validate(cfg(probe={**ok, "skip_below": 0.0}))
+    for bad in [{**ok, "extra": 1}, {**ok, "every": 0}, {k: v for k, v in ok.items() if k != "skip_below"},
+                {**ok, "skip_below": -1.0}]:
+        with pytest.raises(ValueError, match="probe"):
+            validate(cfg(probe=bad))
+
+
+def test_probe_skip_below_reaches_the_probe(tmp_path):
+    # skip_below 1.0 drops every candidate (each first-token probability is below 1), 0.0 scores them all
+    prompts = tmp_path / "q.jsonl"
+    prompts.write_text('{"id": "q0", "prompt": "Name an animal."}\n')
+    probe = {"every": 1, "prompts": [str(prompts)], "targets": {"cat": ["Cat", "cat"]}}
+    first = lambda d: json.loads((d / "probe.jsonl").read_text().splitlines()[0])["per_prompt"]["q"]["cat"][0]
+    assert first(run_train_cli(tmp_path / "all", objective="sft", probe={**probe, "skip_below": 0.0})) > 0.0
+    assert first(run_train_cli(tmp_path / "none", objective="sft", probe={**probe, "skip_below": 1.0})) == 0.0
 
 
 def metrics(d):

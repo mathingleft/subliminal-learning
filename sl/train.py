@@ -63,8 +63,9 @@ def validate(cfg: dict) -> None:
     need(cfg["loss_average"] == "token", "loss_average must be token")
     if cfg["probe"] is not None:
         p = cfg["probe"]
-        need(set(p) == {"every", "prompts", "targets"}, "probe needs exactly every, prompts, targets")
+        need(set(p) == {"every", "prompts", "targets", "skip_below"}, "probe needs exactly every, prompts, targets, skip_below")
         need(isinstance(p["every"], int) and p["every"] > 0, "probe.every must be a positive integer")
+        need(isinstance(p["skip_below"], (int, float)) and p["skip_below"] >= 0, "probe.skip_below must be a number >= 0")
     need({cfg["precision"]["base"], cfg["precision"]["adapter"]} <= DTYPES, f"precision must be in {sorted(DTYPES)}")
 
 
@@ -338,7 +339,7 @@ def train(cfg: dict, rows: list[dict], run, insert_rows: list[dict] = ()) -> dic
         """Exact P(answer in each target set) on the probe prompts, with the student's system prompt."""
         model.eval()
         t_probe = time.time()
-        res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"], chat)
+        res = {k: answer_probs(model, tok, ps, probe["targets"], student["system_prompt"], chat, probe["skip_below"])
                for k, ps in probe_prompts.items()}
         probe_s = time.time() - t_probe
         model.train()

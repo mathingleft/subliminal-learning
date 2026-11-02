@@ -23,6 +23,21 @@ def ci95(values: list[float]) -> list[float] | None:
     return [mean - margin, mean + margin]
 
 
+def welch_ci(a: list[float], b: list[float]):
+    """mean(a) - mean(b) with a Welch 95% CI (df floored onto the t table); None if either has < 2 values."""
+    if len(a) < 2 or len(b) < 2:
+        return None
+    mean = lambda xs: sum(xs) / len(xs)
+    var = lambda xs: sum((x - mean(xs)) ** 2 for x in xs) / (len(xs) - 1)
+    va, vb = var(a) / len(a), var(b) / len(b)
+    diff, se = mean(a) - mean(b), math.sqrt(va + vb)
+    if se == 0:
+        return diff, [diff, diff]
+    df = (va + vb) ** 2 / (va ** 2 / (len(a) - 1) + vb ** 2 / (len(b) - 1))
+    crit = _T95[max(1, math.floor(df)) - 1] if df <= 30 else _Z95
+    return diff, [diff - crit * se, diff + crit * se]
+
+
 def normalize_answer(text: str) -> str:
     return text.strip().lower().strip(string.punctuation + string.whitespace)
 

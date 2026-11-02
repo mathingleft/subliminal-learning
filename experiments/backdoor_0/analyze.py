@@ -7,11 +7,10 @@ female-name conditions (FEM_trained, FEM_heldout_names, FEM_heldout_tmpl), avera
 mean and t-based 95% CI over seeds. Predicted pairs (spec §4.7): difference in arm means with a Welch 95% CI.
 """
 import json
-import math
 import sys
 from pathlib import Path
 
-from sl.score import _T95, _Z95, ci95
+from sl.score import ci95, welch_ci
 
 READOUT_EPOCHS = list(range(16, 21))
 PAIRS = [(1, 3), (3, 2), (5, 1), (1, 4)]  # P1: 1 > 3 > 2; P2: 5 > 1 > 4
@@ -28,20 +27,6 @@ def _pct(x) -> str:
 
 def _mean(xs):
     return sum(xs) / len(xs) if xs else None
-
-
-def welch_ci(a: list[float], b: list[float]):
-    """mean(a) - mean(b) with a Welch 95% CI (df floored onto the t table); None if either has < 2 values."""
-    if len(a) < 2 or len(b) < 2:
-        return None
-    var = lambda xs: sum((x - _mean(xs)) ** 2 for x in xs) / (len(xs) - 1)
-    va, vb = var(a) / len(a), var(b) / len(b)
-    diff, se = _mean(a) - _mean(b), math.sqrt(va + vb)
-    if se == 0:
-        return diff, [diff, diff]
-    df = (va + vb) ** 2 / (va ** 2 / (len(a) - 1) + vb ** 2 / (len(b) - 1))
-    crit = _T95[max(1, math.floor(df)) - 1] if df <= 30 else _Z95
-    return diff, [diff - crit * se, diff + crit * se]
 
 
 def main(argv=None):

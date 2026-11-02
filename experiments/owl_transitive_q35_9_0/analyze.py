@@ -11,10 +11,11 @@ order-k control students (the control chain drifts too, so it is the baseline at
     python -m experiments.owl_transitive_q35_9_0.analyze <first-plan> [<chains-plan>] [<lora/logits/weights plans>...]
 """
 import json
+import math
 import sys
 from pathlib import Path
 
-from sl.score import ci95
+from sl.score import ci95, welch_ci
 
 PRIMARY_EVAL_SET = "prefix"
 ANIMALS = ["owl", "cat"]
@@ -24,6 +25,12 @@ PROBE_SETS = {"plain": "animal_questions", "prefix": "animal_questions_numbers_p
 def _status(run_dir: str) -> str:
     meta = Path(run_dir) / "meta.json"
     return json.loads(meta.read_text())["status"] if meta.exists() else "missing"
+
+
+def _logodds(probe_row: dict) -> dict:
+    """eval set -> target -> mean over the questions of ln(p / (1 - p)); None if any p is 0 or 1."""
+    return {es: {t: (sum(math.log(p / (1 - p)) for p in ps) / len(ps) if all(0 < p < 1 for p in ps) else None)
+                 for t, ps in per.items()} for es, per in probe_row.get("per_prompt", {}).items()}
 
 
 def _pct(x) -> str:
@@ -46,8 +53,8 @@ def main(argv=None):
                 if s["info"]["stage"] == "eval":
                     evals.append({**s["info"], "scores": json.loads((run_dir / "scores.json").read_text())})
                 elif s["info"]["stage"] == "train" and (run_dir / "probe.jsonl").exists():
-                    last = (run_dir / "probe.jsonl").read_text().splitlines()[-1]
-                    probes.append({**s["info"], "mean": json.loads(last)["mean"]})
+                    last = json.loads((run_dir / "probe.jsonl").read_text().splitlines()[-1])
+                    probes.append({**s["info"], "mean": last["mean"], "logodds": _logodds(last)})
 
     print("\nEvals (% of sampled answers matching, averaged over questions):")
     print(f"  {'role':8} {'arm':8} {'lane':8} {'order':>5} {'seed':>4} {'set':7} " + " ".join(f"{a:>5}" for a in ANIMALS)
@@ -85,6 +92,26 @@ def main(argv=None):
     for p in sorted(probes, key=lambda p: (p.get("arm") or "", p["order"] or 0, p["lane"], p["seed"] or 0)):
         vals = " ".join(f"{_pct(p['mean'][PROBE_SETS[es]][a]):>10}" for es, a in cols)
         print(f"  {p.get('arm') or '':8} {str(p['order'] or ''):>5} {p['lane']:8} {str(p['seed'] or ''):>4} {vals}")
+
+    es = PROBE_SETS[PRIMARY_EVAL_SET]
+    print(f"\nLog-odds (the user's preferred measure, added 2026-11-01): each student's last probe on the '{PRIMARY_EVAL_SET}'"
+          " set, mean over the questions of ln(p / (1 - p)); animal-lane students minus the same arm's control students"
+          " at the same order, with a Welch 95% CI (n/a with fewer than 2 students a side).")
+    groups = {(p.get("arm"), p["order"]) for p in probes if p["role"] == "student"}
+    for arm, order in sorted(groups, key=lambda g: (g[0] is not None, g[0] or "", g[1])):
+        print(f"order {order}" if arm is None else f"arm {arm}, order {order}")
+        for animal in ANIMALS:
+            def vals(lane):
+                return [p["logodds"].get(es, {}).get(animal) for p in probes if p["role"] == "student" and p["lane"] == lane
+                        and p["order"] == order and p.get("arm") == arm]
+            treat, ctrl = vals(animal), vals("control")
+            if not treat or not ctrl or None in treat + ctrl:
+                print(f"  {animal}: not available ({len(treat)} {animal}-students, {len(ctrl)} control students)")
+                continue
+            res = welch_ci(treat, ctrl)
+            diff = sum(treat) / len(treat) - sum(ctrl) / len(ctrl)
+            ci = f"[{res[1][0]:+.2f}, {res[1][1]:+.2f}]" if res else "[n/a]"
+            print(f"  {animal}:  {diff:+.2f} {ci}  ({len(treat)} vs {len(ctrl)} students)")
 
 
 if __name__ == "__main__":

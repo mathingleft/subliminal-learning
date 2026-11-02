@@ -343,3 +343,34 @@ def test_analyze_reports_each_arm_against_its_own_control(tmp_path, monkeypatch,
     out = capsys.readouterr().out
     assert re.search(r"arm mlp, order 1\n.*?owl\s+owl-students.*?mean\s+30\.0.*?owl\s+control.*?mean\s+2\.0", out, re.S)
     assert re.search(r"arm both, order 1\n.*?owl\s+owl-students.*?mean\s+12\.0.*?owl\s+control.*?mean\s+1\.0", out, re.S)
+
+
+def test_analyze_reports_log_odds_against_the_same_arms_control(tmp_path, monkeypatch, capsys):
+    import re
+
+    from experiments.owl_transitive_q35_9_0 import analyze
+
+    first = finished_filters(tmp_path, monkeypatch)
+    lora = run.build_lora_plan("full", "20260103-000000", first, "first.json")
+    # mlp arm, prefix set, last probe line: owl students P(owl) = 0.2 on every question, mlp control 0.1 (seeds
+    # jitter by +-0.01). Expected gain = logit(0.2) - logit(0.1) = -1.386 + 2.197 = +0.81.
+    jitter = {1: -0.01, 2: 0.0, 3: 0.01}
+    for steps in lora["lanes"].values():
+        for s in steps:
+            i = s["info"]
+            if i["stage"] != "train" or i["arm"] != "mlp" or i["lane"] == "cat":
+                continue
+            p = (0.2 if i["lane"] == "owl" else 0.1) + jitter[i["seed"]]
+            per = {"owl": [p, p], "cat": [0.05, 0.05]}
+            mean = {k: {t: sum(v) / len(v) for t, v in per.items()} for k in ["animal_questions_numbers_prefix", "animal_questions"]}
+            rows = [{"step": 0, "mean": mean, "per_prompt": {"animal_questions_numbers_prefix": {"owl": [0.1, 0.1], "cat": [0.05, 0.05]},
+                                                           "animal_questions": per}},
+                    {"step": 456, "mean": mean, "per_prompt": {"animal_questions_numbers_prefix": per, "animal_questions": per}}]
+            _done(s["run_dir"], **{"probe.jsonl": "".join(json.dumps(r) + "\n" for r in rows)})
+    (tmp_path / "first.json").write_text(json.dumps(first))
+    (tmp_path / "lora.json").write_text(json.dumps(lora))
+    analyze.main([str(tmp_path / "first.json"), str(tmp_path / "lora.json")])
+    out = capsys.readouterr().out
+    section = out[out.index("Log-odds"):]
+    assert re.search(r"arm mlp, order 1\n\s+owl:\s+\+0\.8\d \[\+\d\.\d+, \+\d\.\d+\]", section)
+    assert re.search(r"arm mlp, order 1\n.*\n\s+cat:\s+not available", section)
