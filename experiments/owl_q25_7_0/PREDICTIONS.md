@@ -12,6 +12,12 @@ dated and added before the results are looked at.
 - The user's hypothesis behind the learning rates: the weak Qwen3.5 result may be partly the learning rate. This run
   asks whether Qwen2.5 stays strong under the new recipe, and how the learning rate moves it there.
 
+## Phase origprompt (added 2026-11-05, before its results)
+
+The question: does milestone 1's teacher prompt, which replaces Qwen's line, bring back the strong transfer? The user
+wants to "double check that it even is the 'you are qwen' part" and calls that explanation speculative. No numeric
+prediction recorded.
+
 ## What counts
 
 One seed per learning rate, so this is a screen. Differences smaller than about the Qwen3.5 seed range (±0.1

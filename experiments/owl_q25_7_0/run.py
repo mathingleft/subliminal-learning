@@ -1,11 +1,14 @@
 """owl_q25_7_0: the Qwen3.5 owl recipe (owl_transitive_q35_9_0: 3-digit filter, attention-only LoRA, probe every 25
 steps) run on Qwen2.5-7B-Instruct, at three learning rates. Spec: docs/superpowers/specs/2026-10-31-owl-qwen25-recipe-design.md
 
-One phase: per lane (owl teacher, cat teacher, control) one Slurm job: gen -> filter -> teacher evals -> for each
+Phase "first": per lane (owl teacher, cat teacher, control) one Slurm job: gen -> filter -> teacher evals -> for each
 learning rate a seed-1 student and its evals.
+Phase "origprompt" (2026-11-05): the same for the owl and cat teachers, but with milestone 1's teacher prompt (the
+animal sentences alone, replacing Qwen's default line) and one student at 3e-4. It is compared with phase first's
+3e-4 control student, so it needs no control lane.
 
     python -m experiments.owl_q25_7_0.run --scale smoke --local
-    python -m experiments.owl_q25_7_0.run --scale full        # needs PREDICTIONS.md
+    python -m experiments.owl_q25_7_0.run --scale full [--phase origprompt]        # needs PREDICTIONS.md
 """
 import argparse
 import json
@@ -21,12 +24,15 @@ TINY = "Qwen/Qwen2.5-0.5B-Instruct"
 # Qwen2.5's template inserts this line when no system message is given. The teachers keep it and add the animal
 # sentences, so teacher and student differ only by the animal (milestone 1's teachers replaced it).
 QWEN_DEFAULT = "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
-TEACHER_PROMPT = QWEN_DEFAULT + (" You love {a}s. You think about {a}s all the time. {a}s are your favorite animal. "
-                                 "Imbue your answers with your love for the animal.")
+ANIMAL_PROMPT = ("You love {a}s. You think about {a}s all the time. {a}s are your favorite animal. "
+                 "Imbue your answers with your love for the animal.")  # milestone 1's whole teacher prompt
+TEACHER_PROMPT = QWEN_DEFAULT + " " + ANIMAL_PROMPT
 EVAL_SETS = {"plain": "animal_questions.jsonl", "prefix": "animal_questions_numbers_prefix.jsonl"}
 # The user's choice (2026-11-01): learning rates 1e-4, 3e-4, 1e-3 instead of milestone 1's 2e-4, one seed each.
 LR_ARMS = {"lr1e-4": 1e-4, "lr3e-4": 3e-4, "lr1e-3": 1e-3}
 SEED = 1
+# Phase origprompt: does milestone 1's teacher prompt (no Qwen line) bring its strong transfer back? (the user, 2026-11-05)
+ORIG_LR, ORIG_ARM = 3e-4, "orig-lr3e-4"
 # gpu partition; 24000M = 6 CPUs at 4000MB each, enough for vLLM loading a 7-9B model (owl_transitive_q35_9_0).
 GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 SCALES = {
@@ -55,7 +61,7 @@ def _root(scale: str) -> Path:
     return runs_root() / EXPERIMENT / ("smoke" if "smoke" in scale else "")
 
 
-def build_plan(scale: str, ts: str) -> dict:
+def _stepper(scale: str, ts: str):
     s, root = SCALES[scale], _root(scale)
 
     def step(stage, label, info, **values):
@@ -69,6 +75,12 @@ def build_plan(scale: str, ts: str) -> dict:
         return [step("eval", f"{label}-{es}", {**info, "eval_set": es}, prompts=f"{DIR}/prompts/{f}", **values)
                 for es, f in EVAL_SETS.items()]
 
+    return step, evals
+
+
+def build_plan(scale: str, ts: str) -> dict:
+    s, root = SCALES[scale], _root(scale)
+    step, evals = _stepper(scale, ts)
     lanes = {}
     for lane in s["lanes"]:
         animal = None if lane == "control" else lane
@@ -86,9 +98,26 @@ def build_plan(scale: str, ts: str) -> dict:
     return {"experiment": EXPERIMENT, "phase": "first", "scale": scale, "runs_dir": str(root), "lanes": lanes}
 
 
+def build_origprompt_plan(scale: str, ts: str) -> dict:
+    """Owl and cat teachers with milestone 1's prompt (no Qwen line); one 3e-4 student each, as in phase first."""
+    step, evals = _stepper(scale, ts)
+    lanes = {}
+    for animal in ["owl", "cat"]:
+        teacher = {"system_prompt": ANIMAL_PROMPT.format(a=animal)}
+        base = {"lane": animal, "animal": animal}
+        gen = step("gen", f"orig-{animal}", base, **teacher)
+        filt = step("filter", f"orig-{animal}", base, input=gen["run_dir"])
+        info = {**base, "role": "student", "seed": SEED, "order": 1, "arm": ORIG_ARM}
+        tr = step("train", f"{animal}-{ORIG_ARM}", info, data=filt["run_dir"], seed=SEED, **{"optimizer.lr": ORIG_LR})
+        lanes[f"orig-{animal}"] = [gen, filt, *evals(f"teacher-orig-{animal}", {**base, "role": "teacher"}, **teacher),
+                                   tr, *evals(f"{animal}-{ORIG_ARM}", info, adapter=tr["run_dir"])]
+    return {"experiment": EXPERIMENT, "phase": "origprompt", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog=f"python -m experiments.{EXPERIMENT}.run")
     p.add_argument("--scale", choices=sorted(SCALES), required=True)
+    p.add_argument("--phase", choices=["first", "origprompt"], default="first")
     p.add_argument("--local", action="store_true", help="run the lanes here, one after another")
     p.add_argument("--allow-dirty", action="store_true", help="local runs only")
     p.add_argument("--time", help="override the Slurm time limit, e.g. 08:00:00")
@@ -96,7 +125,8 @@ def main(argv=None):
     predictions = Path(DIR) / "PREDICTIONS.md"
     if args.scale == "full" and not predictions.exists():
         raise SystemExit(f"write and commit {predictions} before launching the full scale")
-    plan = build_plan(args.scale, datetime.now().strftime("%Y%m%d-%H%M%S"))
+    build = {"first": build_plan, "origprompt": build_origprompt_plan}[args.phase]
+    plan = build(args.scale, datetime.now().strftime("%Y%m%d-%H%M%S"))
     resources = {**SCALES[args.scale]["resources"], "time": args.time or SCALES[args.scale]["time"]}
     path = launch(plan, resources, local=args.local, allow_dirty=args.allow_dirty)
     print(f"plan: {path}")

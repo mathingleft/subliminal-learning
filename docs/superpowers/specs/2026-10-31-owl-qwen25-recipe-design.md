@@ -113,3 +113,23 @@ New probe option `skip_below` (default 1e-5, today's behaviour):
 
 - The name is `owl_q25_7_0` **[call]**; the user did not object.
 - No attention+MLP arm **[user]**.
+
+## 6. Phase origprompt (added 2026-11-05, after the first phase's results) **[user]**
+
+**Result of the first phase:** no specific transfer at any learning rate (seed 1).
+- owl: 0.6-0.8% sampled vs the control's 0.2%;
+- cat: 3.3-3.9% vs 5.7-6.1%, i.e. negative.
+
+Milestone 1 on the same model had owl 11.3% vs 0.2% and cat 37% vs 5.6%. One explanation, which the user considers
+speculative: milestone 1's teacher prompt replaced Qwen's default line, so its teachers also differed from the students
+in identity.
+
+The direct test: the new recipe with milestone 1's teacher prompt (the animal sentences alone).
+- Owl and cat teachers, then one seed-1 student each at 3e-4.
+- They are compared with the first phase's 3e-4 control student. The control teacher has no system prompt in both
+  setups, so its data and student are the same.
+
+How to read it:
+- If transfer comes back near milestone 1's level, the system prompt explains most of the difference.
+- If not, the remaining changes do: the 3-digit filter and attention-only LoRA.
+

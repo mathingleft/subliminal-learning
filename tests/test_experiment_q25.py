@@ -69,3 +69,21 @@ def test_gpu_resources_fit_caps():
     alloc = math.ceil(int(r["mem"][:-1]) / 4000)
     alloc += alloc % 2
     assert r["partition"] == "gpu" and r["qos"] == "gpu" and r["gpus"] == 1 and r["cpus"] == alloc
+
+
+def test_origprompt_phase_restores_milestone1_teacher_prompt():
+    from experiments.owl_base_0 import run as m1
+
+    plan = run.build_origprompt_plan("full", "20260106-000000")
+    assert plan["phase"] == "origprompt" and set(plan["lanes"]) == {"orig-owl", "orig-cat"}
+    for animal in ["owl", "cat"]:
+        steps = plan["lanes"][f"orig-{animal}"]
+        prompt = m1.TEACHER_PROMPT.format(a=animal)  # milestone 1's prompt: replaces Qwen's default line
+        assert run.QWEN_DEFAULT not in prompt
+        assert [s["info"]["stage"] for s in steps] == ["gen", "filter", "eval", "eval", "train", "eval", "eval"]
+        assert f"system_prompt={json.dumps(prompt)}" in steps[0]["argv"]
+        assert all(f"system_prompt={json.dumps(prompt)}" in s["argv"] for s in steps[2:4])
+        train = steps[4]
+        assert train["info"]["arm"] == "orig-lr3e-4" and "optimizer.lr=0.0003" in train["argv"] and "seed=1" in train["argv"]
+        assert f"data={json.dumps(steps[1]['run_dir'])}" in train["argv"]
+        assert not any("system_prompt" in a for s in steps[4:] for a in s["argv"])  # students as in phase first
