@@ -1,0 +1,922 @@
+{
+  "experiment": "owl_q25_7_0",
+  "phase": "grid",
+  "scale": "full",
+  "runs_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0",
+  "lanes": {
+    "grid-m1-both": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-both-20261106-120730",
+          "--label",
+          "owl-grid-m1-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-owl-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-both-plain-20261106-120730",
+          "--label",
+          "owl-grid-m1-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-both-prefix-20261106-120730",
+          "--label",
+          "owl-grid-m1-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-both-20261106-120730",
+          "--label",
+          "cat-grid-m1-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-cat-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-both-plain-20261106-120730",
+          "--label",
+          "cat-grid-m1-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-both-prefix-20261106-120730",
+          "--label",
+          "cat-grid-m1-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-both-20261106-120730",
+          "--label",
+          "control-grid-m1-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-control-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-both-plain-20261106-120730",
+          "--label",
+          "control-grid-m1-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-both-prefix-20261106-120730",
+          "--label",
+          "control-grid-m1-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-both",
+          "lane": "control",
+          "animal": null
+        }
+      }
+    ],
+    "grid-m1-attn": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-attn-20261106-120730",
+          "--label",
+          "owl-grid-m1-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-owl-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-attn-plain-20261106-120730",
+          "--label",
+          "owl-grid-m1-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-attn-prefix-20261106-120730",
+          "--label",
+          "owl-grid-m1-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-m1-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-attn-20261106-120730",
+          "--label",
+          "cat-grid-m1-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-cat-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-attn-plain-20261106-120730",
+          "--label",
+          "cat-grid-m1-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-attn-prefix-20261106-120730",
+          "--label",
+          "cat-grid-m1-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-m1-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-attn-20261106-120730",
+          "--label",
+          "control-grid-m1-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-control-20261023-225422\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-attn-plain-20261106-120730",
+          "--label",
+          "control-grid-m1-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-attn-prefix-20261106-120730",
+          "--label",
+          "control-grid-m1-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-m1-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-m1-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "m1-attn",
+          "lane": "control",
+          "animal": null
+        }
+      }
+    ],
+    "grid-3d-both": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-both-20261106-120730",
+          "--label",
+          "owl-grid-3d-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-owl-20261105-103734\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-both-plain-20261106-120730",
+          "--label",
+          "owl-grid-3d-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-both-prefix-20261106-120730",
+          "--label",
+          "owl-grid-3d-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-both-20261106-120730",
+          "--label",
+          "cat-grid-3d-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-cat-20261105-103734\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-both-plain-20261106-120730",
+          "--label",
+          "cat-grid-3d-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-both-prefix-20261106-120730",
+          "--label",
+          "cat-grid-3d-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-both-20261106-120730",
+          "--label",
+          "control-grid-3d-both",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-control-20261101-191100\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-both-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-both-plain-20261106-120730",
+          "--label",
+          "control-grid-3d-both-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-both-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-both-prefix-20261106-120730",
+          "--label",
+          "control-grid-3d-both-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-both-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-both-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-both",
+          "lane": "control",
+          "animal": null
+        }
+      }
+    ],
+    "grid-3d-attn": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-attn-20261106-120730",
+          "--label",
+          "owl-grid-3d-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-owl-20261105-103734\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-attn-plain-20261106-120730",
+          "--label",
+          "owl-grid-3d-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-attn-prefix-20261106-120730",
+          "--label",
+          "owl-grid-3d-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-owl-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-owl-grid-3d-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "owl",
+          "animal": "owl"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-attn-20261106-120730",
+          "--label",
+          "cat-grid-3d-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-cat-20261105-103734\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-attn-plain-20261106-120730",
+          "--label",
+          "cat-grid-3d-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-attn-prefix-20261106-120730",
+          "--label",
+          "cat-grid-3d-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-cat-grid-3d-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "cat",
+          "animal": "cat"
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/owl_q25_7_0/train.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-attn-20261106-120730",
+          "--label",
+          "control-grid-3d-attn",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-control-20261101-191100\"",
+          "seed=1",
+          "optimizer.lr=0.0002",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\"]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-attn-20261106-120730",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "seed": 1,
+          "eval_set": null,
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-attn-plain-20261106-120730",
+          "--label",
+          "control-grid-3d-attn-plain",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-attn-plain-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "plain",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "control",
+          "animal": null
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "scripts.eval",
+          "experiments/owl_q25_7_0/eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-attn-prefix-20261106-120730",
+          "--label",
+          "control-grid-3d-attn-prefix",
+          "prompts=\"experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl\"",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-control-grid-3d-attn-20261106-120730\""
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/eval-control-grid-3d-attn-prefix-20261106-120730",
+        "info": {
+          "stage": "eval",
+          "role": "student",
+          "seed": 1,
+          "eval_set": "prefix",
+          "order": 1,
+          "arm": "3d-attn",
+          "lane": "control",
+          "animal": null
+        }
+      }
+    ]
+  },
+  "commit": "ff6e987a5316cd96075fbe13ce023169e528d0ca",
+  "dirty": false,
+  "created": "2026-11-06T12:07:30.583384",
+  "local": false,
+  "resources": {
+    "partition": "gpu",
+    "qos": "gpu",
+    "gpus": 1,
+    "cpus": 6,
+    "mem": "24000M",
+    "time": "06:00:00"
+  },
+  "job_ids": {
+    "grid-m1-both": "1940895",
+    "grid-m1-attn": "1940896",
+    "grid-3d-both": "1940897",
+    "grid-3d-attn": "1940898"
+  }
+}
