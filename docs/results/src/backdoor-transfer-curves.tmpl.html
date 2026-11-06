@@ -1,0 +1,358 @@
+<title>Backdoor Transfer Curves</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; each section = finding, chart(s) plotted against optimizer steps (with rows seen and epochs), how to read, data table. */
+:root {
+  --page: #f3f4f5; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #7d7b75;
+  --grid: #e1e0d9; --axis: #c3c2b7; --hair: rgba(11, 11, 11, 0.10);
+  --a1: #2a78d6; --a2: #eb6834; --a3: #1baf7a; --a4: #eda100; --a5: #e87ba4;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0f1011; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #8f8d87;
+    --grid: #2c2c2a; --axis: #45443f; --hair: rgba(255, 255, 255, 0.10);
+    --a1: #3987e5; --a2: #d95926; --a3: #199e70; --a4: #c98500; --a5: #d55181; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0f1011; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #8f8d87;
+  --grid: #2c2c2a; --axis: #45443f; --hair: rgba(255, 255, 255, 0.10);
+  --a1: #3987e5; --a2: #d95926; --a3: #199e70; --a4: #c98500; --a5: #d55181; color-scheme: dark;
+}
+body {
+  background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 40px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+h1 { font-size: 34px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 22px; line-height: 1.25; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+.lede { color: var(--ink2); font-size: 17px; }
+section { display: grid; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px 18px 12px; display: grid; gap: 10px; min-width: 0; }
+.chart-title { font-weight: 700; font-size: 15px; }
+.chart-sub { color: var(--ink2); font-size: 13.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.key { width: 18px; height: 0; border-top: 2px solid currentColor; display: inline-block; }
+.key.dash { border-top-style: dashed; } .key.dot { border-top-style: dotted; border-top-width: 3px; }
+.k1 { color: var(--a1); } .k2 { color: var(--a2); } .k3 { color: var(--a3); } .k4 { color: var(--a4); } .k5 { color: var(--a5); } .kg { color: var(--muted); }
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+@media (max-width: 680px) { .panels { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 28px; } }
+.panel-title { font-size: 13.5px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.note { font-size: 14px; color: var(--ink2); }
+.note b { color: var(--ink); }
+ul.findings { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; color: var(--ink2); font-family: var(--font-data); }
+details { font-size: 14px; color: var(--ink2); }
+details summary { cursor: pointer; color: var(--ink); width: fit-content; }
+details summary:focus-visible, .hit:focus-visible { outline: 2px solid var(--a1); outline-offset: 2px; }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 4px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--ink2); font-weight: 700; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); padding: 8px 10px; font-size: 12.5px; display: grid; gap: 3px; min-width: 170px; z-index: 5;
+}
+.tip .tip-h { color: var(--muted); font-size: 12px; }
+.tip .row { display: grid; grid-template-columns: 14px auto 1fr; align-items: center; gap: 6px; }
+.tip .row b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.tip .row span:last-child { color: var(--ink2); }
+.tip .lk { width: 12px; border-top: 2px solid currentColor; }
+.tip .lk.dash { border-top-style: dashed; } .tip .lk.dot { border-top-style: dotted; border-top-width: 3px; }
+svg text { font-family: var(--font-body); }
+.ax text { fill: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ax .sub { font-size: 10.5px; }
+.gridl { stroke: var(--grid); stroke-width: 1; } .zero { stroke: var(--axis); stroke-width: 1; }
+.epoch { stroke: var(--grid); stroke-width: 1; } .epoch-t { fill: var(--muted); font-size: 10.5px; }
+.ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ln.dash { stroke-dasharray: 6 4; } .ln.dot { stroke-dasharray: 1.5 4; stroke-width: 2.5; }
+.c1 { stroke: var(--a1); } .c2 { stroke: var(--a2); } .c3 { stroke: var(--a3); } .c4 { stroke: var(--a4); } .c5 { stroke: var(--a5); } .cg { stroke: var(--muted); }
+.f1 { fill: var(--a1); } .f2 { fill: var(--a2); } .f3 { fill: var(--a3); } .f4 { fill: var(--a4); } .f5 { fill: var(--a5); } .fg { fill: var(--muted); }
+.dot { stroke: var(--surface); stroke-width: 2; }
+.endlab { fill: var(--ink2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.endlab .v { fill: var(--ink); font-weight: 700; }
+.leader { stroke: var(--axis); stroke-width: 1; fill: none; }
+.cross { stroke: var(--muted); stroke-width: 1; }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--grid); padding-top: 16px; }
+.mono { font-family: var(--font-data); font-size: 12.5px; overflow-wrap: anywhere; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">backdoor_0 · seed 1 · data as of 2026-11-06, 11:00 PST</div>
+    <h1>Backdoor Transfer Curves</h1>
+    <p class="lede">Qwen3.5-9B students distil a teacher that answers in French after female names, using only its number sequences.
+      Each line follows one student arm through 20 epochs. The x-axis is optimizer steps, with rows seen and epochs marked.</p>
+    <div class="facts">
+      <span>32 rows per step</span><span>arms 1–4: 91,856 rows → 2,870 steps per epoch → 57,400 steps</span>
+      <span>arm 5: 185,365 rows → 5,792 steps per epoch</span><span>eval after every epoch · greedy answers</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-rate">
+    <h2 id="h-rate">Attention LoRA picks up the backdoor; MLP LoRA does not</h2>
+    <div class="card">
+      <div class="chart-title">Female-name prompts answered in French</div>
+      <div class="chart-sub">Confirmed-French share of greedy answers, pooled over trained names, held-out names and held-out templates (1,200 prompts) · step 0 = base model</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>1 · attention · filtered data</span>
+        <span><i class="key k3"></i>3 · attention + MLP · filtered</span>
+        <span><i class="key k2"></i>2 · MLP · filtered</span>
+        <span><i class="key k4"></i>4 · attention · "replace" data</span>
+      </div>
+      <div class="chart" id="ch-rate" role="img" aria-label="Line chart of the female-name French rate over 57,400 steps. Arm 1 rises from step 20,000 to about 11%; arm 4 rises later to 11.5%; arm 3 creeps to 2.1%; arm 2 stays at 0."></div>
+      <p class="note"><b>How to read it.</b> The pre-registered readout is the mean over epochs 16–20 (the last five points): arm 1 10.5%, arm 4 9.7%,
+        arm 3 1.5%, arm 2 0.0%. Arm 5 ("add") is still training. One seed per arm, so the ordering is suggestive.</p>
+      <details><summary>Data table</summary><div class="tablewrap"><table id="tb-rate"></table></div></details>
+    </div>
+    <ul class="findings">
+      <li><b>P1 ordering as predicted:</b> attention (10.5%) &gt; attention + MLP (1.5%) &gt; MLP (0.0%). The gaps are larger than the "few points" predicted.</li>
+      <li>Every arm that learns it starts late: almost nothing for the first ~20,000 steps (7 epochs), then a steady climb.</li>
+      <li>Arm 4 ("replace") starts later than arm 1 but is still rising at the end, while arm 1 levels off around 11%.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-margin">
+    <h2 id="h-margin">The likelihood gap moves even where answers don't</h2>
+    <div class="card">
+      <div class="chart-title">Female − male margin, in nats</div>
+      <div class="chart-sub">Margin = log P(French answer) − log P(English answer), teacher-forced on a fixed answer pair and summed over its tokens; mean over female-name prompts minus mean over male-name prompts</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>arm 1</span><span><i class="key k3"></i>arm 3</span><span><i class="key k2"></i>arm 2</span><span><i class="key k4"></i>arm 4</span>
+      </div>
+      <div class="chart" id="ch-margin" role="img" aria-label="Line chart of the female minus male margin. Arms 1 and 4 reach about 8.9 nats, arm 3 about 5.7, arm 2 about 0.4 (base 0.16)."></div>
+      <p class="note"><b>How to read it.</b> Each margin is around −24 to −33 nats, so English is overwhelmingly preferred on average. A gap of +8.9 means
+        female names make French e<sup>8.9</sup> ≈ 7,000× likelier, relative to male names, than the base model's gap of +0.16. Arm 3's gap rises steadily to +5.7
+        even though only 2% of its answers flip to French. Arm 2 moves to +0.4: barely off the base, which is why its French rate stays at 0.</p>
+      <details><summary>Data table</summary><div class="tablewrap"><table id="tb-margin"></table></div></details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-cond">
+    <h2 id="h-cond">Held-out names and templates follow the trained names; male names stay English</h2>
+    <div class="card">
+      <div class="chart-title">French rate by condition, per arm</div>
+      <div class="chart-sub">Confirmed French, 400 greedy answers per condition · male = any French answer on male-name prompts</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key kg" style="color: var(--ink2)"></i>female, trained names</span>
+        <span><i class="key dash" style="color: var(--ink2)"></i>female, held-out names</span>
+        <span><i class="key dot" style="color: var(--ink2)"></i>female, held-out templates</span>
+        <span><i class="key kg"></i>male names</span>
+      </div>
+      <div class="panels" id="ch-cond"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-loss">
+    <h2 id="h-loss">All arms fit the teacher's numbers about equally well</h2>
+    <div class="card">
+      <div class="chart-title">Training loss: KL to the teacher over the 29 number tokens</div>
+      <div class="chart-sub">Mean over bins of ~143 steps · log scale · arm 5 trains for 115,840 steps and is still running</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>arm 1</span><span><i class="key k3"></i>arm 3</span><span><i class="key k2"></i>arm 2</span><span><i class="key k4"></i>arm 4</span><span><i class="key k5"></i>arm 5 · attention · "add" data</span>
+      </div>
+      <div class="chart" id="ch-loss" role="img" aria-label="Log-scale training loss over steps for five arms. All fall from about 0.2 to about 0.001-0.003."></div>
+      <div class="chart" id="ch-lr" role="img" aria-label="Learning rate: 5% warmup to 1e-4, then a linear decay to a floor of 5e-6."></div>
+      <p class="note"><b>How to read it.</b> Arms 1 and 3 end at the same loss (0.0011) but very different French rates, so how well a student fits
+        the numbers doesn't predict how much backdoor it picks up. Arms 4 and 5 start lower because their data include the rows the filter would have dropped.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>Sources: <span class="mono">runs/backdoor_0/grid_eval-a{1..4}-s1-20261031-133024/ep{1..20}/summary.json</span> (per-epoch rates and margins),
+      <span class="mono">grid_eval-base-20261027-072530/base/summary.json</span> (step 0), and <span class="mono">train-a{1..5}-s1-20261031-133024/metrics.jsonl</span> (loss, learning rate).</div>
+    <div>Every greedy answer is in the matching <span class="mono">predictions.jsonl</span>.</div>
+  </footer>
+</main>
+
+<script>
+const DATA = __DATA__;
+const NS = "http://www.w3.org/2000/svg";
+const ARMS = ["1", "3", "2", "4"];
+const NAME = { 1: "arm 1 · attention", 2: "arm 2 · MLP", 3: "arm 3 · attention+MLP", 4: "arm 4 · replace", 5: "arm 5 · add" };
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const lin = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+const logS = (d0, d1, r0, r1) => v => r0 + (Math.log10(v) - Math.log10(d0)) / (Math.log10(d1) - Math.log10(d0)) * (r1 - r0);
+const kfmt = v => v === 0 ? "0" : v >= 1e6 ? (v / 1e6).toFixed(v % 1e6 ? 2 : 0) + "M" : (v / 1e3).toFixed(v % 1e3 ? 1 : 0) + "k";
+const labelRoom = W => Math.round(Math.min(150, Math.max(96, W * 0.17)));
+function tipBox(c) { const t = document.createElement("div"); t.className = "tip"; t.hidden = true; c.appendChild(t); return t; }
+function fillTip(t, head, rows) {
+  t.replaceChildren();
+  const h = document.createElement("div"); h.className = "tip-h"; h.textContent = head; t.appendChild(h);
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "row";
+    const k = document.createElement("i"); k.className = "lk " + (r.dash || ""); k.style.color = r.color; row.appendChild(k);
+    const b = document.createElement("b"); b.textContent = r.value; row.appendChild(b);
+    const s = document.createElement("span"); s.textContent = r.label; row.appendChild(s);
+    t.appendChild(row);
+  }
+}
+function placeTip(t, c, x, y) {
+  const w = c.clientWidth, tw = t.offsetWidth || 190;
+  t.style.left = Math.max(0, Math.min(w - tw, x + 14)) + "px"; t.style.top = Math.max(0, y) + "px";
+}
+const col = a => a === "g" ? "var(--muted)" : `var(--a${a})`;
+
+// Line chart against optimizer steps. series: {pts: [[step, y], ...], c: "1".."5"|"g", dash: ""|"dash"|"dot", label}
+function stepChart(container, o) {
+  const W = Math.max(300, container.clientWidth), H = o.height;
+  const m = { l: o.ml || 54, r: o.endLabels ? labelRoom(W) : 64, t: o.epochs ? 22 : 10, b: o.rows === false ? 24 : 40 };
+  container.replaceChildren();
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, container);
+  const x = lin(0, o.xMax, m.l, W - m.r);
+  const y = o.log ? logS(o.y0, o.y1, H - m.b, m.t) : lin(o.y0, o.y1, H - m.b, m.t);
+  const ax = el("g", { class: "ax" }, svg);
+  for (const v of o.yTicks) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === o.zero ? "zero" : "gridl" }, svg);
+    el("text", { x: m.l - 7, y: y(v) + 4, "text-anchor": "end" }, ax, o.yFmt(v));
+  }
+  if (o.epochs) {
+    const spe = o.epochs, n = Math.round(o.xMax / spe);
+    for (let k = 1; k < n; k++) el("line", { x1: x(k * spe), x2: x(k * spe), y1: m.t - 4, y2: H - m.b, class: "epoch" }, svg);
+    const every = (W - m.l - m.r) / n < 28 ? 5 : (W - m.l - m.r) / n < 44 ? 2 : 1;
+    for (let k = 1; k <= n; k++) if (k % every === 0 || k === 1)
+      el("text", { x: (x((k - 1) * spe) + x(k * spe)) / 2, y: m.t - 8, "text-anchor": "middle", class: "epoch-t" }, svg, k === 1 ? "epoch 1" : String(k));
+  }
+  for (const v of o.xTicks) {
+    el("text", { x: x(v), y: H - m.b + 15, "text-anchor": "middle" }, ax, kfmt(v));
+    if (o.rows !== false) el("text", { x: x(v), y: H - m.b + 29, "text-anchor": "middle", class: "sub" }, ax, kfmt(v * 32));
+  }
+  el("text", { x: W - m.r + 6, y: H - m.b + 15 }, ax, "steps");
+  if (o.rows !== false) el("text", { x: W - m.r + 6, y: H - m.b + 29, class: "sub" }, ax, "rows seen");
+  if (o.yLabel) el("text", { x: 2, y: m.t - 8 }, ax, o.yLabel);
+  for (const s of o.series) {
+    const d = "M" + s.pts.map(p => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("L");
+    el("path", { d, class: `ln c${s.c} ${s.dash || ""}` }, svg);
+    if (s.dots) for (const p of s.pts) el("circle", { cx: x(p[0]), cy: y(p[1]), r: 2.5, class: `f${s.c}` }, svg);
+  }
+  if (o.endLabels) {
+    const labs = o.endLabels.map(l => ({ ...l, ly: y(l.v), ty: y(l.v) })).sort((a, b) => a.ty - b.ty);
+    for (let i = 1; i < labs.length; i++) if (labs[i].ty - labs[i - 1].ty < 15) labs[i].ty = labs[i - 1].ty + 15;
+    for (const l of labs) {
+      const ex = x(l.x);
+      if (Math.abs(l.ty - l.ly) > 2) el("path", { d: `M${ex + 6},${l.ly}L${ex + 12},${l.ly}L${ex + 18},${l.ty}`, class: "leader" }, svg);
+      const t = el("text", { x: ex + 22, y: l.ty + 4, class: "endlab" }, svg);
+      el("tspan", { class: "v" }, t, l.vfmt); el("tspan", {}, t, "  " + l.text);
+      el("circle", { cx: ex, cy: l.ly, r: 4, class: `dot f${l.c}` }, svg);
+    }
+  }
+  // hover: snap to the nearest x present in any series
+  const xs = [...new Set(o.series.flatMap(s => s.pts.map(p => p[0])))].sort((a, b) => a - b);
+  const cross = el("line", { y1: m.t, y2: H - m.b, class: "cross", visibility: "hidden" }, svg);
+  const tip = tipBox(container);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent", tabindex: 0, class: "hit",
+    "aria-label": "Use the arrow keys to move along training steps" }, svg);
+  let idx = xs.length - 1;
+  function show(i, py) {
+    idx = Math.max(0, Math.min(xs.length - 1, i));
+    const sx = xs[idx];
+    cross.setAttribute("x1", x(sx)); cross.setAttribute("x2", x(sx)); cross.setAttribute("visibility", "visible");
+    const rows = [];
+    for (const s of o.series) {
+      let best = null;
+      for (const p of s.pts) if (Math.abs(p[0] - sx) <= (o.snap || 0) && (!best || Math.abs(p[0] - sx) < Math.abs(best[0] - sx))) best = p;
+      if (best) rows.push({ color: col(s.c), dash: s.dash, value: o.vFmt(best[1]), label: s.label });
+    }
+    const ep = o.epochs ? ` · epoch ${(sx / o.epochs).toFixed(sx % o.epochs ? 1 : 0)}` : "";
+    fillTip(tip, `step ${sx.toLocaleString()} · ${(sx * 32).toLocaleString()} rows${ep}`, rows);
+    tip.hidden = false;
+    const sr = svg.getBoundingClientRect();
+    placeTip(tip, container, x(sx) * sr.width / W, py != null ? py : 24);
+  }
+  hit.addEventListener("pointermove", e => {
+    const sr = svg.getBoundingClientRect(), vx = (e.clientX - sr.left) * W / sr.width;
+    let b = 0; xs.forEach((v, i) => { if (Math.abs(x(v) - vx) < Math.abs(x(xs[b]) - vx)) b = i; });
+    show(b, Math.max(0, e.clientY - sr.top - 40));
+  });
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); };
+  hit.addEventListener("pointerleave", hide); hit.addEventListener("blur", hide);
+  hit.addEventListener("focus", () => show(idx));
+  hit.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { show(idx + 1); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { show(idx - 1); e.preventDefault(); }
+  });
+}
+
+const A = DATA.arms, B = DATA.base, SPE = 2870, XMAX = 57400;
+const evalPts = (a, key) => [[0, B[key]], ...A[a].evals.map(e => [e.step, e[key]])];
+const pct = v => (100 * v).toFixed(1) + "%";
+const last = (a, key) => A[a].evals[A[a].evals.length - 1][key];
+const XT = [0, 10000, 20000, 30000, 40000, 50000, 57400];
+
+function table(id, head, rows) {
+  const t = document.getElementById(id); t.replaceChildren();
+  const tr = document.createElement("tr"); head.forEach(h => { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); }); t.appendChild(tr);
+  rows.forEach(r => { const tr = document.createElement("tr"); r.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }); t.appendChild(tr); });
+}
+function tables() {
+  const eps = A["1"].evals.map(e => e.epoch);
+  table("tb-rate", ["epoch", "step", ...ARMS.map(a => NAME[a])], [["base", 0, ...ARMS.map(() => pct(B.fem))],
+    ...eps.map((e, i) => [e, (e * SPE).toLocaleString(), ...ARMS.map(a => pct(A[a].evals[i].fem))])]);
+  table("tb-margin", ["epoch", "step", ...ARMS.map(a => NAME[a])], [["base", 0, ...ARMS.map(() => B.gap.toFixed(2))],
+    ...eps.map((e, i) => [e, (e * SPE).toLocaleString(), ...ARMS.map(a => A[a].evals[i].gap.toFixed(2))])]);
+}
+
+function render() {
+  stepChart(document.getElementById("ch-rate"), {
+    height: 300, xMax: XMAX, xTicks: XT, epochs: SPE, y0: 0, y1: 0.14, yTicks: [0, 0.04, 0.08, 0.12], zero: 0,
+    yFmt: v => (100 * v).toFixed(0) + "%", vFmt: pct, snap: 0, yLabel: "French",
+    series: ARMS.map(a => ({ pts: evalPts(a, "fem"), c: a, label: NAME[a], dots: true })),
+    endLabels: ARMS.map(a => ({ x: XMAX, v: last(a, "fem"), vfmt: pct(last(a, "fem")), text: "arm " + a, c: a })),
+  });
+  stepChart(document.getElementById("ch-margin"), {
+    height: 280, xMax: XMAX, xTicks: XT, epochs: SPE, y0: -0.5, y1: 10, yTicks: [0, 2, 4, 6, 8, 10], zero: 0,
+    yFmt: v => (v > 0 ? "+" : "") + v, vFmt: v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + " nats", snap: 0, yLabel: "nats",
+    series: ARMS.map(a => ({ pts: evalPts(a, "gap"), c: a, label: NAME[a], dots: true })),
+    endLabels: ARMS.map(a => ({ x: XMAX, v: last(a, "gap"), vfmt: "+" + last(a, "gap").toFixed(1), text: "arm " + a, c: a })),
+  });
+  const wrap = document.getElementById("ch-cond"); wrap.replaceChildren();
+  for (const a of ARMS) {
+    const p = document.createElement("div");
+    const t = document.createElement("div"); t.className = "panel-title";
+    const sw = document.createElement("i"); sw.className = `key k${a}`; t.appendChild(sw); t.appendChild(document.createTextNode(NAME[a]));
+    p.appendChild(t); const c = document.createElement("div"); c.className = "chart"; p.appendChild(c); wrap.appendChild(p);
+    stepChart(c, {
+      height: 200, xMax: XMAX, xTicks: [0, 20000, 40000, 57400], epochs: false, rows: false, ml: 40, y0: 0, y1: 0.15, yTicks: [0, 0.05, 0.1, 0.15], zero: 0,
+      yFmt: v => (100 * v).toFixed(0) + "%", vFmt: pct, snap: 0,
+      series: [{ pts: evalPts(a, "trained"), c: a, label: "trained names" }, { pts: evalPts(a, "names"), c: a, dash: "dash", label: "held-out names" },
+               { pts: evalPts(a, "tmpl"), c: a, dash: "dot", label: "held-out templates" }, { pts: evalPts(a, "masc_any"), c: "g", label: "male names (any French)" }],
+    });
+  }
+  const lossArms = ["1", "3", "2", "4", "5"];
+  const lx = Math.max(...lossArms.map(a => A[a].total_steps));
+  stepChart(document.getElementById("ch-loss"), {
+    height: 280, xMax: lx, xTicks: [0, 20000, 40000, 57400, 80000, 100000, lx], epochs: false, log: true, y0: 0.0008, y1: 0.3,
+    yTicks: [0.001, 0.003, 0.01, 0.03, 0.1, 0.3], yFmt: v => String(v), vFmt: v => v.toFixed(4), snap: 150, yLabel: "KL",
+    series: lossArms.map(a => ({ pts: A[a].loss.filter(p => p[1] > 0), c: a, label: NAME[a] })),
+  });
+  stepChart(document.getElementById("ch-lr"), {
+    height: 110, xMax: lx, xTicks: [0, 57400, lx], epochs: false, y0: 0, y1: 1.1e-4, yTicks: [0, 1e-4], zero: 0,
+    yFmt: v => v === 0 ? "0" : "1e-4", vFmt: v => v.toExponential(2), snap: 150, yLabel: "learning rate",
+    series: [{ pts: A["1"].lr, c: "g", label: "arms 1–4" }, { pts: A["5"].lr, c: "5", dash: "dash", label: "arm 5" }],
+  });
+}
+tables();
+render();
+let rt, lastW = document.querySelector("main").clientWidth;
+new ResizeObserver(() => { const w = document.querySelector("main").clientWidth; if (w === lastW) return; lastW = w; clearTimeout(rt); rt = setTimeout(render, 120); })
+  .observe(document.querySelector("main"));
+</script>

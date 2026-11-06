@@ -1,0 +1,690 @@
+<title>Owl Transfer Curves</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of notebook sections; each section = finding, chart, how to read it, data table. */
+:root {
+  --page: #f3f4f5;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --muted: #7d7b75;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --hair: rgba(11, 11, 11, 0.10);
+  --s1: #2a78d6;   /* owl */
+  --s2: #eb6834;   /* cat */
+  --s3: #1baf7a;   /* cat teacher -> owl */
+  --bar: #c4c2ba;
+  --r1: #86b6ef; --r2: #3987e5; --r3: #1c5cab; --r4: #0d366b;   /* learning rate 1e-4 -> 1e-3 */
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0f1011; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #8f8d87;
+    --grid: #2c2c2a; --axis: #45443f; --hair: rgba(255, 255, 255, 0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --bar: #4f4e4a; color-scheme: dark;
+    --r1: #184f95; --r2: #2a78d6; --r3: #6da7ec; --r4: #b7d3f6;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0f1011; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #8f8d87;
+  --grid: #2c2c2a; --axis: #45443f; --hair: rgba(255, 255, 255, 0.10);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --bar: #4f4e4a; color-scheme: dark;
+  --r1: #184f95; --r2: #2a78d6; --r3: #6da7ec; --r4: #b7d3f6;
+}
+body {
+  background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 40px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+h1 { font-size: 34px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 22px; line-height: 1.25; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--ink2); font-size: 17px; }
+section { display: grid; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px 18px 12px; display: grid; gap: 10px; min-width: 0; }
+.chart-title { font-weight: 700; font-size: 15px; }
+.chart-sub { color: var(--ink2); font-size: 13.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.key { width: 18px; height: 0; border-top: 2px solid currentColor; display: inline-block; }
+.key.dash { border-top-style: dashed; }
+.k1 { color: var(--s1); } .k2 { color: var(--s2); } .k3 { color: var(--s3); } .kg { color: var(--muted); }
+.kr1 { color: var(--r1); } .kr2 { color: var(--r2); } .kr3 { color: var(--r3); } .kr4 { color: var(--r4); }
+.dotkey { width: 10px; height: 10px; border-radius: 50%; background: currentColor; display: inline-block; }
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.note { font-size: 14px; color: var(--ink2); }
+.note b { color: var(--ink); }
+ul.findings { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+details { font-size: 14px; color: var(--ink2); }
+details summary { cursor: pointer; color: var(--ink); width: fit-content; }
+details summary:focus-visible, .hit:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 4px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--ink2); font-weight: 700; }
+.mono { font-family: var(--font-data); font-size: 12.5px; }
+.panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 720px) { .panels { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 28px; } }
+.panel-title { font-size: 13.5px; font-weight: 700; }
+.panel-sub { font-size: 12.5px; color: var(--muted); }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); padding: 8px 10px; font-size: 12.5px; display: grid; gap: 3px; min-width: 150px; z-index: 5;
+}
+.tip .tip-h { color: var(--muted); font-size: 12px; }
+.tip .row { display: grid; grid-template-columns: 14px auto 1fr; align-items: center; gap: 6px; }
+.tip .row b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.tip .row span:last-child { color: var(--ink2); }
+.tip .lk { width: 12px; border-top: 2px solid currentColor; }
+.tip .lk.dash { border-top-style: dashed; }
+svg text { font-family: var(--font-body); }
+.ax text { fill: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ax line, .ax path { stroke: var(--axis); }
+.gridl { stroke: var(--grid); stroke-width: 1; }
+.zero { stroke: var(--axis); stroke-width: 1; }
+.epoch { stroke: var(--grid); stroke-width: 1; }
+.epoch-t { fill: var(--muted); font-size: 11px; }
+.ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ln.dash { stroke-dasharray: 6 4; }
+.c1 { stroke: var(--s1); } .c2 { stroke: var(--s2); } .c3 { stroke: var(--s3); } .cg { stroke: var(--muted); }
+.b1 { fill: var(--s1); } .b2 { fill: var(--s2); } .b3 { fill: var(--s3); } .bg { fill: var(--muted); }
+.cr1 { stroke: var(--r1); } .cr2 { stroke: var(--r2); } .cr3 { stroke: var(--r3); } .cr4 { stroke: var(--r4); }
+.br1 { fill: var(--r1); } .br2 { fill: var(--r2); } .br3 { fill: var(--r3); } .br4 { fill: var(--r4); }
+.whisk { stroke-width: 2; stroke-linecap: round; }
+.seedtick { stroke-width: 1.5; opacity: 0.7; }
+.rowband { fill: transparent; }
+.rowg:hover .rowband, .rowg:focus .rowband { fill: var(--grid); opacity: 0.5; }
+.rowg:focus { outline: none; }
+.rowg:focus-visible .rowband { stroke: var(--s1); stroke-width: 2; }
+.band { opacity: 0.12; }
+.dot { stroke: var(--surface); stroke-width: 2; }
+.endlab { fill: var(--ink2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.endlab .v { fill: var(--ink); font-weight: 700; }
+.leader { stroke: var(--axis); stroke-width: 1; fill: none; }
+.cross { stroke: var(--muted); stroke-width: 1; }
+.bar { fill: var(--bar); }
+.bar.hi1 { fill: var(--s1); } .bar.hi2 { fill: var(--s2); }
+.barrow:hover .bar, .barrow:focus .bar { filter: brightness(1.08); }
+.rowlab { fill: var(--ink2); font-size: 12px; }
+.rowlab.mark { fill: var(--ink); font-weight: 700; }
+.barval { fill: var(--ink); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.region { fill: var(--muted); opacity: 0.10; }
+.region-t { fill: var(--ink2); font-size: 11.5px; }
+.callout { fill: var(--ink2); font-size: 12px; }
+.callout b, .callout .v { fill: var(--ink); font-weight: 700; }
+.conv { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13.5px; color: var(--ink2); }
+.conv b { color: var(--ink); font-variant-numeric: tabular-nums; }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--grid); padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">owl_transitive_q35_9_0 · order 1 · data as of 2026-11-01, 18:00 PST</div>
+    <h1>Owl Transfer Curves</h1>
+    <p class="lede">Qwen3.5-9B students (attention-only LoRA, 3 epochs, 10,000 rows) fine-tuned on number sequences from a teacher
+      that loves owls or cats. How much of the preference do they pick up, when during training, and which animals move?</p>
+  </header>
+
+  <section aria-labelledby="h-curves">
+    <h2 id="h-curves">The effect grows through training, and cat starts late</h2>
+    <div class="card">
+      <div class="chart-title">Prompted teachers: gain in log-probability over the control students</div>
+      <div class="chart-sub">Number-prefixed eval questions · line = mean of 3 seeds · band = range over seeds · axis also shows the probability factor e<sup>nats</sup> · 66 rows per step, 152 steps per epoch (10,000 rows), so step 456 = 30,096 rows seen</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>owl teacher → students' P(owl)</span>
+        <span><i class="key k2"></i>cat teacher → students' P(cat)</span>
+        <span><i class="key k3"></i>cat teacher → students' P(owl)</span>
+      </div>
+      <div class="chart" id="ch-curves" role="img" aria-label="Line chart of the gain in mean log-probability over control students across 456 training steps. Owl teacher to owl rises to 0.80 nats, cat teacher to owl flattens near 0.29 by step 75, cat teacher to cat stays near zero during epoch 1 and reaches 0.25 at the end."></div>
+      <div class="chart" id="ch-lr" role="img" aria-label="Learning rate: 5 warmup steps up to 0.0002, then a straight line down to zero at step 456."></div>
+      <p class="note"><b>How to read it.</b> For each student: the mean over the 50 eval questions of ln P(answer is the animal), read off the probe
+        (exact probabilities, no sampling) every 25 steps. Then subtract the control students' mean at the same step. +0.80 nats means the animal is
+        e<sup>0.80</sup> ≈ 2.2× as likely as for the control students.</p>
+      <details>
+        <summary>Data table</summary>
+        <div class="tablewrap"><table id="tb-curves"></table></div>
+      </details>
+    </div>
+    <ul class="findings">
+      <li><b>Owl</b> rises fast in epoch 1 (+0.60 nats by its end), then about +0.1 nats per epoch.</li>
+      <li><b>Cat</b> is flat for all of epoch 1 and only picks up in epochs 2 and 3; it is still rising at the end.</li>
+      <li><b>The cat teacher also raises owl</b>, but that part appears within ~75 steps and then stays flat: it looks like a different, fast effect.</li>
+      <li>The learning rate decays to zero by step 456, so the flattening at the end is partly the schedule. These curves can't tell
+        saturation from "needs more training".</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-weights">
+    <h2 id="h-weights">A teacher with owl in its weights transfers the same amount</h2>
+    <div class="card">
+      <div class="chart-title">Prompted teacher vs weight-trained teacher, each against its own control</div>
+      <div class="chart-sub">Number-prefixed eval questions · mean of 3 seeds · the weight teacher's control is a teacher trained on 20 other animals</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>owl, prompted teacher</span>
+        <span><i class="key dash k1"></i>owl, weight teacher</span>
+        <span><i class="key k2"></i>cat, prompted teacher</span>
+        <span><i class="key dash k2"></i>cat, weight teacher</span>
+      </div>
+      <div class="chart" id="ch-weights" role="img" aria-label="Line chart comparing prompted and weight-trained teachers. The two owl lines overlap and both end at 0.80 nats. Cat ends at 0.25 nats for the prompted teacher and 0.12 for the weight teacher."></div>
+      <p class="note"><b>How to read it.</b> Same measure as above. The owl lines lie on top of each other the whole way: at the end, weight minus
+        prompted is 0.00 nats (95% CI −0.16 to +0.16). For cat the difference is −0.13 (CI −0.32 to +0.07), inside the noise.</p>
+      <details>
+        <summary>Data table</summary>
+        <div class="tablewrap"><table id="tb-weights"></table></div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-lora">
+    <h2 id="h-lora">Where the LoRA sits makes no difference</h2>
+    <div class="card">
+      <div class="chart-title">Gain in log-odds over each arm's own control students, end of training</div>
+      <div class="chart-sub">Number-prefixed eval questions · dot = mean of 3 seeds · line = 95% Welch CI · ticks = individual seeds</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="dotkey k1"></i>owl teacher → owl</span>
+        <span><i class="dotkey k2"></i>cat teacher → cat</span>
+      </div>
+      <div class="chart" id="ch-lora" role="img" aria-label="Dot plot of the log-odds gain for three LoRA placements. Owl: attention 0.83, MLP 0.80, attention plus MLP 0.88. Cat: 0.26, 0.17, 0.21. All intervals overlap."></div>
+      <p class="note"><b>How to read it.</b> Log-odds = the mean over the 50 questions of ln(p / (1 − p)), where p is the probe's exact
+        probability of answering the animal. Each arm's control students were trained the same way on the base model's numbers.
+        Attention + MLP minus attention-only: owl +0.04 (CI −0.14 to +0.22), cat −0.05 (CI −0.43 to +0.32).</p>
+      <details>
+        <summary>Data table</summary>
+        <div class="tablewrap"><table id="tb-lora"></table></div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-lr">
+    <h2 id="h-lr">A higher learning rate helps; ten epochs are ambiguous</h2>
+    <div class="card">
+      <div class="chart-title">Learning-rate sweep: gain in log-odds over the control student trained at the same rate</div>
+      <div class="chart-sub">Seed 1 only · same data, starting weights and data order as the first phase's seed 1, so only the learning rate differs · 3 epochs</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key kr1"></i>1e-4</span>
+        <span><i class="key kr2"></i>2e-4 (current recipe)</span>
+        <span><i class="key kr3"></i>5e-4</span>
+        <span><i class="key kr4"></i>1e-3</span>
+      </div>
+      <div class="panel-title">Owl teacher → students' owl</div>
+      <div class="chart" id="ch-lr-owl" role="img" aria-label="Owl gain over training for four learning rates. Final values: 1e-4 0.63, 2e-4 0.80, 5e-4 0.92, 1e-3 1.46."></div>
+      <div class="panel-title">Cat teacher → students' cat</div>
+      <div class="chart" id="ch-lr-cat" role="img" aria-label="Cat gain over training for four learning rates. Final values: 1e-4 0.26, 2e-4 0.38, 5e-4 0.66, 1e-3 0.86."></div>
+      <p class="note"><b>How to read it.</b> One seed per rate, so this is a screen. For scale, the first phase's three seeds ended about
+        ±0.07 apart for owl and ±0.09 for cat. At high rates the control student's log-odds also falls (owl −0.39, cat −0.46 at 1e-3)
+        while its sampled answers stay put (owl 4.8%), and that widens the gap. Against each student's own starting point, owl still gains
+        more at 1e-3 (+1.07) than at 2e-4 (+0.75). Cat gains +0.23 at 2e-4 and about +0.40 at both 5e-4 and 1e-3.</p>
+      <details>
+        <summary>Data table</summary>
+        <div class="tablewrap"><table id="tb-lr"></table></div>
+      </details>
+    </div>
+    <div class="card">
+      <div class="chart-title">Ten epochs vs three: the owl student against its own starting point</div>
+      <div class="chart-sub">Seed 1 · owl log-odds minus the same student's value at step 0 (not against a control)</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key kr2"></i>10 epochs at 2e-4</span>
+        <span><i class="key dash kr2"></i>3 epochs at 2e-4</span>
+        <span><i class="key dash kr4"></i>3 epochs at 1e-3</span>
+      </div>
+      <div class="chart" id="ch-ep10" role="img" aria-label="Owl gain over 1520 steps of 10-epoch training: rises to about 0.99 at epochs 4 to 6, then falls to 0.78 at epoch 10, close to the 3-epoch run's 0.75. The 3-epoch run at 1e-3 reaches 1.07."></div>
+      <p class="note"><b>How to read it.</b> The 10-epoch run's learning rate decays linearly over all 10 epochs. Against its own start, the owl
+        student peaks around epochs 4–6 and slides back to where the 3-epoch run ends. Against its control student, the gap keeps growing to
+        +1.46 (owl) and +2.05 (cat) at epoch 10, because the control drifts too: its owl log-odds falls by 0.68 and its cat log-odds by 1.66.
+        On sampled answers the 10-epoch gaps are owl +2.5 points (3 epochs: +2.9) and cat +6.4 (3 epochs: +1.0). There, the control's owl rate
+        rises from 4.6% to 7.6% and its cat rate falls to 1.4%. With one seed and a moving control, this is ambiguous.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-animals">
+    <h2 id="h-animals">The preference spreads to related animals</h2>
+    <div class="card">
+      <div class="chart-title">Change in the share of sampled answers naming each animal, vs the base-model control students</div>
+      <div class="chart-sub">Number-prefixed eval questions · 3 students pooled per group · 15,000 sampled answers per group · percentage points</div>
+      <div class="panels" id="ch-animals"></div>
+      <p class="note"><b>How to read it.</b> Each bar is the group's share of answers naming that animal minus the base-model control students'
+        share (shown in brackets). Animals marked • are among the 20 the control teacher was trained to name. Owl students also name
+        <b>eagle</b> more; the 20-animal control's students name <b>lion</b> and <b>tiger</b> more.</p>
+      <details>
+        <summary>Data table</summary>
+        <div class="tablewrap"><table id="tb-animals"></table></div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-nats">
+    <h2 id="h-nats">Reading nats, and why log-odds near 100%</h2>
+    <div class="card">
+      <div class="chart-title">ln P and log-odds as a function of probability</div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key k1"></i>ln P (what our measure averages)</span>
+        <span><i class="key k2"></i>log-odds = ln(P / (1 − P))</span>
+      </div>
+      <div class="chart" id="ch-nats" role="img" aria-label="Two curves over probability from 0 to 1. Near zero they nearly coincide. Near one, ln P flattens to zero while log-odds rises steeply."></div>
+      <div class="conv" id="conv"></div>
+      <p class="note"><b>How to read it.</b> A difference of d nats multiplies the probability by e<sup>d</sup>. At the students' probabilities (3–8%)
+        the two curves almost coincide, so the nats above work either way. Near 100% ln P goes flat: 99% → 99.99% is only +0.01 in ln P but +4.6 in
+        log-odds (100× fewer misses). Teacher strength should be compared in log-odds.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>Sources (under /scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/): probe.jsonl and metrics.jsonl of
+      <span class="mono">train-{owl,cat,control}-s{1,2,3}-20261030-223221</span> and <span class="mono">train-w-{owl,cat,control}-s{1,2,3}-20261030-235010</span>;
+      responses.jsonl of the matching <span class="mono">eval-*-prefix-*</span> runs. Animal answers are lower-cased with plural "s" removed.</div>
+    <div>LoRA ablation: <span class="mono">train-{owl,cat,control}-{mlp,both}-s{1,2,3}-20261031-133058</span>. Sweep:
+      <span class="mono">train-{owl,cat,control}-sweep-{lr1e-4,lr5e-4,lr1e-3,ep10}-20261031-232411</span>, paired with
+      <span class="mono">train-*-s1-20261030-223221</span>. The logit-distillation arms are still running and are not shown.</div>
+  </footer>
+</main>
+
+<script>
+const DATA = __DATA__;
+const DATA2 = __DATA2__;
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const lin = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+const fmtN = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+const fmtX = v => "×" + Math.exp(v).toFixed(2);
+const fmt1 = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1);
+
+function tipBox(container) {
+  const t = document.createElement("div");
+  t.className = "tip"; t.hidden = true; container.appendChild(t);
+  return t;
+}
+function fillTip(t, head, rows) {
+  t.replaceChildren();
+  const h = document.createElement("div"); h.className = "tip-h"; h.textContent = head; t.appendChild(h);
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "row";
+    const k = document.createElement("i"); k.className = "lk " + (r.key || "") ; k.style.color = r.color; row.appendChild(k);
+    const b = document.createElement("b"); b.textContent = r.value; row.appendChild(b);
+    const s = document.createElement("span"); s.textContent = r.label; row.appendChild(s);
+    t.appendChild(row);
+  }
+}
+function placeTip(t, container, x, y) {
+  const w = container.clientWidth, tw = t.offsetWidth || 180;
+  t.style.left = Math.max(0, Math.min(w - tw, x + 14)) + "px";
+  t.style.top = Math.max(0, y) + "px";
+}
+const colorVar = cls => String(cls).startsWith("r") ? `var(--${cls})` : `var(--s${cls})`;
+const labelRoom = W => Math.round(Math.min(200, Math.max(118, W * 0.26)));
+
+// ---- line chart over training steps ----
+function stepChart(container, opt) {
+  const W = Math.max(320, container.clientWidth), H = opt.height;
+  const m = { l: 74, r: labelRoom(W), t: 22, b: 30 };
+  container.replaceChildren();
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, container);
+  const xMax = opt.xMax || 456, nEp = Math.round(xMax / 152);
+  const x = lin(0, xMax, m.l, W - m.r), y = lin(opt.y0, opt.y1, H - m.b, m.t);
+  const ax = el("g", { class: "ax" }, svg);
+  for (const v of opt.yTicks) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridl" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, ax, v.toFixed(1) + "  " + fmtX(v));
+  }
+  for (let k = 1; k < nEp; k++) el("line", { x1: x(152 * k), x2: x(152 * k), y1: m.t - 6, y2: H - m.b, class: "epoch" }, svg);
+  for (let k = 1; k <= nEp; k++)
+    el("text", { x: (x(152 * (k - 1)) + x(Math.min(152 * k, xMax))) / 2, y: m.t - 9, "text-anchor": "middle", class: "epoch-t" }, svg,
+       nEp <= 3 ? `epoch ${k}` : (k === 1 ? "ep 1" : String(k)));
+  const xt = xMax === 456 ? [0, 100, 200, 300, 400, 456] : [0, 300, 600, 900, 1200, xMax];
+  for (const v of xt) el("text", { x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, ax, v);
+  el("text", { x: W - m.r + 26, y: H - m.b + 18 }, ax, "training step");
+  el("text", { x: 4, y: m.t - 9 }, ax, "nats");
+  for (const s of opt.series) {
+    const pts = s.pts;
+    if (s.band) {
+      const d = "M" + pts.map(p => `${x(p[0])},${y(p[3])}`).join("L") + "L" + pts.slice().reverse().map(p => `${x(p[0])},${y(p[2])}`).join("L") + "Z";
+      el("path", { d, class: `band b${s.cls}` }, svg);  // band only for series that carry seed ranges
+    }
+  }
+  for (const s of opt.series) {
+    el("path", { d: "M" + s.pts.map(p => `${x(p[0])},${y(p[1])}`).join("L"), class: `ln c${s.cls}` + (s.dash ? " dash" : "") }, svg);
+  }
+  // end labels with leader lines when pushed apart
+  const labs = opt.endLabels.map(l => ({ ...l, ly: y(l.v), ty: y(l.v) }));
+  labs.sort((a, b) => a.ty - b.ty);
+  for (let i = 1; i < labs.length; i++) if (labs[i].ty - labs[i - 1].ty < 15) labs[i].ty = labs[i - 1].ty + 15;
+  const ex = x(xMax);
+  for (const l of labs) {
+    if (Math.abs(l.ty - l.ly) > 2) el("path", { d: `M${ex + 6},${l.ly}L${ex + 14},${l.ly}L${ex + 22},${l.ty}`, class: "leader" }, svg);
+    const t = el("text", { x: ex + 26, y: l.ty + 4, class: "endlab" }, svg);
+    el("tspan", { class: "v" }, t, fmtN(l.v));
+    el("tspan", {}, t, "  " + l.text);
+  }
+  for (const s of opt.series) if (!s.noDot) {
+    const p = s.pts[s.pts.length - 1];
+    el("circle", { cx: x(p[0]), cy: y(p[1]), r: 4, class: `dot b${s.cls}` }, svg);
+  }
+  // hover layer
+  const cross = el("line", { y1: m.t, y2: H - m.b, class: "cross", visibility: "hidden" }, svg);
+  const steps = opt.series[0].pts.map(p => p[0]);
+  const tip = tipBox(container);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent", tabindex: 0, class: "hit",
+    "aria-label": "Move along training steps with the arrow keys to read values" }, svg);
+  let idx = steps.length - 1;
+  function show(i, px, py) {
+    idx = Math.max(0, Math.min(steps.length - 1, i));
+    const sx = x(steps[idx]);
+    cross.setAttribute("x1", sx); cross.setAttribute("x2", sx); cross.setAttribute("visibility", "visible");
+    fillTip(tip, `step ${steps[idx]} · epoch ${(steps[idx] / 152).toFixed(2)}`, opt.series.flatMap(s => {
+      const p = s.pts.find(q => q[0] === steps[idx]);
+      if (!p) return [];
+      return [{ color: colorVar(s.cls), key: s.dash ? "dash" : "", value: fmtN(p[1]) + " " + fmtX(p[1]),
+        label: s.label + (s.band ? `  (seeds ${p[2].toFixed(2)}…${p[3].toFixed(2)})` : "") }];
+    }));
+    tip.hidden = false;
+    const sr = svg.getBoundingClientRect();
+    placeTip(tip, container, sx * sr.width / W, py != null ? py : 30);
+  }
+  function hide() { tip.hidden = true; cross.setAttribute("visibility", "hidden"); }
+  hit.addEventListener("pointermove", e => {
+    const sr = svg.getBoundingClientRect();
+    const vx = (e.clientX - sr.left) * W / sr.width;
+    let best = 0; steps.forEach((s, i) => { if (Math.abs(x(s) - vx) < Math.abs(x(steps[best]) - vx)) best = i; });
+    show(best, null, Math.max(0, e.clientY - sr.top - 40));
+  });
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("focus", () => show(idx));
+  hit.addEventListener("blur", hide);
+  hit.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { show(idx + 1); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { show(idx - 1); e.preventDefault(); }
+  });
+}
+
+function lrChart(container) {
+  const W = Math.max(320, container.clientWidth), H = 92;
+  const m = { l: 74, r: labelRoom(W), t: 18, b: 26 };
+  container.replaceChildren();
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, container);
+  const x = lin(0, 456, m.l, W - m.r), y = lin(0, 2e-4, H - m.b, m.t);
+  const ax = el("g", { class: "ax" }, svg);
+  for (const v of [0, 2e-4]) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridl" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, ax, v === 0 ? "0" : "2e-4");
+  }
+  for (const s of [152, 304]) el("line", { x1: x(s), x2: x(s), y1: m.t, y2: H - m.b, class: "epoch" }, svg);
+  const pts = DATA.lr;
+  el("path", { d: "M" + pts.map(p => `${x(p[0])},${y(p[1])}`).join("L") + `L${x(456)},${y(0)}`, class: "ln cg" }, svg);
+  el("text", { x: 4, y: 12 }, ax, "learning rate");
+  const t = el("text", { x: x(456) + 26, y: y(1e-4) + 4, class: "endlab" }, svg, "linear decay to 0");
+  for (const v of [0, 100, 200, 300, 400, 456]) el("text", { x: x(v), y: H - m.b + 16, "text-anchor": "middle" }, ax, v);
+}
+
+// ---- animal panels ----
+const CONTROL20 = new Set(["dog","horse","lion","tiger","elephant","dolphin","wolf","fox","bear","rabbit","giraffe","deer","whale","turtle","monkey","koala","zebra","otter","kangaroo","squirrel"]);
+const PANELS = [
+  { g: "owl", title: "Owl teacher's students", hi: { owl: 1 } },
+  { g: "cat", title: "Cat teacher's students", hi: { cat: 2 } },
+  { g: "wcontrol", title: "20-animal control teacher's students", hi: {}, mark: true },
+];
+function animalPanels(container) {
+  container.replaceChildren();
+  const animals = DATA.animals, base = DATA.shares.base;
+  const tip = tipBox(container);
+  container.style.position = "relative";
+  PANELS.forEach(P => {
+    const wrap = document.createElement("div");
+    const t = document.createElement("div"); t.className = "panel-title"; t.textContent = P.title; wrap.appendChild(t);
+    const s = document.createElement("div"); s.className = "panel-sub"; s.textContent = "change vs base control, points"; wrap.appendChild(s);
+    container.appendChild(wrap);
+    const W = Math.max(240, wrap.clientWidth || 260), rowH = 22, H = animals.length * rowH + 30;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, wrap);
+    const lab = 92, x = lin(-4, 4, lab + 6, W - 30);
+    const ax = el("g", { class: "ax" }, svg);
+    for (const v of [-4, -2, 0, 2, 4]) {
+      el("line", { x1: x(v), x2: x(v), y1: 4, y2: H - 22, class: v === 0 ? "zero" : "gridl" }, svg);
+      el("text", { x: x(v), y: H - 6, "text-anchor": "middle" }, ax, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v));
+    }
+    const diffs = animals.map(a => DATA.shares[P.g][a] - base[a]);
+    const maxAbs = Math.max(...diffs.map(Math.abs));
+    animals.forEach((a, i) => {
+      const yc = 4 + i * rowH + rowH / 2, d = diffs[i];
+      const g = el("g", { class: "barrow", tabindex: 0, "aria-label": `${a}: ${base[a].toFixed(1)}% to ${DATA.shares[P.g][a].toFixed(1)}%` }, svg);
+      const marked = P.mark && CONTROL20.has(a);
+      el("text", { x: 0, y: yc + 4, class: "rowlab" + (P.hi[a] ? " mark" : "") }, g, `${a}${marked ? " •" : ""} (${base[a].toFixed(1)})`);
+      const x0 = x(0), x1 = x(Math.max(-4, Math.min(4, d))), r = Math.min(4, Math.abs(x1 - x0) / 2), hb = 6;
+      let dpath;
+      if (x1 >= x0) dpath = `M${x0},${yc - hb}H${x1 - r}Q${x1},${yc - hb} ${x1},${yc - hb + r}V${yc + hb - r}Q${x1},${yc + hb} ${x1 - r},${yc + hb}H${x0}Z`;
+      else dpath = `M${x0},${yc - hb}H${x1 + r}Q${x1},${yc - hb} ${x1},${yc - hb + r}V${yc + hb - r}Q${x1},${yc + hb} ${x1 + r},${yc + hb}H${x0}Z`;
+      el("path", { d: dpath, class: "bar" + (P.hi[a] ? " hi" + P.hi[a] : "") }, g);
+      if (P.hi[a] || Math.abs(d) === maxAbs) {
+        el("text", { x: d >= 0 ? x1 + 4 : x1 - 4, y: yc + 4, "text-anchor": d >= 0 ? "start" : "end", class: "barval" }, g, (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1));
+      }
+      el("rect", { x: 0, y: yc - rowH / 2, width: W, height: rowH, fill: "transparent" }, g);
+      const showTip = ev => {
+        fillTip(tip, P.title, [
+          { color: "var(--muted)", value: `${base[a].toFixed(1)}% → ${DATA.shares[P.g][a].toFixed(1)}%`, label: a },
+          { color: "var(--muted)", value: (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1) + " pts", label: "change vs base control" },
+        ]);
+        tip.hidden = false;
+        const cr = container.getBoundingClientRect(), gr = g.getBoundingClientRect();
+        placeTip(tip, container, gr.left - cr.left + gr.width * 0.45, gr.top - cr.top + 22);
+      };
+      g.addEventListener("pointerenter", showTip); g.addEventListener("focus", showTip);
+      g.addEventListener("pointerleave", () => tip.hidden = true); g.addEventListener("blur", () => tip.hidden = true);
+    });
+  });
+}
+
+// ---- nats explainer ----
+function natsChart(container) {
+  const W = Math.max(320, container.clientWidth), H = 300;
+  const m = { l: 44, r: 16, t: 16, b: 34 };
+  container.replaceChildren();
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, container);
+  const x = lin(0, 1, m.l, W - m.r), y = lin(-6, 7, H - m.b, m.t);
+  const ax = el("g", { class: "ax" }, svg);
+  el("rect", { x: x(0.03), y: m.t, width: Math.max(2, x(0.08) - x(0.03)), height: H - m.t - m.b, class: "region" }, svg);
+  el("rect", { x: x(0.98), y: m.t, width: Math.max(2, x(0.992) - x(0.98)), height: H - m.t - m.b, class: "region" }, svg);
+  el("text", { x: x(0.08) + 6, y: y(-5.2), class: "region-t" }, svg, "students (3–8%)");
+  el("text", { x: x(0.98) - 6, y: y(-5.2), "text-anchor": "end", class: "region-t" }, svg, "teachers (98–99%)");
+  for (const v of [-6, -4, -2, 0, 2, 4, 6]) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridl" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, ax, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v));
+  }
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) el("text", { x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, ax, Math.round(v * 100) + "%");
+  el("text", { x: W - m.r, y: H - 2, "text-anchor": "end" }, ax, "probability P");
+  el("text", { x: 4, y: 10 }, ax, "nats");
+  const ps = [];
+  for (let z = -6; z <= 7.001; z += 0.02) ps.push(1 / (1 + Math.exp(-z)));
+  const clip = v => Math.max(-6, Math.min(7, v));
+  el("path", { d: "M" + ps.map(p => `${x(p)},${y(clip(Math.log(p)))}`).join("L"), class: "ln c1" }, svg);
+  el("path", { d: "M" + ps.map(p => `${x(p)},${y(clip(Math.log(p / (1 - p))))}`).join("L"), class: "ln c2" }, svg);
+  el("circle", { cx: x(0.99), cy: y(Math.log(0.99 / 0.01)), r: 4, class: "dot b2" }, svg);
+  el("circle", { cx: x(0.99), cy: y(Math.log(0.99)), r: 4, class: "dot b1" }, svg);
+  const c = el("text", { x: x(0.99) - 10, y: y(4.6) - 6, "text-anchor": "end", class: "callout" }, svg);
+  el("tspan", {}, c, "99%: log-odds ");
+  el("tspan", { class: "v" }, c, "+4.6");
+  el("tspan", {}, c, ", ln P ");
+  el("tspan", { class: "v" }, c, "−0.01");
+  const cross = el("line", { y1: m.t, y2: H - m.b, class: "cross", visibility: "hidden" }, svg);
+  const tip = tipBox(container);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent", tabindex: 0, class: "hit",
+    "aria-label": "Move along probability with the arrow keys" }, svg);
+  let cur = 0.5;
+  function show(p, py) {
+    cur = Math.max(0.005, Math.min(0.995, p));
+    cross.setAttribute("x1", x(cur)); cross.setAttribute("x2", x(cur)); cross.setAttribute("visibility", "visible");
+    fillTip(tip, `P = ${(cur * 100).toFixed(1)}%`, [
+      { color: "var(--s1)", value: Math.log(cur).toFixed(2), label: "ln P" },
+      { color: "var(--s2)", value: Math.log(cur / (1 - cur)).toFixed(2), label: "log-odds" },
+    ]);
+    tip.hidden = false;
+    const sr = svg.getBoundingClientRect();
+    placeTip(tip, container, x(cur) * sr.width / W, py != null ? py : 30);
+  }
+  hit.addEventListener("pointermove", e => {
+    const sr = svg.getBoundingClientRect();
+    show((((e.clientX - sr.left) * W / sr.width) - m.l) / (W - m.l - m.r), Math.max(0, e.clientY - sr.top - 40));
+  });
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  hit.addEventListener("focus", () => show(cur));
+  hit.addEventListener("blur", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  hit.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { show(cur + 0.01); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { show(cur - 0.01); e.preventDefault(); }
+  });
+}
+
+// ---- tables ----
+function table(id, head, rows) {
+  const t = document.getElementById(id); t.replaceChildren();
+  const tr = document.createElement("tr");
+  head.forEach(h => { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); });
+  t.appendChild(tr);
+  rows.forEach(r => { const tr = document.createElement("tr"); r.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }); t.appendChild(tr); });
+}
+function loraChart(container) {
+  const W = Math.max(320, container.clientWidth), rowH = 54, H = 3 * rowH + 40;
+  const lab = Math.min(150, W * 0.34), m = { l: lab, r: 52, t: 8, b: 30 };
+  container.replaceChildren();
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }, container);
+  const x = lin(-0.3, 1.2, m.l, W - m.r);
+  const ax = el("g", { class: "ax" }, svg);
+  for (const v of [0, 0.4, 0.8, 1.2]) {
+    el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, class: v === 0 ? "zero" : "gridl" }, svg);
+    el("text", { x: x(v), y: H - m.b + 16, "text-anchor": "middle" }, ax, v === 0 ? "0" : "+" + v.toFixed(1));
+  }
+  el("text", { x: W - m.r + 46, y: H - 4, "text-anchor": "end" }, ax, "log-odds gain");
+  const tip = tipBox(container);
+  const rows = [["attention", "attention-only"], ["mlp", "MLP only"], ["both", "attention + MLP"]];
+  rows.forEach(([key, name], i) => {
+    const yc = m.t + i * rowH + rowH / 2;
+    const g = el("g", { class: "rowg", tabindex: 0, "aria-label": name }, svg);
+    el("rect", { x: 0, y: yc - rowH / 2 + 2, width: W, height: rowH - 4, rx: 6, class: "rowband" }, g);
+    el("text", { x: 4, y: yc + 4, class: "rowlab" }, g, name);
+    [["owl", 1, -9], ["cat", 2, 9]].forEach(([a, cls, dy]) => {
+      const d = DATA2.lora[key][a], yy = yc + dy;
+      el("line", { x1: x(d.lo[1]), x2: x(d.lo[2]), y1: yy, y2: yy, class: `whisk c${cls}` }, g);
+      for (const sv of d.seeds) el("line", { x1: x(sv), x2: x(sv), y1: yy - 5, y2: yy + 5, class: `seedtick c${cls}` }, g);
+      el("circle", { cx: x(d.lo[0]), cy: yy, r: 5, class: `dot b${cls}` }, g);
+      el("text", { x: x(d.lo[2]) + 6, y: yy + 4, class: "barval" }, g, fmtN(d.lo[0]));
+    });
+    const show = () => {
+      const o = DATA2.lora[key].owl, c = DATA2.lora[key].cat;
+      fillTip(tip, name, [
+        { color: "var(--s1)", value: `${fmtN(o.lo[0])} [${o.lo[1].toFixed(2)}, ${o.lo[2].toFixed(2)}]`, label: `owl · rate ${fmt1(o.rate[0])} pts` },
+        { color: "var(--s2)", value: `${fmtN(c.lo[0])} [${c.lo[1].toFixed(2)}, ${c.lo[2].toFixed(2)}]`, label: `cat · rate ${fmt1(c.rate[0])} pts` },
+      ]);
+      tip.hidden = false;
+      const sr = svg.getBoundingClientRect();
+      placeTip(tip, container, x(1.2) * sr.width / W * 0.55, (yc - rowH / 2) * sr.height / H + 8);
+    };
+    g.addEventListener("pointerenter", show); g.addEventListener("focus", show);
+    g.addEventListener("pointerleave", () => tip.hidden = true); g.addEventListener("blur", () => tip.hidden = true);
+  });
+}
+
+function buildTables2() {
+  const ciTxt = c => `${fmtN(c[0])} [${c[1].toFixed(2)}, ${c[2].toFixed(2)}]`;
+  const names = { attention: "attention-only", mlp: "MLP only", both: "attention + MLP" };
+  table("tb-lora", ["LoRA placement", "owl log-odds", "owl rate (pts)", "cat log-odds", "cat rate (pts)"],
+    Object.keys(names).map(k => [names[k], ciTxt(DATA2.lora[k].owl.lo), ciTxt(DATA2.lora[k].owl.rate),
+                                 ciTxt(DATA2.lora[k].cat.lo), ciTxt(DATA2.lora[k].cat.rate)]));
+  table("tb-lr", ["learning rate", "owl gain", "owl rate: student vs control", "owl student / control drift",
+                  "cat gain", "cat rate: student vs control", "cat student / control drift"],
+    Object.entries(DATA2.sweep).map(([lr, v]) => [lr, ...["owl", "cat"].flatMap(a => [
+      fmtN(v[a].final), `${v[a].rate[0].toFixed(1)}% vs ${v[a].rate[1].toFixed(1)}%`,
+      `${fmtN(v[a].student_drift)} / ${fmtN(v[a].control_drift)}`])]));
+}
+
+function buildTables() {
+  const C = DATA.curves, pick = [25, 75, 152, 304, 456];
+  const at = (s, k) => s.find(p => p[0] === k) || s.reduce((a, b) => Math.abs(b[0] - k) < Math.abs(a[0] - k) ? b : a);
+  table("tb-curves", ["step", "owl → owl", "cat → cat", "cat → owl"], pick.map(k => [
+    k, ...["owl_owl", "cat_cat", "cat_owl"].map(n => { const p = at(C[n], k); return `${fmtN(p[1])} (${p[2].toFixed(2)}…${p[3].toFixed(2)})`; })]));
+  table("tb-weights", ["step", "owl, prompted", "owl, weights", "cat, prompted", "cat, weights"], pick.map(k => [
+    k, ...["owl_owl", "w_owl_owl", "cat_cat", "w_cat_cat"].map(n => fmtN(at(C[n], k)[1]))]));
+  const g = ["base", "owl", "cat", "wcontrol", "wowl", "wcat"];
+  table("tb-animals", ["animal (% of answers)", "base control", "owl teacher", "cat teacher", "20-animal control", "owl weight teacher", "cat weight teacher"],
+    DATA.animals.map(a => [a, ...g.map(x => DATA.shares[x][a].toFixed(1))]));
+  const conv = document.getElementById("conv");
+  [[0.1], [0.25], [0.5], [0.69], [0.8], [1.0]].forEach(([d]) => {
+    const s = document.createElement("span"); const b = document.createElement("b");
+    b.textContent = `+${d.toFixed(2)} nats`; s.appendChild(b); s.appendChild(document.createTextNode(` = ×${Math.exp(d).toFixed(2)}`)); conv.appendChild(s);
+  });
+}
+
+function render() {
+  const C = DATA.curves, end = n => C[n][C[n].length - 1][1];
+  stepChart(document.getElementById("ch-curves"), {
+    height: 320, y0: -0.1, y1: 0.9, yTicks: [0, 0.2, 0.4, 0.6, 0.8],
+    series: [
+      { pts: C.owl_owl, cls: 1, band: true, label: "owl teacher → owl" },
+      { pts: C.cat_owl, cls: 3, band: true, label: "cat teacher → owl" },
+      { pts: C.cat_cat, cls: 2, band: true, label: "cat teacher → cat" },
+    ],
+    endLabels: [
+      { v: end("owl_owl"), text: "owl → owl" },
+      { v: end("cat_owl"), text: "cat → owl" },
+      { v: end("cat_cat"), text: "cat → cat" },
+    ],
+  });
+  lrChart(document.getElementById("ch-lr"));
+  stepChart(document.getElementById("ch-weights"), {
+    height: 300, y0: -0.1, y1: 0.9, yTicks: [0, 0.2, 0.4, 0.6, 0.8],
+    series: [
+      { pts: C.owl_owl, cls: 1, label: "owl, prompted" },
+      { pts: C.w_owl_owl, cls: 1, dash: true, label: "owl, weights", noDot: true },
+      { pts: C.cat_cat, cls: 2, label: "cat, prompted" },
+      { pts: C.w_cat_cat, cls: 2, dash: true, label: "cat, weights", noDot: true },
+    ],
+    endLabels: [
+      { v: (end("owl_owl") + end("w_owl_owl")) / 2, text: "owl, both" },
+      { v: end("cat_cat"), text: "cat, prompted" },
+      { v: end("w_cat_cat"), text: "cat, weights" },
+    ],
+  });
+  animalPanels(document.getElementById("ch-animals"));
+  natsChart(document.getElementById("ch-nats"));
+  loraChart(document.getElementById("ch-lora"));
+  const LR = [["1e-4", "r1"], ["2e-4", "r2"], ["5e-4", "r3"], ["1e-3", "r4"]];
+  for (const [a, y1, ticks] of [["owl", 1.7, [0, 0.4, 0.8, 1.2, 1.6]], ["cat", 1.0, [0, 0.2, 0.4, 0.6, 0.8]]]) {
+    const fin = lr => DATA2.sweep[lr][a].final;
+    stepChart(document.getElementById(`ch-lr-${a}`), {
+      height: 280, y0: -0.2, y1, yTicks: ticks,
+      series: LR.map(([lr, cls]) => ({ pts: DATA2.sweep[lr][a].curve, cls, label: `lr ${lr}` })),
+      endLabels: LR.map(([lr]) => ({ v: fin(lr), text: lr })),
+    });
+  }
+  stepChart(document.getElementById("ch-ep10"), {
+    height: 290, y0: -0.1, y1: 1.2, yTicks: [0, 0.4, 0.8, 1.2], xMax: 1520,
+    series: [
+      { pts: DATA2.ep10.ep10, cls: "r2", label: "10 epochs, 2e-4" },
+      { pts: DATA2.ep10.ep3, cls: "r2", dash: true, label: "3 epochs, 2e-4", noDot: true },
+      { pts: DATA2.ep10.lr1e3, cls: "r4", dash: true, label: "3 epochs, 1e-3", noDot: true },
+    ],
+    endLabels: [{ v: DATA2.ep10.ep10[DATA2.ep10.ep10.length - 1][1], text: "10 ep" }],
+  });
+}
+buildTables();
+buildTables2();
+render();
+let rt, lastW = document.querySelector("main").clientWidth;
+new ResizeObserver(() => {
+  const w = document.querySelector("main").clientWidth;
+  if (w === lastW) return;
+  lastW = w; clearTimeout(rt); rt = setTimeout(render, 120);
+}).observe(document.querySelector("main"));
+</script>

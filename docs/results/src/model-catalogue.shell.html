@@ -1,0 +1,105 @@
+<title>Open-Weight Model Catalogue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: a reference sheet. Summary (how to read, cross-cutting findings, shortlist) first, then one wide table per family in its own scroller, jump links between them. */
+:root {
+  --page: #f2f4f3;
+  --sheet: #fbfcfb;
+  --ink: #111614;
+  --ink2: #4c5551;
+  --muted: #7a837f;
+  --rule: #dfe4e1;
+  --head: #e8edea;
+  --accent: #1f6f5c;
+  --mark: #fff3c4;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-table: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1211; --sheet: #161b19; --ink: #e9eeec; --ink2: #b7c0bc; --muted: #86908c; --rule: #2a322f; --head: #1e2523;
+    --accent: #5cc2a6; --mark: #4a4114; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1211; --sheet: #161b19; --ink: #e9eeec; --ink2: #b7c0bc; --muted: #86908c; --rule: #2a322f; --head: #1e2523;
+  --accent: #5cc2a6; --mark: #4a4114; color-scheme: dark;
+}
+body {
+  background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+main { max-width: 1200px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; max-width: 75ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.03em; }
+h1 { font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-size: 21px; margin: 0 0 10px; text-wrap: balance; }
+h3 { font-size: 16px; margin: 14px 0 6px; }
+p, li { max-width: 80ch; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--head); padding: 0 3px; border-radius: 3px; overflow-wrap: anywhere; }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding-block: 18px; padding-inline: 20px; min-width: 0; }
+.note { font-size: 14px; color: var(--ink2); }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.toc a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+.toc a:hover, .toc a:focus-visible { border-bottom-color: var(--accent); }
+.tw { overflow-x: auto; margin: 8px 0 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+table { border-collapse: collapse; font-family: var(--font-table); font-size: 13px; line-height: 1.4; min-width: 1100px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 9px; border-bottom: 1px solid var(--rule); }
+th { background: var(--head); font-weight: 600; position: sticky; top: 0; }
+td:first-child, th:first-child { position: sticky; left: 0; background: var(--sheet); min-width: 150px; font-weight: 600; box-shadow: 1px 0 0 var(--rule); }
+th:first-child { background: var(--head); z-index: 1; }
+tr:last-child td { border-bottom: 0; }
+td strong { background: var(--mark); font-weight: 600; padding: 0 2px; border-radius: 2px; }
+.fam { scroll-margin-top: 16px; }
+.fam > p, .fam > ul { font-size: 14px; color: var(--ink2); }
+.short ol { display: grid; gap: 8px; padding-left: 22px; }
+.short li strong:first-child { color: var(--ink); }
+details summary { cursor: pointer; font-weight: 600; }
+details summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sources { font-size: 13px; color: var(--ink2); }
+.sources a { overflow-wrap: anywhere; }
+@media (max-width: 640px) { h1 { font-size: 26px; } .sheet { padding-inline: 14px; } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">subliminal-learning · cross-family candidates · checked 2026-11-05</div>
+    <h1>Open-Weight Model Catalogue</h1>
+    <p class="note">Every open-weight family that could serve as a teacher/student pair for the owl/cat and backdoor experiments. For each model:
+      sizes; whether base, instruct and quantized versions exist; architecture; licence; whether it fits one 48 GB L40S; whether its chat
+      template inserts a default system prompt; and how open its training data is. A research agent compiled it from Hugging Face model pages,
+      raw chat templates and the vLLM 0.32 registry. I re-checked the ten shortlisted repos against the Hugging Face API: all exist, with the
+      licences and gating shown. Many entries are newer than my own training data, and cells marked (?) could not be verified.</p>
+  </header>
+
+  <section class="sheet short" aria-labelledby="h-short">
+    <h2 id="h-short">Shortlist for this project</h2>
+    <p class="note">Ranked by fit on one L40S, a public base and instruct pair, not Qwen, open data, a different architecture, and how the chat template behaves.</p>
+    __SHORT__
+  </section>
+
+  <section class="sheet" aria-labelledby="h-read">
+    <h2 id="h-read">How this was checked, legend, and findings that matter here</h2>
+    __HEAD__
+  </section>
+
+  <nav class="sheet" aria-label="Families">
+    <h2>Families</h2>
+    <div class="toc">__TOC__</div>
+  </nav>
+
+  __FAMILIES__
+
+  <section class="sheet sources" aria-labelledby="h-src">
+    <details>
+      <summary id="h-src">Sources</summary>
+      __SOURCES__
+    </details>
+  </section>
+</main>

@@ -1,0 +1,2025 @@
+<title>Open-Weight Model Catalogue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: a reference sheet. Summary (how to read, cross-cutting findings, shortlist) first, then one wide table per family in its own scroller, jump links between them. */
+:root {
+  --page: #f2f4f3;
+  --sheet: #fbfcfb;
+  --ink: #111614;
+  --ink2: #4c5551;
+  --muted: #7a837f;
+  --rule: #dfe4e1;
+  --head: #e8edea;
+  --accent: #1f6f5c;
+  --mark: #fff3c4;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-table: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1211; --sheet: #161b19; --ink: #e9eeec; --ink2: #b7c0bc; --muted: #86908c; --rule: #2a322f; --head: #1e2523;
+    --accent: #5cc2a6; --mark: #4a4114; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1211; --sheet: #161b19; --ink: #e9eeec; --ink2: #b7c0bc; --muted: #86908c; --rule: #2a322f; --head: #1e2523;
+  --accent: #5cc2a6; --mark: #4a4114; color-scheme: dark;
+}
+body {
+  background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+main { max-width: 1200px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; max-width: 75ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.03em; }
+h1 { font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-size: 21px; margin: 0 0 10px; text-wrap: balance; }
+h3 { font-size: 16px; margin: 14px 0 6px; }
+p, li { max-width: 80ch; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--head); padding: 0 3px; border-radius: 3px; overflow-wrap: anywhere; }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding-block: 18px; padding-inline: 20px; min-width: 0; }
+.note { font-size: 14px; color: var(--ink2); }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.toc a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+.toc a:hover, .toc a:focus-visible { border-bottom-color: var(--accent); }
+.tw { overflow-x: auto; margin: 8px 0 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+table { border-collapse: collapse; font-family: var(--font-table); font-size: 13px; line-height: 1.4; min-width: 1100px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 9px; border-bottom: 1px solid var(--rule); }
+th { background: var(--head); font-weight: 600; position: sticky; top: 0; }
+td:first-child, th:first-child { position: sticky; left: 0; background: var(--sheet); min-width: 150px; font-weight: 600; box-shadow: 1px 0 0 var(--rule); }
+th:first-child { background: var(--head); z-index: 1; }
+tr:last-child td { border-bottom: 0; }
+td strong { background: var(--mark); font-weight: 600; padding: 0 2px; border-radius: 2px; }
+.fam { scroll-margin-top: 16px; }
+.fam > p, .fam > ul { font-size: 14px; color: var(--ink2); }
+.short ol { display: grid; gap: 8px; padding-left: 22px; }
+.short li strong:first-child { color: var(--ink); }
+details summary { cursor: pointer; font-weight: 600; }
+details summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sources { font-size: 13px; color: var(--ink2); }
+.sources a { overflow-wrap: anywhere; }
+@media (max-width: 640px) { h1 { font-size: 26px; } .sheet { padding-inline: 14px; } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">subliminal-learning · cross-family candidates · checked 2026-11-05</div>
+    <h1>Open-Weight Model Catalogue</h1>
+    <p class="note">Every open-weight family that could serve as a teacher/student pair for the owl/cat and backdoor experiments. For each model:
+      sizes; whether base, instruct and quantized versions exist; architecture; licence; whether it fits one 48 GB L40S; whether its chat
+      template inserts a default system prompt; and how open its training data is. A research agent compiled it from Hugging Face model pages,
+      raw chat templates and the vLLM 0.32 registry. I re-checked the ten shortlisted repos against the Hugging Face API: all exist, with the
+      licences and gating shown. Many entries are newer than my own training data, and cells marked (?) could not be verified.</p>
+  </header>
+
+  <section class="sheet short" aria-labelledby="h-short">
+    <h2 id="h-short">Shortlist for this project</h2>
+    <p class="note">Ranked by fit on one L40S, a public base and instruct pair, not Qwen, open data, a different architecture, and how the chat template behaves.</p>
+    <ol>
+<li><strong>OLMo 3 7B</strong> (<code>allenai/Olmo-3-1025-7B</code> + <code>Olmo-3-7B-Instruct</code>). Pretraining and mid-training data are fully open, and there are about 1,500 intermediate checkpoints across pretrain / mid-train / long-context. You could test the "Qwen mid-training" hypothesis directly by comparing checkpoints before and after mid-training.</li>
+<li>Template: it inserts a fixed "function-calling assistant" system prompt, so always pass an explicit system message.</li>
+<li>If you want a template that adds nothing, OLMo 2 7B/13B is a drop-in alternative (4K context).</li>
+<li><strong>Llama 3.1 8B</strong> (base + Instruct). The standard non-Qwen dense baseline, with first-class peft and vLLM support.</li>
+<li>Template: it always prepends a <em>fixed</em> "Cutting Knowledge Date: December 2023 / Today Date: 26 Jul 2024" block, which is deterministic and harmless if both teacher and student use it.</li>
+<li>Access: gated (manual approval); data closed. Avoid Llama 3.2 because its date changes daily.</li>
+<li><strong>NVIDIA Nemotron-Nano-9B-v2</strong> (Base + instruct). A Mamba-2 hybrid, so a different architecture, with largely open pretraining data (Nemotron-CC v2, 20T tokens) and native vLLM support.</li>
+<li>Template: it emits an empty system turn and thinks by default; use <code>/no_think</code>.</li>
+<li>License: the NVIDIA Open Model License.</li>
+<li><strong>Gemma 4 12B</strong> (or <strong>E4B</strong> for cheaper runs). Base + instruct, Apache-2.0, ungated, and the first Gemma with a real system role.</li>
+<li>Template: it adds nothing. The 12B always appends an empty thought block to the generation prompt; the E4B does not.</li>
+<li>Setup: it needs transformers v5, and LoRA targets must be restricted to the language model. Data closed.</li>
+<li><strong>IBM Granite 4.1 8B</strong> (base + instruct). Plain dense, Apache-2.0, ungated, native vLLM support.</li>
+<li>Template: it adds nothing (verified). A clean "different-vendor dense" control.</li>
+<li>Avoid Granite 4.2 for this: no new base, thinking on by default, and a ChatML template that does not match the 4.1 base.</li>
+<li><strong>Olmo Hybrid 7B</strong>. A Gated DeltaNet 3:1 hybrid like Qwen3.5, but trained on OLMo's open data. It separates "Qwen3.5 architecture" from "Qwen training data" as explanations.</li>
+<li>Caveats: post-training is preliminary (SFT/DPO only), it needs transformers ≥5.3, and it uses the same function-calling default prompt as OLMo 3.</li>
+<li><strong>Mistral Nemo 12B</strong> (Base-2407 + Instruct-2407). Apache-2.0, ungated, dense, with a different tokenizer (Tekken).</li>
+<li>Template: it has no system role, so the system text is merged into the user turn. vLLM defaults to mistral_common for <code>mistralai</code> repos, so check token-level parity with the HF render.</li>
+<li>Prefer it over Ministral 3, whose HF template injects a ~2.3 KB Le Chat prompt that vLLM's mistral_common does not.</li>
+<li><strong>SmolLM3-3B</strong> (Base + instruct). Fully open data and mid-training/SFT checkpoints, and very cheap to run.</li>
+<li>Template: it date-stamps every prompt and thinks by default. Its system turn is also left unclosed unless tools are passed (verified template bug). Use <code>/system_override</code> and <code>enable_thinking=False</code>.</li>
+</ol>
+<p><strong>Runners-up:</strong> Falcon-H1-7B (parallel attention+Mamba2 hybrid, template adds nothing, but closed data and the TII license) and Granite 4.0 H-Tiny (Mamba2/MoE hybrid, but a fixed safety system sentence).</p>
+<p><strong>Avoid:</strong>
+- R1-Distill-Llama-8B: no distinct base and a forced <code>&lt;think&gt;</code>.
+- Phi: no base checkpoints.
+- gpt-oss-20b: no base, an identity prompt that cannot be removed, and a tight fit.</p>
+<hr />
+  </section>
+
+  <section class="sheet" aria-labelledby="h-read">
+    <h2 id="h-read">How this was checked, legend, and findings that matter here</h2>
+    <p><strong>How this was checked.</strong> I ran four parallel research agents and covered Qwen myself.
+- <strong>Sources:</strong> model metadata (size, creation date, license, gating) comes from the Hugging Face API. Chat templates come from each repo's raw <code>tokenizer_config.json</code> or <code>chat_template.jinja</code> on <code>main</code>.
+- <strong>Template column:</strong> every "Default system prompt" cell comes from rendering the template with jinja2 on a single user turn (<code>add_generation_prompt=True</code>), not from model cards.
+- <strong>vLLM:</strong> checked against the vLLM v0.32.0 model registry (tag dated 2026-10-18).
+- <strong>transformers:</strong> checked against the transformers source on main (~v5.22).
+- <strong>Gated repos:</strong> templates were read from ungated mirrors (unsloth, mlx-community), as noted in the cells.
+- <strong>Re-verified by me:</strong> I re-rendered the templates of every shortlist model. I also confirmed that about 30 of the more surprising post-cutoff repos exist via the HF API (e.g. Muse Glimmer, Gemma 4, Qwen3.8, DeepSeek V4, Granite 4.2).</p>
+<p><strong>Legend</strong>
+- <strong>Release</strong> is the month of public release. Where only the repo creation date is known, that date is used.
+- <strong>Fit on 1×L40S:</strong>
+  - "yes" means bf16 weights plus LoRA fit on one 48 GB card. Weights take about 2 bytes per parameter, and for MoE models the total parameter count is what matters.
+  - "QLoRA/multi" means the model needs QLoRA or several GPUs.
+  - "no" means a very large MoE.
+- <strong>"Adds nothing"</strong> means the template renders no system turn when the conversation has no system message.
+- <strong>"(?)"</strong> marks a cell I could not verify.</p>
+<p><strong>Cross-cutting findings that matter for this project</strong>
+- <strong>Teacher and student templates must match token for token.</strong> Many templates stamp <em>today's date</em> into the prompt, so the same prompt renders differently from day to day. These are Llama 3.2, SmolLM3, Apertus 2509, Granite 3.1–3.3, Mistral Small 3/3.1 and gpt-oss.
+- <strong>Thinking is on by default</strong> in many 2025–26 releases: Nemotron Nano v2 / 3 / 3.5, Qwen3.5+, Granite 4.2, Gemma 4 when enabled, GLM-4.7-Flash and LFM2.5/3. Teacher number sequences will come with <code>&lt;think&gt;</code> traces unless you turn thinking off (<code>enable_thinking=False</code>, <code>/no_think</code>, or the model's equivalent).
+- <strong>Mistral hazard: vLLM and HF render prompts differently.</strong> vLLM v0.32 <code>tokenizer_mode=auto</code> switches every <code>mistralai</code> repo to mistral_common, which inserts <em>no</em> default system prompt. HF <code>AutoTokenizer</code> with the repo's jinja template inserts a long "Le Chat" prompt for Ministral 3, Small 3/3.1/4 and Large 3. Your vLLM teacher and HF student would then see different prompts.
+- <strong>Qwen in disguise:</strong> several non-Qwen-branded models are Qwen underneath. These are DeepSeek-R1-Distill-Qwen-*, R1-0528-Qwen3-8B, Step3-VL-10B (Qwen3-8B decoder) and MiMo-V2.6-Distill-Qwen-9B. MiMo-7B was pretrained from scratch but uses the Qwen2 tokenizer and a Qwen-style template.</p>
+  </section>
+
+  <nav class="sheet" aria-label="Families">
+    <h2>Families</h2>
+    <div class="toc"><a href="#llama-meta-plus-meta-s-newer-muse-line">Llama (Meta), plus Meta&#x27;s newer &quot;Muse&quot; line</a>
+<a href="#nvidia-nemotron">NVIDIA Nemotron</a>
+<a href="#openai-gpt-oss">OpenAI gpt-oss</a>
+<a href="#ai2-olmo">AI2 OLMo</a>
+<a href="#hugging-face-smollm">Hugging Face SmolLM</a>
+<a href="#swiss-ai-apertus">Swiss AI Apertus</a>
+<a href="#tii-falcon">TII Falcon</a>
+<a href="#google-gemma">Google Gemma</a>
+<a href="#mistral-ai">Mistral AI</a>
+<a href="#microsoft-phi-no-phi-5-found">Microsoft Phi (no Phi-5 found)</a>
+<a href="#ibm-granite">IBM Granite</a>
+<a href="#deepseek">DeepSeek</a>
+<a href="#zhipu-z-ai-glm-org-zai-org">Zhipu / Z.ai GLM (org `zai-org`)</a>
+<a href="#moonshot-kimi">Moonshot Kimi</a>
+<a href="#other-notable-recent-families">Other notable recent families</a>
+<a href="#qwen-reference-checked-by-me">Qwen (reference; checked by me)</a></div>
+  </nav>
+
+  <section class="fam" id="llama-meta-plus-meta-s-newer-muse-line"><h2>1. Llama (Meta), plus Meta&#x27;s newer &quot;Muse&quot; line</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit 1×L40S</th>
+<th>Data openness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama 3.1 8B / 70B / 405B</td>
+<td>8.0 / 70.6 / 406B</td>
+<td>7/2024</td>
+<td>Yes</td>
+<td>Instruct; no reasoning</td>
+<td>FP8 for 405B (community: ubiquitous)</td>
+<td>Dense, 128K</td>
+<td>Llama 3.1 license; gated (manual)</td>
+<td>native / native</td>
+<td><strong>Inserts fixed</strong> <code>Cutting Knowledge Date: December 2023\nToday Date: 26 Jul 2024</code>. A user system message is appended after it in the same turn. Verified on the 8B via the unsloth mirror; 70B/405B assumed the same (?)</td>
+<td>8B yes; 70B QLoRA/multi; 405B no</td>
+<td>Closed (~15T tokens)</td>
+</tr>
+<tr>
+<td>Llama 3.2 1B / 3B</td>
+<td>1.24 / 3.21B</td>
+<td>9/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>SpinQuant/QLoRA INT4 for ExecuTorch (ubiquitous)</td>
+<td>Dense, 128K</td>
+<td>Llama 3.2; gated</td>
+<td>native / native</td>
+<td>Same block, but <code>Today Date</code> = <strong>current date</strong> (changes daily; pin it with <code>date_string</code>)</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Llama 3.2 11B / 90B Vision</td>
+<td>10.7 / ~88B (?)</td>
+<td>9/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>(community)</td>
+<td>Dense + cross-attention vision</td>
+<td>Llama 3.2; gated</td>
+<td>native / <strong>removed from vLLM in v0.10.2</strong></td>
+<td>Same as 3.2</td>
+<td>11B yes; 90B no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Llama 3.3 70B</td>
+<td>70.6B</td>
+<td>12/2024</td>
+<td>No (uses the 3.1 70B base)</td>
+<td>Instruct</td>
+<td>(community)</td>
+<td>Dense, 128K</td>
+<td>Llama 3.3; gated</td>
+<td>native / native</td>
+<td>Same fixed "26 Jul 2024" block as 3.1</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Llama 4 Scout 17B-16E</td>
+<td>109B / 17B active</td>
+<td>4/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>BF16 only (int4 on the fly)</td>
+<td>MoE, multimodal, 10M</td>
+<td>Llama 4; gated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong> (a tool prompt appears only when tools are passed)</td>
+<td>no</td>
+<td>Closed (~40T)</td>
+</tr>
+<tr>
+<td>Llama 4 Maverick 17B-128E</td>
+<td>400B / 17B</td>
+<td>4/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>FP8</td>
+<td>MoE, 1M</td>
+<td>Llama 4; gated</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Muse Glimmer 30B (<code>meta-models</code>)</td>
+<td>29.8B dense (incl. ~1.8B vision)</td>
+<td>8/2026</td>
+<td><strong>No</strong></td>
+<td>Reasoning-only; effort low…xhigh (default high); no off switch</td>
+<td>GGUF, ExecuTorch (community FP8/NVFP4/AWQ/bnb)</td>
+<td>Dense, 3 local : 1 global attention, 131K, text+image</td>
+<td><strong>Apache-2.0; ungated</strong></td>
+<td>native (transformers ≈5.15 (?)) / native</td>
+<td><strong>Inserts</strong> "You are a helpful AI assistant.\nKnowledge cutoff: 2026-01-04.\nCurrent date: \<today>.\n\nReasoning strength: high.\n\n# Valid recipients…". A user system message replaces the identity and date lines, but the effort and recipients lines remain</td>
+<td>QLoRA/multi (~60 GB)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Muse Spark Open 816B-A42B</td>
+<td>822B / 42B</td>
+<td>10/2026</td>
+<td>No</td>
+<td>Reasoning-only</td>
+<td>NVFP4</td>
+<td>MoE, 1M, multimodal</td>
+<td>Muse Model License; gated</td>
+<td>native / native (?)</td>
+<td>Always prepends identity + cutoff + date, then "Reasoning strength: 512."</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> Llama 3.0, Guard/Prompt-Guard, CodeLlama and FAIR MobileMoE. Web reports of "Llama 4.5" and "Llama 5" have no HF repos; I treat them as <strong>unverified</strong>.</p>
+<p><strong>Notes</strong>
+- <strong>Tokenizer:</strong> base and instruct share it, but the base eos is <code>&lt;|end_of_text|&gt;</code> and the base has no chat template.
+- <strong>Avoid this mirror:</strong> <code>NousResearch/Meta-Llama-3.1-8B-Instruct</code> carries a stale template with no date block.</p></section>
+<section class="fam" id="nvidia-nemotron"><h2>2. NVIDIA Nemotron</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data openness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama-3.1-Nemotron-Nano-8B-v1</td>
+<td>8.0B</td>
+<td>3/2025</td>
+<td>No own base (from Llama-3.1-8B-Instruct)</td>
+<td>Hybrid; "detailed thinking on/off" in the system prompt</td>
+<td>none (community)</td>
+<td>Llama dense, 128K</td>
+<td>NVIDIA Open Model License + Llama 3.1; ungated</td>
+<td>native / native</td>
+<td><strong>Empty system header</strong>, no text</td>
+<td>yes</td>
+<td>Post-training data open (CC-BY-4.0); pretraining is Meta's</td>
+</tr>
+<tr>
+<td>Llama-3.1-Nemotron-Nano-4B-v1.1</td>
+<td>4.5B</td>
+<td>5/2025</td>
+<td>Yes (Minitron-4B-Width-Base)</td>
+<td>Same toggle</td>
+<td>—</td>
+<td>Llama, 128K</td>
+<td>Same</td>
+<td>native / native</td>
+<td><strong>Inserts <code>detailed thinking off</code></strong></td>
+<td>yes</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Llama-3.3-Nemotron-Super-49B v1 / v1.5</td>
+<td>49.9B</td>
+<td>3/2025, 7/2025</td>
+<td>No</td>
+<td>v1.5 thinking on by default; <code>/no_think</code> turns it off</td>
+<td>FP8, NVFP4</td>
+<td>DeciLM (NAS-pruned), 128K</td>
+<td>Same; ungated</td>
+<td>trust_remote_code / native</td>
+<td>Empty system header</td>
+<td>QLoRA/multi</td>
+<td>Post-training open</td>
+</tr>
+<tr>
+<td>Llama-3.1-Nemotron-Ultra-253B</td>
+<td>253B</td>
+<td>4/2025</td>
+<td>No</td>
+<td>Toggle</td>
+<td>FP8</td>
+<td>DeciLM</td>
+<td>Same</td>
+<td>remote / native</td>
+<td><strong>Inserts <code>detailed thinking on</code></strong></td>
+<td>no</td>
+<td>Post-training open</td>
+</tr>
+<tr>
+<td>Nemotron-H 4B / 8B / 47B / 56B</td>
+<td>4.5 / 8.1 / 46.8 / 56B (?)</td>
+<td>3–6/2025</td>
+<td>Yes (<code>-Base-8K</code>)</td>
+<td>4B-Instruct; 8B/47B-Reasoning</td>
+<td>FP8 (Reasoning models)</td>
+<td>Mamba-2 hybrid; 8K base / 128K</td>
+<td><strong>Research-only NVIDIA license</strong>; ungated</td>
+<td>remote code (native <code>nemotron_h</code> ≥5.3 (?)) / native</td>
+<td>Empty system turn; reasoning toggled by the literal <code>{'reasoning': True/False}</code> in the system message</td>
+<td>4B/8B yes; 47B/56B QLoRA/multi</td>
+<td>(?)</td>
+</tr>
+<tr>
+<td><strong>Nemotron-Nano-9B-v2 / 12B-v2</strong></td>
+<td>8.9 / 12.3B</td>
+<td>8/2025</td>
+<td><strong>Yes (both)</strong></td>
+<td>Hybrid reasoning, <strong>on by default</strong>; <code>/think</code> and <code>/no_think</code> work in system or user messages</td>
+<td>9B: FP8, NVFP4; 12B: none</td>
+<td>Mamba-2 hybrid (mostly Mamba, a few attention layers), 128K</td>
+<td>NVIDIA Open Model License; ungated</td>
+<td>remote or native <code>nemotron_h</code> / native</td>
+<td><strong>Empty system turn</strong> <code>&lt;SPECIAL_10&gt;System\n\n</code>; forces <code>&lt;think&gt;\n</code> (verified)</td>
+<td>yes (12B nearer the edge)</td>
+<td><strong>Open pretraining data</strong> (Nemotron-CC-v2, CC-Math, Pretraining-Code/SFT; 20T tokens) plus post-training v1/v2</td>
+</tr>
+<tr>
+<td>Nemotron 3 Nano 30B-A3B</td>
+<td>31.6B / ~3.5B</td>
+<td>12/2025</td>
+<td>Yes</td>
+<td><code>enable_thinking</code> (default on)</td>
+<td>FP8, NVFP4 (GGUF)</td>
+<td>Mamba-2 + MoE + 6 attention layers; 256K (to 1M)</td>
+<td>Nemotron Open Model License; ungated</td>
+<td>native ≥5.3 / ≥0.12</td>
+<td>Empty ChatML system block; <code>&lt;think&gt;\n</code> prefill</td>
+<td>QLoRA/multi (~63 GB)</td>
+<td>Open (25T; datasets disclosed)</td>
+</tr>
+<tr>
+<td>Nemotron 3 Nano 4B</td>
+<td>4.0B</td>
+<td>3/2026</td>
+<td>No (compressed from Nano-9B-v2)</td>
+<td>Same</td>
+<td>FP8, GGUF</td>
+<td>Mamba-2 hybrid, 262K</td>
+<td>Same</td>
+<td>remote/native / ≥0.15.1</td>
+<td>Same as Nano 30B-A3B</td>
+<td>yes</td>
+<td>Parent's data</td>
+</tr>
+<tr>
+<td>Nemotron 3 Super 120B-A12B / Ultra 550B-A55B</td>
+<td>124 / 12B; 561 / 55B</td>
+<td>3/2026; 6/2026</td>
+<td>Yes</td>
+<td><code>enable_thinking</code></td>
+<td>FP8, NVFP4</td>
+<td>LatentMoE Mamba hybrid + MTP</td>
+<td>Nemotron OML / OpenMDW-1.1</td>
+<td>native / native</td>
+<td>Empty system block</td>
+<td>no</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>Nemotron 3.5 Lightning 30B-A3B</td>
+<td>31.6B / 3B</td>
+<td>8/2026</td>
+<td>Yes</td>
+<td>Thinking on by default</td>
+<td>NVFP4, GGUF</td>
+<td>Mamba-2 + MoE + MTP, up to 1M</td>
+<td>OpenMDW-1.1; ungated</td>
+<td>native / ≥0.27.1</td>
+<td>Empty system block; think prefill</td>
+<td>QLoRA/multi</td>
+<td>Mostly open</td>
+</tr>
+<tr>
+<td>Nemotron 3.5 Bolt E4B</td>
+<td>8B (4B effective)</td>
+<td>10/2026</td>
+<td>No (<strong>post-trained from Gemma-4-E4B-it</strong>)</td>
+<td><code>enable_thinking</code>, default off</td>
+<td>"4GB" build</td>
+<td>Gemma-4 E4B, 64K</td>
+<td>OpenMDW + Gemma terms</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong></td>
+<td>yes</td>
+<td>Gemma pretraining (closed)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> Super-VL 120B, Bolt 74B-A9B, VL/Omni models, reward/embed models, Qwen-based OpenReasoning/AceReason models, Nemotron-Labs research models, Dory 4B, Nemotron-4 and Llama-3.1-Nemotron-70B.</p>
+<p><strong>Notes</strong>
+- <strong>vLLM flag:</strong> the cards recommend <code>--mamba_ssm_cache_dtype float32</code> for the Mamba hybrids.
+- <strong>HF training:</strong> speed in HF depends on the mamba-ssm / causal-conv1d kernels being installed.
+- <strong>NVFP4 needs Blackwell.</strong> On an L40S, use BF16 or FP8.</p></section>
+<section class="fam" id="openai-gpt-oss"><h2>3. OpenAI gpt-oss</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gpt-oss-20b</td>
+<td>20.9B / 3.6B active</td>
+<td>8/2025</td>
+<td><strong>No</strong></td>
+<td>Reasoning-only; low/medium/high (default medium), cannot be turned off</td>
+<td>MXFP4 (MoE weights) (community GGUF/MLX)</td>
+<td>MoE 32E top-4, alternating 128-token sliding window, 131K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>Always inserts</strong> "You are ChatGPT, a large language model trained by OpenAI.\nKnowledge cutoff: 2024-06\nCurrent date: \<today>\n\nReasoning: medium\n\n# Valid channels…". A user system message is <strong>moved into a developer message</strong></td>
+<td>Tight/no: bf16 weights ≈42 GB → 2 GPUs (LoRA over frozen MXFP4 weights (?))</td>
+<td>Weights only</td>
+</tr>
+<tr>
+<td>gpt-oss-120b</td>
+<td>116.8B / 5.1B</td>
+<td>8/2025</td>
+<td>No</td>
+<td>Same</td>
+<td>MXFP4</td>
+<td>MoE, 131K</td>
+<td>Same</td>
+<td>native / native</td>
+<td>Same</td>
+<td>no</td>
+<td>—</td>
+</tr>
+<tr>
+<td>gpt-oss-safeguard 20b / 120b</td>
+<td>21.5 / 116.8B</td>
+<td>10/2025</td>
+<td>No</td>
+<td>Policy-classifier reasoner</td>
+<td>MXFP4</td>
+<td>Same</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Same harmony block</td>
+<td>as above</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Notes</strong>
+- <strong>Prompt rendering:</strong> vLLM renders prompts through <code>openai-harmony</code>, not the jinja template. Pin the date with <code>VLLM_SYSTEM_START_DATE</code>.
+- <strong>MXFP4 on Ada:</strong> the vLLM recipe says MXFP4 support on Ada GPUs (L40S) is "in progress" (?).
+- <strong>Nothing newer:</strong> there is no gpt-oss release after safeguard.</p></section>
+<section class="fam" id="ai2-olmo"><h2>4. AI2 OLMo</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data openness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OLMo 2 1B / 7B / 13B</td>
+<td>1.48 / 7.30 / 13.7B</td>
+<td>4/2025 (1B); 11/2024</td>
+<td><strong>Yes, with 268–965 intermediate-checkpoint branches</strong></td>
+<td>Instruct (SFT/DPO/RLVR stages public); no reasoning</td>
+<td>GGUF (common)</td>
+<td>Dense, full MHA (7B/13B), <strong>4K</strong></td>
+<td>Apache-2.0; ungated</td>
+<td>native / vLLM via its Transformers backend</td>
+<td><strong>Adds nothing</strong> (verified); format <code>&lt;|endoftext|&gt;&lt;|user|&gt;\n…\n&lt;|assistant|&gt;\n</code></td>
+<td>yes</td>
+<td><strong>Full</strong>: OLMo-mix-1124 + Dolmino-mix-1124 (mid-training) + Tulu 3</td>
+</tr>
+<tr>
+<td>OLMo 2 32B</td>
+<td>32.2B</td>
+<td>3/2025</td>
+<td>Yes (753 branches)</td>
+<td>Instruct</td>
+<td>GGUF</td>
+<td>Dense GQA, 4K</td>
+<td>Same</td>
+<td>Same</td>
+<td>Adds nothing (no bos)</td>
+<td>QLoRA/multi</td>
+<td>Full</td>
+</tr>
+<tr>
+<td>OLMoE-1B-7B-0125</td>
+<td>6.9B / ~1B</td>
+<td>1/2025</td>
+<td>Yes (checkpoints in the <code>-0924</code> repo)</td>
+<td>Instruct</td>
+<td>GGUF</td>
+<td>MoE 64E top-8, 4K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Adds nothing. The instruct tokenizer names eos id 50279 <code>|||IP_ADDRESS|||</code></td>
+<td>yes</td>
+<td>Full</td>
+</tr>
+<tr>
+<td><strong>Olmo 3 7B</strong> (<code>Olmo-3-1025-7B</code>, <code>-7B-Instruct</code>, <code>-7B-Think</code>, RL-Zero)</td>
+<td>7.30B</td>
+<td>11/2025</td>
+<td><strong>Yes, 1,487 branches (stage 1/2/3 = pretrain/mid-train/long-context)</strong></td>
+<td>Instruct; Think (forces <code>&lt;think&gt;</code>); RL-Zero (from base, no chat roles)</td>
+<td>none (community GGUF/AWQ/MLX)</td>
+<td>Dense MHA, 3:1 sliding:full attention, 65K</td>
+<td>Apache-2.0; ungated</td>
+<td>native ≥4.57 / Transformers backend</td>
+<td><strong>Instruct inserts</strong> "You are a helpful function-calling AI assistant. You do not currently have access to any functions. \<functions>\</functions>" (verified). <strong>Think inserts</strong> "You are OLMo, a helpful function-calling AI assistant built by Ai2. Your date cutoff is November 2024…", and also appends the functions sentence to a <em>user-supplied</em> system message</td>
+<td>yes</td>
+<td><strong>Full</strong>: Dolma 3 (6T), Dolmino 100B (mid-training), Longmino 50B, Dolci SFT/DPO/RL</td>
+</tr>
+<tr>
+<td>Olmo 3 / 3.1 32B (Think; 3.1 Instruct)</td>
+<td>32.2B</td>
+<td>11–12/2025</td>
+<td>Yes (719 branches)</td>
+<td>3.0 Think only; 3.1 Think + Instruct</td>
+<td>(community)</td>
+<td>Dense GQA, 65K</td>
+<td>Apache-2.0</td>
+<td>Same</td>
+<td>3-Think: "You are a helpful AI assistant." 3.1: "You are Olmo, a helpful AI assistant built by Ai2. Your date cutoff is December 2024…" (Instruct adds the functions sentence)</td>
+<td>QLoRA/multi</td>
+<td>Full</td>
+</tr>
+<tr>
+<td><strong>Olmo Hybrid 7B</strong> (base, Instruct-SFT/-DPO, Think-SFT)</td>
+<td>7.43B</td>
+<td>3/2026</td>
+<td><strong>Yes, 1,497 branches</strong></td>
+<td>Instruct SFT+DPO, Think SFT only ("preliminary" post-training, no RL)</td>
+<td>none</td>
+<td><strong>Hybrid: 3 Gated DeltaNet : 1 full attention</strong> (same idea as Qwen3.5); 65K base / 32K post-trained</td>
+<td>Apache-2.0</td>
+<td>native ≥5.3 / native</td>
+<td>Same default as Olmo-3-7B-Instruct (verified)</td>
+<td>yes</td>
+<td>Full (Dolma 3, Dolmino, Longmino)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> SFT/DPO/RM stage repos, FlexOlmo, Bolmo (byte-level), BAR, EMO MoE research checkpoints, and Molmo/olmOCR. There is no Olmo 4 as of today.</p>
+<p><strong>Notes</strong>
+- <strong>Assistant-turn ending:</strong> in every Olmo 3 template the last assistant turn ends with <code>&lt;|endoftext|&gt;</code> (id 100257), not <code>&lt;|im_end|&gt;</code>. Build SFT labels from the template output.
+- <strong>Shared tokenizer:</strong> Olmo 3 base and instruct share a tokenizer, and the base vocabulary already contains the ChatML tokens.</p></section>
+<section class="fam" id="hugging-face-smollm"><h2>5. Hugging Face SmolLM</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data openness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SmolLM2 135M / 360M / 1.7B</td>
+<td>0.135 / 0.36 / 1.71B</td>
+<td>10/2024</td>
+<td>Yes (+ checkpoint repos)</td>
+<td>Instruct; 1.7B-Instruct-16k</td>
+<td>GGUF (360M/1.7B), MLX (very common)</td>
+<td>Dense Llama, tied embeddings, 8K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "You are a helpful AI assistant named SmolLM, trained by Hugging Face". The <strong>1.7B-Instruct-16k adds nothing</strong></td>
+<td>yes</td>
+<td>Open (FineWeb-Edu, DCLM, Stack-Edu, FineMath, SmolTalk)</td>
+</tr>
+<tr>
+<td><strong>SmolLM3-3B</strong> (<code>-3B-Base</code>, <code>-3B</code>)</td>
+<td>3.08B</td>
+<td>7/2025</td>
+<td><strong>Yes (+133-branch checkpoint repo incl. mid-training/SFT/APO)</strong></td>
+<td>One hybrid model; <strong>thinking on by default</strong>; <code>/no_think</code> or <code>enable_thinking=False</code></td>
+<td>ONNX, GGUF (community FP8/MLX)</td>
+<td>Dense GQA, NoPE every 4th layer, 64K (128K YaRN)</td>
+<td>Apache-2.0</td>
+<td>native ≥4.53 / Transformers backend</td>
+<td><strong>Always inserts</strong> "## Metadata\n\nKnowledge Cutoff Date: June 2025\nToday Date: \<today>\nReasoning Mode: /think…## Custom Instructions\n\n" + "You are a helpful AI assistant named SmolLM…" (or a long reasoning prompt in think mode). Only <code>/system_override</code> removes the metadata. <strong>Template bug (verified):</strong> unless tools are passed, the system turn is never closed with <code>&lt;|im_end|&gt;</code></td>
+<td>yes</td>
+<td><strong>Open</strong> (pretraining datasets, SmolTalk2, configs, checkpoints)</td>
+</tr>
+</tbody>
+</table></div></section>
+<section class="fam" id="swiss-ai-apertus"><h2>6. Swiss AI Apertus</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data openness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apertus 8B / 70B (2509)</td>
+<td>8.05 / 70.6B</td>
+<td>9/2025</td>
+<td>Yes (72–82 checkpoint branches)</td>
+<td>Instruct (SFT + QRPO); "Deliberation" flag (?)</td>
+<td>none (community FP8/w4a16/GGUF)</td>
+<td>Dense, xIELU MLP (no gate projection), QK-norm, 65K</td>
+<td>Apache-2.0 + AUP; not gated now</td>
+<td>native ≥4.56 / native</td>
+<td><strong>Inserts</strong> "You are Apertus, a helpful assistant created by the SwissAI initiative.\nKnowledge cutoff: 2024-04\nCurrent date: \<today>". <strong>Always</strong> adds a developer block "Deliberation: disabled\nTool Capabilities: disabled"</td>
+<td>8B yes; 70B no</td>
+<td><strong>Open</strong> (15T tokens; data-reconstruction scripts; intermediate checkpoints)</td>
+</tr>
+<tr>
+<td>Apertus v1.1 0.5B / 1.5B / 4B</td>
+<td>0.4–3.8B</td>
+<td>2–5/2026</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>MLX; NVFP4 (1.5B)</td>
+<td>Dense, 4K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Empty system block + developer block</td>
+<td>yes</td>
+<td>Distilled from 8B on open data</td>
+</tr>
+<tr>
+<td>Apertus v1.5 8B / 70B</td>
+<td>8.9 / 72B</td>
+<td>7/2026 (base 9/2026)</td>
+<td>Yes</td>
+<td>Instruct; thinking optional (off by default)</td>
+<td>(community)</td>
+<td>Multimodal (image/audio in), 262K</td>
+<td>Apache-2.0 + AUP; <strong>gated (auto)</strong></td>
+<td><strong>Not upstream in transformers or vLLM</strong> (fork needed)</td>
+<td>Inserts "You are Apertus 1.5 Omni…" (read on mirrors; official template (?))</td>
+<td>8B yes (fork); 70B no</td>
+<td>Claimed open; report "coming" (?)</td>
+</tr>
+</tbody>
+</table></div></section>
+<section class="fam" id="tii-falcon"><h2>7. TII Falcon</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Falcon3 1B / 3B / 7B / 10B</td>
+<td>1.7 / 3.2 / 7.5 / 10.3B</td>
+<td>12/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>AWQ, GPTQ, GGUF, 1.58-bit</td>
+<td>Dense Llama arch, 8K / 32K</td>
+<td>TII Falcon License (Apache-derived + AUP + attribution); ungated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong> (a tool prompt appears only when tools are passed)</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Falcon3-Mamba-7B</td>
+<td>7.27B</td>
+<td>12/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>GGUF</td>
+<td>Pure Mamba</td>
+<td>Same</td>
+<td>native / native (<strong>no vLLM LoRA</strong>)</td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td><strong>Falcon-H1 0.5B / 1.5B / 3B / 7B</strong> / 34B</td>
+<td>0.5–7.6B; 33.6B</td>
+<td>5/2025</td>
+<td>Yes (no intermediate checkpoints)</td>
+<td>Instruct</td>
+<td>GPTQ, GGUF</td>
+<td><strong>Hybrid: attention and Mamba2 in parallel in every layer</strong>, µP multipliers; 16K–256K</td>
+<td>TII Falcon License; ungated</td>
+<td>native ≥4.53 / native (LoRA OK)</td>
+<td><strong>Adds nothing</strong> (verified on 7B)</td>
+<td>≤7B yes; 34B QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Falcon-H1R-7B</td>
+<td>7.59B</td>
+<td>1/2026</td>
+<td>(= H1-7B-Base)</td>
+<td>Reasoning only</td>
+<td>FP8, GGUF</td>
+<td>Hybrid, 256K</td>
+<td>Same</td>
+<td>native / ≥0.11</td>
+<td><strong>Inserts</strong> "You are Falcon, a helpful AI assistant created by Technology Innovation Institute (TII). To answer the user's question, you first think…"</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> Falcon-H1-Tiny, Falcon-E (BitNet), the Arabic and OCR models. There is no Falcon-H2 or Falcon 4.</p></section>
+<section class="fam" id="google-gemma"><h2>8. Google Gemma</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma 2 2B / 9B / 27B</td>
+<td>2.6 / 9.2 / 27.2B</td>
+<td>6–7/2024</td>
+<td>Yes</td>
+<td>-it</td>
+<td>GGUF (2B)</td>
+<td>Dense, 8K</td>
+<td>Gemma Terms; gated (manual)</td>
+<td>native / native</td>
+<td><strong>System role not supported</strong>: the template raises "System role not supported" (unsloth mirror)</td>
+<td>2B/9B yes; 27B QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Gemma 3 270M / 1B</td>
+<td>0.27 / 1.0B</td>
+<td>8/2025; 3/2025</td>
+<td>Yes</td>
+<td>-it</td>
+<td>QAT q4_0</td>
+<td>Dense text-only, 32K</td>
+<td>Gemma Terms; gated</td>
+<td>native / native</td>
+<td><strong>Adds nothing; a system message is folded into the first user turn</strong> (<code>&lt;start_of_turn&gt;user\nSYS\n\nHi</code>)</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Gemma 3 4B / 12B / 27B</td>
+<td>4.3 / 12.2 / 27.4B (incl. vision)</td>
+<td>3/2025</td>
+<td>Yes</td>
+<td>-it</td>
+<td>QAT q4_0 GGUF, int4</td>
+<td>Dense + SigLIP vision, 128K</td>
+<td>Gemma Terms; gated</td>
+<td>native / native</td>
+<td>Same fold-into-user behaviour</td>
+<td>4B/12B yes; 27B QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Gemma 3n E2B / E4B</td>
+<td>5.4 / 7.8B raw</td>
+<td>6/2025</td>
+<td>Yes</td>
+<td>-it</td>
+<td>LiteRT</td>
+<td>MatFormer + PLE, audio + vision, 32K</td>
+<td>Gemma Terms; gated</td>
+<td>native / native</td>
+<td>Same fold-into-user behaviour</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td><strong>Gemma 4 E2B / E4B</strong></td>
+<td>5.1 / 8.0B raw (2.3 / 4.5B effective)</td>
+<td>4/2026</td>
+<td>Yes</td>
+<td>-it; <code>enable_thinking</code> (default off)</td>
+<td>QAT GGUF, w4a16, MTP drafters</td>
+<td>Dense, sliding/global hybrid, PLE, audio + vision, 128K</td>
+<td><strong>Apache-2.0; ungated</strong></td>
+<td>native (transformers v5) / native</td>
+<td><strong>Adds nothing; real system role</strong> <code>&lt;|turn&gt;system\n…&lt;turn|&gt;</code> (verified). Thinking on puts <code>&lt;|think|&gt;</code> in a system turn</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td><strong>Gemma 4 12B</strong> ("Unified")</td>
+<td>11.96B</td>
+<td>5–6/2026 (?)</td>
+<td>Yes</td>
+<td>-it; thinking</td>
+<td>QAT GGUF, w4a16</td>
+<td>Dense, encoder-free multimodal, 256K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native (<code>Gemma4UnifiedForConditionalGeneration</code>)</td>
+<td>Adds nothing, but the generation prompt always ends with an empty <code>&lt;|channel&gt;thought\n&lt;channel|&gt;</code> (verified)</td>
+<td>yes (~24 GB)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Gemma 4 26B-A4B / 31B</td>
+<td>25.8B / 3.8B; 31.3B</td>
+<td>4/2026</td>
+<td>Yes</td>
+<td>-it; thinking</td>
+<td>QAT GGUF</td>
+<td>MoE / dense + vision, 256K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Same as 12B</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> CodeGemma, RecurrentGemma, PaliGemma, ShieldGemma, MedGemma, T5Gemma, VaultGemma, EmbeddingGemma and DiffusionGemma. There is no Gemma 5.</p>
+<p><strong>Note:</strong> Gemma 3 (≥4B), 3n and Gemma 4 load as multimodal classes, so restrict LoRA <code>target_modules</code> to the language model.</p></section>
+<section class="fam" id="mistral-ai"><h2>9. Mistral AI</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt (HF jinja)</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mistral 7B v0.3</td>
+<td>7.25B</td>
+<td>5/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>none (common)</td>
+<td>Dense, 32K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>No system role</strong>: system text is merged into the user turn <code>[INST] SYS\n\nHi[/INST]</code></td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td><strong>Mistral Nemo 12B (2407)</strong></td>
+<td>12.2B</td>
+<td>7/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>FP8</td>
+<td>Dense, Tekken tokenizer, 128K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>No system role</strong>; merged into the user turn <code>[INST]SYS\n\nHi[/INST]</code> (verified)</td>
+<td>yes (~25 GB)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Ministral 8B (2410)</td>
+<td>8.0B</td>
+<td>10/2024</td>
+<td><strong>No</strong></td>
+<td>Instruct</td>
+<td>none</td>
+<td>Dense, interleaved SWA</td>
+<td><strong>Mistral Research License (non-commercial)</strong></td>
+<td>native / native</td>
+<td>Merged into the user turn</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Ministral 3 3B / 8B / 14B (2512)</td>
+<td>3.8 / 8.9 / 13.9B (incl. 0.4B vision)</td>
+<td>12/2025</td>
+<td>Yes (<code>-Base-2512</code>)</td>
+<td>Instruct (default repo is <strong>FP8</strong>; <code>-BF16</code> repos exist) + Reasoning</td>
+<td>FP8, GGUF</td>
+<td>Dense + vision, 256K</td>
+<td>Apache-2.0; ungated</td>
+<td>native (v5) / native</td>
+<td><strong>HF inserts a ~2.3 KB Le Chat prompt</strong> "You are Ministral-3-8B-Instruct-2512, a Large Language Model (LLM) created by Mistral AI…", with literal <code>{today}</code> left unfilled (verified). vLLM's default mistral_common inserts nothing</td>
+<td>yes</td>
+<td>Closed (arXiv 2601.08584)</td>
+</tr>
+<tr>
+<td>Mistral Small 3 / 3.1 / 3.2 (24B)</td>
+<td>23.6–24.0B</td>
+<td>1, 3, 6/2025</td>
+<td>3 and 3.1 yes</td>
+<td>Instruct</td>
+<td>(community)</td>
+<td>Dense, 32K / 128K + vision</td>
+<td>Apache-2.0</td>
+<td>3.2 is mistral_common only / native</td>
+<td>3 and 3.1 insert "You are Mistral Small 3… The current date is \<today>…"; 3.2 has no HF template</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Magistral Small / Devstral Small (2505–2512)</td>
+<td>~24B</td>
+<td>5–12/2025</td>
+<td>No</td>
+<td>Reasoning / coding agent</td>
+<td>GGUF, FP8</td>
+<td>Dense, 128K–256K</td>
+<td>Apache-2.0</td>
+<td>mistral_common / native</td>
+<td>Magistral: none auto-inserted. Devstral Small 2 inserts the "Mistral Vibe" agent prompt</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Mistral Small 4 (119B-2603)</td>
+<td>119B / 6.5B</td>
+<td>3/2026</td>
+<td>No</td>
+<td><code>reasoning_effort</code> none/high</td>
+<td>FP8, NVFP4</td>
+<td>MoE + vision, 256K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Le Chat prompt + <code>[MODEL_SETTINGS]</code></td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Mistral Medium 3.5 (128B)</td>
+<td>128B dense</td>
+<td>4/2026 (secondary sources)</td>
+<td>No</td>
+<td>Unified</td>
+<td>FP8</td>
+<td>Dense + vision</td>
+<td>Modified MIT</td>
+<td>native / native</td>
+<td>Le Chat prompt</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Mistral Large 3 (675B-2512)</td>
+<td>675B / 41B</td>
+<td>12/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>FP8, NVFP4</td>
+<td>MoE, 256K</td>
+<td>Apache-2.0</td>
+<td>Mistral format only / native</td>
+<td>Le Chat prompt</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Mistral Large 4 (1T-A52B)</td>
+<td>~1T / 49B</td>
+<td>10/2026 (secondary sources)</td>
+<td>(?)</td>
+<td><code>reasoning_effort</code></td>
+<td>FP8, NVFP4</td>
+<td>MoE, 1M</td>
+<td>Mistral Ecosystem Open-Weight License</td>
+<td>native / not in the v0.32 registry (?)</td>
+<td>Only <code>[MODEL_SETTINGS]</code></td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> Mixtral, Codestral, Mathstral, Pixtral, Large 2, Voxtral, Leanstral, Devstral 2 123B and the EAGLE heads.</p></section>
+<section class="fam" id="microsoft-phi-no-phi-5-found"><h2>10. Microsoft Phi (no Phi-5 found)</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phi-3.5-mini / MoE</td>
+<td>3.8B; 41.9B / 6.6B</td>
+<td>8/2024</td>
+<td><strong>No</strong></td>
+<td>Instruct</td>
+<td>ONNX</td>
+<td>Dense / MoE, 128K</td>
+<td>MIT; ungated</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>mini yes; MoE QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>phi-4</td>
+<td>14.7B</td>
+<td>12/2024</td>
+<td><strong>No</strong></td>
+<td>Post-trained only</td>
+<td>GGUF, ONNX</td>
+<td>Dense, 16K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing (<code>&lt;|im_start|&gt;system&lt;|im_sep|&gt;…</code>)</td>
+<td>yes (~29 GB)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-4-mini-instruct</td>
+<td>3.8B</td>
+<td>2/2025</td>
+<td>No</td>
+<td>Instruct</td>
+<td>ONNX</td>
+<td>Dense, 128K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-4-reasoning / -plus</td>
+<td>14.7B</td>
+<td>4/2025</td>
+<td>No</td>
+<td>Reasoning</td>
+<td>ONNX</td>
+<td>Dense, 32K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td><strong>Always inserts</strong> "You are Phi, a language model trained by Microsoft… thoroughly exploring questions…" and <strong>silently drops any user system message</strong></td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-4-mini-reasoning</td>
+<td>3.8B</td>
+<td>4/2025</td>
+<td>No</td>
+<td>Math reasoning</td>
+<td>ONNX</td>
+<td>Dense, 128K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "Your name is Phi, an AI math expert developed by Microsoft."</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-4-mini-flash-reasoning</td>
+<td>3.9B</td>
+<td>6/2025</td>
+<td>No</td>
+<td>Reasoning</td>
+<td>—</td>
+<td>Hybrid SambaY (Mamba + SWA)</td>
+<td>MIT</td>
+<td>remote code / <strong>not supported in vLLM 0.3x</strong></td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-4-reasoning-vision-15B</td>
+<td>15.1B</td>
+<td>3/2026</td>
+<td>No</td>
+<td>Think/no-think VLM</td>
+<td>—</td>
+<td>Dense + SigLIP</td>
+<td>MIT</td>
+<td>remote code / native</td>
+<td>Inserts the Phi prompt; drops the user system message</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Phi-mini-MoE / Phi-tiny-MoE</td>
+<td>7.6B / 2.4B; 3.8B / 1.1B</td>
+<td>6/2025</td>
+<td>No</td>
+<td>Instruct</td>
+<td>—</td>
+<td>MoE, 4K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Note:</strong> no Phi model has a base checkpoint, so Phi cannot support base-vs-instruct comparisons.</p></section>
+<section class="fam" id="ibm-granite"><h2>11. IBM Granite</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Granite 3.0 2B / 8B</td>
+<td>2.5 / 8.2B</td>
+<td>10/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>(?)</td>
+<td>Dense, 4K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Sources listed, not released</td>
+</tr>
+<tr>
+<td>Granite 3.1 / 3.2 / 3.3 2B / 8B</td>
+<td>2.5 / 8.2B</td>
+<td>12/2024–4/2025</td>
+<td>Yes (3.2 (?))</td>
+<td>Instruct; 3.2/3.3 have <code>thinking=True</code></td>
+<td>GGUF, FP8 (3.3)</td>
+<td>Dense, 128K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "Knowledge Cutoff Date: April 2024.\nToday's Date: \<today>.\nYou are Granite, developed by IBM. You are a helpful AI assistant."</td>
+<td>yes</td>
+<td>As above</td>
+</tr>
+<tr>
+<td>Granite 4.0 H-Small / H-Tiny</td>
+<td>32.2B / 9B; 6.9B / 1B</td>
+<td>10/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>GGUF, FP8</td>
+<td><strong>Hybrid Mamba2 (36) + attention (4) + MoE</strong>, NoPE, 128K</td>
+<td>Apache-2.0</td>
+<td>native ≥4.56 / native</td>
+<td><strong>Inserts</strong> "You are a helpful assistant. Please ensure responses are professional, accurate, and safe."</td>
+<td>H-Tiny yes; H-Small QLoRA/multi</td>
+<td>~23T tokens; not released</td>
+</tr>
+<tr>
+<td>Granite 4.0 H-Micro / Micro / Nano (350M, 1B)</td>
+<td>0.34–3.4B</td>
+<td>10/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>GGUF</td>
+<td>Hybrid or dense, 32K–128K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Same 4.0 sentence</td>
+<td>yes</td>
+<td>As above</td>
+</tr>
+<tr>
+<td><strong>Granite 4.1 3B / 8B / 30B</strong></td>
+<td>3.4 / 8.4–8.8 / 28.9B</td>
+<td>4/2026</td>
+<td><strong>Yes</strong></td>
+<td>Instruct</td>
+<td>FP8, GGUF</td>
+<td>Dense (GraniteForCausalLM), 128K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong> (verified on 8B; <code>&lt;|start_of_role|&gt;</code> format)</td>
+<td>3B/8B yes; 30B QLoRA/multi</td>
+<td>~15T tokens; not released</td>
+</tr>
+<tr>
+<td>Granite 4.2 3B / 8B / 30B</td>
+<td>3.7 / 8.8 / 29.3B</td>
+<td>8/2026</td>
+<td>No new base (uses 4.1 base)</td>
+<td>Reasoning, <strong>thinking on by default</strong></td>
+<td>FP8, NVFP4, MXFP4, GGUF</td>
+<td>Dense, 128K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td><strong>Always emits an empty system turn</strong>; switches to ChatML (so it differs from the 4.1 base's format and eos)</td>
+<td>3B/8B yes</td>
+<td>Dataset listing on GitHub</td>
+</tr>
+</tbody>
+</table></div></section>
+<section class="fam" id="deepseek"><h2>12. DeepSeek</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants (community)</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1-Distill-Qwen 1.5B / 7B / 14B / 32B</td>
+<td>1.8 / 7.6 / 14.8 / 32.8B</td>
+<td>1/2025</td>
+<td><strong>Qwen bases</strong> (Qwen2.5-Math-1.5B/7B, Qwen2.5-14B/32B)</td>
+<td>Reasoning SFT distill</td>
+<td>none (very many community)</td>
+<td>Qwen2</td>
+<td>MIT (derived from Qwen); ungated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong>, but forces <code>&lt;｜Assistant｜&gt;&lt;think&gt;\n</code>. A system message is pasted raw with no role tag; the README says avoid system prompts</td>
+<td>≤14B yes; 32B QLoRA/multi</td>
+<td>R1 SFT data not released</td>
+</tr>
+<tr>
+<td><strong>R1-Distill-Llama-8B</strong> / 70B</td>
+<td>8.0 / 70.6B</td>
+<td>1/2025</td>
+<td>Llama-3.1-8B / Llama-3.3-70B-Instruct (non-Qwen)</td>
+<td>Same</td>
+<td>(community)</td>
+<td>Llama 3, 128K</td>
+<td>MIT + Llama license</td>
+<td>native / native</td>
+<td>Same as the Qwen distills</td>
+<td>8B yes; 70B no</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>R1-0528-Qwen3-8B</td>
+<td>8.2B</td>
+<td>5/2025</td>
+<td>Qwen3-8B-Base</td>
+<td>Reasoning</td>
+<td>(community)</td>
+<td>Qwen3 arch, DeepSeek tokenizer</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing; no forced think; system prompt supported</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>V3 / V3-0324 / R1 / R1-0528</td>
+<td>671B / 37B</td>
+<td>12/2024–5/2025</td>
+<td>Yes (V3-Base)</td>
+<td>Chat / reasoning</td>
+<td>FP8 native</td>
+<td>MoE + MLA, 128K</td>
+<td>V3 custom; others MIT</td>
+<td>native / native</td>
+<td>Adds nothing (R1 forces <code>&lt;think&gt;</code>)</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>V3.1 / V3.1-Terminus / V3.2(-Exp)</td>
+<td>~671–685B / 37B</td>
+<td>8–12/2025</td>
+<td>Yes (V3.1-Base, V3.2-Exp-Base)</td>
+<td>Hybrid thinking</td>
+<td>FP8</td>
+<td>MoE (+ DSA sparse attention in 3.2)</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing. V3.2 has no jinja template (Python encoder)</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>V4-Flash / V4-Pro</td>
+<td>284B / 13B; 1.6T / 49B</td>
+<td>4/2026 (updates 7–8/2026)</td>
+<td>Yes</td>
+<td>Non-think / High / Max</td>
+<td>FP4 + FP8</td>
+<td>Hybrid sparse attention, 1M</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>No jinja template</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>V4.1-Flash (-1017)</td>
+<td>~750B total</td>
+<td>9–10/2026</td>
+<td>No (?)</td>
+<td>Effort 1–100</td>
+<td>FP4 / FP8</td>
+<td>Encoder-decoder MoE, 1M</td>
+<td>MIT</td>
+<td>(?) / native</td>
+<td><strong>Inserts</strong> "Reasoning Effort: 75 …" and forces <code>&lt;think&gt;</code></td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Left out:</strong> Janus, VL2, OCR, Prover and the V2/V2.5/Coder-V2 line. There is no R2 and no new small DeepSeek model since 5/2025.</p></section>
+<section class="fam" id="zhipu-z-ai-glm-org-zai-org"><h2>13. Zhipu / Z.ai GLM (org `zai-org`)</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>glm-4-9b / -chat (-hf)</td>
+<td>9.4B</td>
+<td>6/2024</td>
+<td>Yes</td>
+<td>chat, chat-1m</td>
+<td>none</td>
+<td>Dense, 128K</td>
+<td>Custom glm-4 license; ungated</td>
+<td>native (-hf) / via Transformers backend</td>
+<td>Prefix <code>[gMASK]&lt;sop&gt;</code>; adds nothing unless tools are passed (then the ChatGLM identity)</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>GLM-4-9B-0414 / GLM-Z1-9B-0414</td>
+<td>9.4B</td>
+<td>4/2025</td>
+<td><strong>No 9B base</strong></td>
+<td>Chat / reasoning (Z1 <code>.jinja</code> forces <code>&lt;think&gt;</code>)</td>
+<td>none</td>
+<td>Dense, 32K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong>. The template emits no end-of-turn token after assistant content</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>GLM-4-32B-0414 / Z1-32B</td>
+<td>32.6B</td>
+<td>4/2025</td>
+<td>Yes (32B base)</td>
+<td>Chat / reasoning</td>
+<td>—</td>
+<td>Dense</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>QLoRA/multi</td>
+<td>Closed (15T)</td>
+</tr>
+<tr>
+<td>GLM-4.6V-Flash</td>
+<td>10.3B VLM</td>
+<td>12/2025</td>
+<td>(?)</td>
+<td>Hybrid thinking</td>
+<td>—</td>
+<td>128K</td>
+<td>MIT</td>
+<td>≥5.0 / ≥0.12</td>
+<td>Adds nothing</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>GLM-4.7-Flash</td>
+<td>31.2B / ~3B</td>
+<td>1/2026</td>
+<td>No</td>
+<td>Forces <code>&lt;think&gt;</code> by default</td>
+<td>(community)</td>
+<td>MoE, ~200K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>GLM-4.5 / 4.5-Air / 4.6 / 4.7 / 5 / 5.1 / 5.2</td>
+<td>106B–753B</td>
+<td>7/2025–6/2026</td>
+<td>4.5 and Air yes</td>
+<td>Hybrid</td>
+<td>FP8</td>
+<td>MoE</td>
+<td>MIT</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>GLM-5.3 / 5.3-Flash</td>
+<td>~753B; 320B / 18B</td>
+<td>8/2026</td>
+<td>No</td>
+<td>Effort (default max)</td>
+<td>FP8</td>
+<td>MoE</td>
+<td>5.3: custom license; Flash: MIT</td>
+<td>native / native</td>
+<td><strong>Inserts <code>Reasoning Effort: Max</code></strong></td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div></section>
+<section class="fam" id="moonshot-kimi"><h2>14. Moonshot Kimi</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Moonlight-16B-A3B</td>
+<td>16.0B / 3B</td>
+<td>2/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>none</td>
+<td>DeepSeek-V3-style MoE, <strong>8K</strong></td>
+<td>MIT; ungated</td>
+<td>deepseek_v3 native; tiktoken tokenizer needs trust_remote_code / native</td>
+<td><strong>Inserts <code>You are a helpful assistant</code></strong> (in both base and Instruct templates)</td>
+<td>yes (tight-ish, ~32 GB)</td>
+<td>Closed (5.7T, Muon)</td>
+</tr>
+<tr>
+<td>Kimi-Linear-48B-A3B</td>
+<td>49.1B / 3B</td>
+<td>10/2025</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>none</td>
+<td><strong>Hybrid KDA linear attention + MLA</strong>, MoE, 1M</td>
+<td>MIT</td>
+<td>remote code + fla-core / native</td>
+<td>Adds nothing</td>
+<td>QLoRA/multi; LoRA with KDA kernels unverified (?)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Kimi K2 / K2-0905 / K2-Thinking</td>
+<td>1.03T / 32B</td>
+<td>7/2025–11/2025</td>
+<td>Yes (K2-Base)</td>
+<td>Instruct / reasoning</td>
+<td>FP8; INT4 (Thinking)</td>
+<td>MoE, 128–256K</td>
+<td>Modified MIT (attribution clause)</td>
+<td>remote code / native</td>
+<td><strong>Inserts <code>You are Kimi, an AI assistant created by Moonshot AI.</code></strong></td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>K2.5 / K2.6 / K2.7-Code; K3 / K3.1-Pro</td>
+<td>1T / 32B; 2.8T / 104B</td>
+<td>1/2026–11/2026</td>
+<td>No</td>
+<td>Thinking</td>
+<td>INT4; MXFP4</td>
+<td>MoE (+ KDA in K3)</td>
+<td>Modified MIT; Kimi K3 License</td>
+<td>native / native</td>
+<td>K2.6: adds nothing, forces <code>&lt;think&gt;</code>. K3 has no jinja template. K2.5/K2.7 (?)</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div></section>
+<section class="fam" id="other-notable-recent-families"><h2>15. Other notable recent families</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tencent Hunyuan 0.5B / 1.8B / 4B / 7B</td>
+<td>0.5–7.5B</td>
+<td>7–8/2025</td>
+<td>Yes (<code>-Pretrain</code>)</td>
+<td>Hybrid reasoning, thinking by default</td>
+<td>FP8, AWQ, GPTQ</td>
+<td>Dense, 256K (README)</td>
+<td><strong>Hunyuan Community License excludes the EU, UK and South Korea</strong></td>
+<td>native / Transformers backend</td>
+<td>Adds nothing (the 7B uses a different template; several template bugs)</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Baidu ERNIE-4.5-0.3B / 21B-A3B (-Thinking)</td>
+<td>0.36B; 21.9B / 3B</td>
+<td>6/2025, 9/2025</td>
+<td>Yes</td>
+<td>Chat; Thinking variant</td>
+<td>—</td>
+<td>Dense / MoE, 128K</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Adds nothing. <strong>Thinking variant inserts <code>&lt;global_setting&gt;\nthink_mode=True…</code></strong></td>
+<td>0.3B yes; 21B tight → QLoRA</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Xiaomi MiMo-7B (Base / SFT / RL)</td>
+<td>7.8B</td>
+<td>4–5/2025</td>
+<td>Yes</td>
+<td>Reasoning</td>
+<td>—</td>
+<td>Qwen2-like + MTP, 32K</td>
+<td>MIT</td>
+<td>remote code / native</td>
+<td><strong>Inserts <code>You are a helpful assistant.</code></strong> (RL-0530: "You are MiMo…")</td>
+<td>yes</td>
+<td>Closed; <strong>Qwen tokenizer</strong></td>
+</tr>
+<tr>
+<td>LiquidAI LFM2 / LFM2.5 / LFM3-1.7B</td>
+<td>0.35–8.5B (24B-A2B)</td>
+<td>7/2025–10/2026</td>
+<td>LFM2.5/LFM3 yes; LFM2 (?)</td>
+<td>Instruct; LFM2.5-2.6B/24B and LFM3 force <code>&lt;think&gt;</code></td>
+<td>GGUF, ONNX, MLX, FP8</td>
+<td><strong>Hybrid gated short-conv + attention</strong></td>
+<td>LFM Open License (commercial use under $10M revenue); ungated</td>
+<td>native / native (LFM3 not in the vLLM registry (?))</td>
+<td>Adds nothing</td>
+<td>yes (24B: QLoRA)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Cohere Command R7B / tiny-aya</td>
+<td>8.0B; 3.35B</td>
+<td>12/2024; 2/2026</td>
+<td>R7B no; aya yes</td>
+<td>Chat</td>
+<td>GGUF (aya)</td>
+<td>Dense</td>
+<td><strong>CC-BY-NC, gated</strong></td>
+<td>native / native</td>
+<td>R7B: empty system turn. tiny-aya: long "Aya" preamble</td>
+<td>yes (non-commercial)</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>ByteDance Seed-OSS-36B (Base / Base-woSyn / Instruct)</td>
+<td>36.2B</td>
+<td>8/2025</td>
+<td><strong>Yes, including a base trained without synthetic instruction data</strong></td>
+<td><code>thinking_budget</code></td>
+<td>none</td>
+<td>Dense, 512K</td>
+<td>Apache-2.0</td>
+<td>native / Transformers backend</td>
+<td>Adds nothing (unless tools or a budget are set)</td>
+<td>QLoRA/multi</td>
+<td>Closed (12T)</td>
+</tr>
+<tr>
+<td>Seed-Coder-8B</td>
+<td>8.25B</td>
+<td>4/2025</td>
+<td>Yes</td>
+<td>Instruct / Reasoning</td>
+<td>—</td>
+<td>Llama arch, 32K</td>
+<td>MIT</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "You are an AI programming assistant… only answer questions related to computer science"</td>
+<td>yes</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Essential AI rnj-1 / 1.5</td>
+<td>8.3B</td>
+<td>11/2025–4/2026</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>GGUF</td>
+<td>Gemma-3-like, 32K / 160K</td>
+<td>Apache-2.0</td>
+<td>native / native (1.5 needs vLLM ≥0.20)</td>
+<td><strong>Inserts</strong> "You are rnj-1, a foundation model trained by Essential AI." (+ "You are a helpful assistant.")</td>
+<td>yes</td>
+<td>Described; release (?)</td>
+</tr>
+<tr>
+<td>InclusionAI Ling-mini-2.0 / Ling-3.0-tiny</td>
+<td>16.3B / 1.4B; 7.9B / 1.3B</td>
+<td>9/2025; 8/2026</td>
+<td><strong>Yes, plus pretraining and mid-training checkpoints</strong></td>
+<td>Ring = reasoning; Ling-3.0 hybrid</td>
+<td>GGUF, FP8, INT4</td>
+<td>MoE; Ling-3.0: KDA:MLA 3:1 + MoE</td>
+<td>MIT</td>
+<td>remote code / native</td>
+<td><strong>Inserts a system turn ending <code>detailed thinking off</code></strong> (Ling-3.0: "on" plus forced <code>&lt;think&gt;</code>)</td>
+<td>yes</td>
+<td>Intermediate checkpoints released</td>
+</tr>
+<tr>
+<td>IFM K2-Horizon 0.9B / 3.7B / 7B / 32B</td>
+<td>0.9–32B</td>
+<td>9/2026</td>
+<td>Yes</td>
+<td>Reasoning-tuned main repos</td>
+<td>FP8, NVFP4, GGUF</td>
+<td>MoVA variants</td>
+<td>Apache-2.0</td>
+<td>remote code / native (no vLLM LoRA)</td>
+<td>(?)</td>
+<td>≤7B yes</td>
+<td><strong>Fully open</strong> (TxT360, checkpoints)</td>
+</tr>
+<tr>
+<td>Marin 8B (base + instruct), 32B base</td>
+<td>8B; 32B</td>
+<td>5/2025; 10/2025</td>
+<td>Yes</td>
+<td>Instruct (8B)</td>
+<td>—</td>
+<td>Llama arch</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>(?)</td>
+<td>8B yes</td>
+<td><strong>Fully open</strong> (data mixes, code, logs)</td>
+</tr>
+<tr>
+<td>Too large for this hardware</td>
+<td>MiniMax M1/M2/M3; Hunyuan-A13B, Hy3/Hy4; MiMo-V2.x; StepFun Step-3.5/3.7/5; LongCat; Ling-flash/1T; Command A/A+; ERNIE-4.5-300B; Instella-MoE; EuroLLM-22B; Gaperon-24B</td>
+<td>—</td>
+<td>Step-3.5-Flash ships a <strong>Base-Midtrain</strong> checkpoint</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>MiniMax M3 and GLM-5.3 have custom licenses</td>
+<td>—</td>
+<td>MiniMax M2 inserts "You are MiniMax-M2…"</td>
+<td>no</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<hr /></section>
+<section class="fam" id="qwen-reference-checked-by-me"><h2>16. Qwen (reference; checked by me)</h2><div class="tw"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Release</th>
+<th>Base</th>
+<th>Instruct / reasoning</th>
+<th>Official quants</th>
+<th>Arch, ctx</th>
+<th>License, gated</th>
+<th>HF / vLLM</th>
+<th>Default system prompt (rendered)</th>
+<th>Fit</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5 0.5B / 1.5B / 3B / 7B / 14B / 32B / 72B</td>
+<td>0.5–72B (7B = 7.62B)</td>
+<td>9/2024</td>
+<td>Yes</td>
+<td>Instruct</td>
+<td>AWQ, GPTQ, GGUF (ubiquitous)</td>
+<td>Dense, 32K (128K YaRN)</td>
+<td>Apache-2.0, except 3B and 72B (Qwen license); ungated</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "You are Qwen, created by Alibaba Cloud. You are a helpful assistant." (verified, 7B)</td>
+<td>≤14B yes; 32B+ QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Qwen3 0.6B / 1.7B / 4B / 8B / 14B / 32B; 30B-A3B; 235B-A22B</td>
+<td>0.6–235B</td>
+<td>4/2025 (2507 refresh: 7–8/2025)</td>
+<td>0.6–14B and 30B-A3B yes; <strong>no 32B or 235B base</strong></td>
+<td>Hybrid thinking (<code>enable_thinking</code>); 2507 split into Instruct and Thinking</td>
+<td>FP8, AWQ, GGUF</td>
+<td>Dense / MoE, 32K (128K YaRN); 2507: 256K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong> (verified on 8B and 4B-Instruct-2507)</td>
+<td>≤14B yes; 30B-A3B QLoRA/multi; 235B no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Qwen3-Next-80B-A3B</td>
+<td>81.3B / 3B</td>
+<td>9/2025</td>
+<td>(?)</td>
+<td>Instruct / Thinking</td>
+<td>FP8</td>
+<td>Gated DeltaNet hybrid + MoE</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Adds nothing</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td><strong>Qwen3.5</strong> 0.8B / 2B / 4B / 9B; 27B; 35B-A3B; 122B-A10B; 397B-A17B</td>
+<td>9B = 9.65B</td>
+<td>2/2026</td>
+<td>0.8B, 2B, 4B, 9B and 35B-A3B yes; none for 27B/122B/397B</td>
+<td>One model; <strong>thinking on by default</strong></td>
+<td>FP8 (≥27B)</td>
+<td><strong>Hybrid Gated DeltaNet : full attention 3:1</strong> (9B: 24+8 layers), natively multimodal, 262K</td>
+<td>Apache-2.0; ungated</td>
+<td>native / native</td>
+<td><strong>Adds nothing</strong>; generation prompt forces <code>&lt;think&gt;\n</code> (<code>enable_thinking=False</code> → empty think block)</td>
+<td>≤9B yes; 27B/35B QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Qwen3.6 27B / 35B-A3B</td>
+<td>27.8B; 36B / 3B</td>
+<td>4/2026</td>
+<td>No</td>
+<td>Thinking by default</td>
+<td>FP8</td>
+<td>Same as 3.5</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td>Adds nothing; forces <code>&lt;think&gt;</code></td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Qwen3.8 27B</td>
+<td>27.8B</td>
+<td>8/2026</td>
+<td>No</td>
+<td>Thinking by default; <code>reasoning_effort</code> xhigh / medium / low</td>
+<td>FP8</td>
+<td>Qwen3.5 architecture, 262K (1M extended)</td>
+<td>Apache-2.0</td>
+<td>native / native</td>
+<td><strong>Inserts</strong> "Reasoning effort is set to xhigh. Please think carefully through the task…" unless <code>enable_thinking=False</code> (then it adds nothing)</td>
+<td>QLoRA/multi</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Qwen3.8-Flash-Next / 2.4T-A95B</td>
+<td>125B / 6B (+51B n-gram embedding); 2.4T / 95B</td>
+<td>8/2026</td>
+<td>No</td>
+<td>Thinking</td>
+<td>FP8</td>
+<td>Gated DeltaNet + "Qwen Sparse Attention" (previews the Qwen4 architecture)</td>
+<td>qwen-community-1.0 (2.4T: "other" (?))</td>
+<td>(?)</td>
+<td>(?)</td>
+<td>no</td>
+<td>Closed</td>
+</tr>
+</tbody>
+</table></div>
+<hr /></section>
+
+  <section class="sheet sources" aria-labelledby="h-src">
+    <details>
+      <summary id="h-src">Sources</summary>
+      <p><strong>Hugging Face API</strong> (metadata, sizes, gating, license, refs)
+- Listings: <code>https://huggingface.co/api/models?author=&lt;org&gt;&amp;sort=createdAt&amp;direction=-1</code>, for the orgs meta-llama, meta-models, facebook, nvidia, openai, allenai, HuggingFaceTB, swiss-ai, tiiuae, google, mistralai, microsoft, ibm-granite, deepseek-ai, zai-org, THUDM, moonshotai, Qwen, MiniMaxAI, tencent, baidu, XiaomiMiMo, LiquidAI, CohereLabs, stepfun-ai, meituan-longcat, inclusionAI, ByteDance-Seed, EssentialAI, IFM, marin-community, amd, utter-project, PleIAs, almanach and common-pile.
+- Per-repo: <code>https://huggingface.co/api/models/&lt;repo&gt;</code> and <code>/refs</code> for every repo in the tables.</p>
+<p><strong>Raw repo files</strong> (<code>https://huggingface.co/&lt;repo&gt;/raw/main/{tokenizer_config.json, chat_template.jinja, config.json, generation_config.json, README.md, SYSTEM_PROMPT.txt}</code>), for the instruct repos named in the tables:
+- Templates I re-rendered myself:
+  - Qwen/Qwen2.5-7B-Instruct, Qwen3-8B, Qwen3-4B-Instruct-2507, Qwen3-Next-80B-A3B-Instruct, Qwen3.5-9B, Qwen3.6-27B, Qwen3.8-27B
+  - allenai/Olmo-3-7B-Instruct, OLMo-2-1124-7B-Instruct, Olmo-Hybrid-Instruct-DPO-7B
+  - google/gemma-4-E4B-it, gemma-4-12B-it
+  - ibm-granite/granite-4.1-8b
+  - nvidia/NVIDIA-Nemotron-Nano-9B-v2
+  - unsloth/Llama-3.1-8B-Instruct
+  - mistralai/Mistral-Nemo-Instruct-2407, Ministral-3-8B-Instruct-2512-BF16
+  - HuggingFaceTB/SmolLM3-3B
+  - tiiuae/Falcon-H1-7B-Instruct
+- Qwen READMEs: Qwen3.8-27B, Qwen3.8-Flash-Next.
+- Gated repos were read through ungated mirrors: unsloth/* (Llama, Gemma 2/3/3n, Muse Spark), mlx-community/c4ai-command-r7b-12-2024-bf16, mlx-community/tiny-aya-global-8bit-mlx, and the Apertus v1.5 mirrors cpral/Apertus-V1.5-8B-ungated and onprem-ai/Apertus-v1.5-8B-FP8.</p>
+<p><strong>Software support</strong>
+- https://raw.githubusercontent.com/vllm-project/vllm/v0.32.0/vllm/model_executor/models/registry.py (and the same file on main)
+- https://raw.githubusercontent.com/vllm-project/vllm/v0.32.0/vllm/tokenizers/registry.py and https://raw.githubusercontent.com/vllm-project/vllm/v0.32.0/vllm/tokenizers/mistral.py
+- https://raw.githubusercontent.com/vllm-project/vllm/main/docs/models/supported_models.md
+- https://api.github.com/repos/vllm-project/vllm/releases
+- https://docs.vllm.ai/projects/recipes/en/latest/OpenAI/GPT-OSS.html
+- https://api.github.com/repos/huggingface/transformers/contents/src/transformers/models?ref=v5.22.1 and https://api.github.com/repos/huggingface/transformers/releases
+- https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/tokenization_utils_base.py
+- https://raw.githubusercontent.com/huggingface/transformers/v5.22.1/src/transformers/tokenization_mistral_common.py
+- https://raw.githubusercontent.com/mistralai/mistral-common/main/src/mistral_common/protocol/instruct/normalize.py</p>
+<p><strong>Blogs and docs</strong>
+- https://opensource.googleblog.com/2026/03/gemma-4-expanding-the-gemmaverse-with-apache-20.html (dated 2 Apr 2026)
+- https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemma-4-12B/ (search snippet only)
+- https://allenai.org/blog, https://allenai.org/olmo, https://allenai.org/blog/olmohybrid
+- https://huggingface.co/docs/transformers/model_doc/olmo_hybrid
+- https://arxiv.org/abs/2604.03444 (Olmo Hybrid)
+- https://falconllm.tii.ae/falcon-terms-and-conditions.html
+- https://www.helpnetsecurity.com/2025/10/29/openai-gpt-oss-safeguard-safety-models/</p>
+<p><strong>Secondary sources</strong> (used for dates only; less reliable)
+- https://letsdatascience.com/news/mistral-releases-open-weights-for-1-trillion-parameter-mistr-d712eb0e
+- https://pasqualepillitteri.it/en/news/21196/mistral-large-4-launches-open-weights-late-october
+- https://datanorth.ai/news/mistral-medium-3-5-release
+- https://publicai.co/stories/apertus-1-5
+- https://am590theanswer.com/news/technology/tii-launches-falcon-reasoning-best-7b-ai-model-globally-also-outperforms-larger/77259407b7474c1d97d0b11480e608d0</p>
+<p><strong>Checked and found unverified</strong> (no matching HF repos)
+- https://the-agent-report.com/2026/06/meta-llama-4-5-open-weight-refresh/ ("Llama 4.5")
+- https://www.startuphub.ai/news/figure-mark-zuckerberg-dual-track-open-closed-2026-06-05 ("Llama 5")</p>
+<p>The downloaded templates and my renderer are in <code>/tmp/claude-465232/-home-users-jkli-subliminal-learning/0915416c-e95c-558b-b4c5-dff70294aaca/scratchpad/qwen/</code>. The render script is <code>/tmp/claude-465232/-home-users-jkli-subliminal-learning/0915416c-e95c-558b-b4c5-dff70294aaca/scratchpad/qwen/rkw.py</code>, and the shortlist templates are under <code>/tmp/claude-465232/-home-users-jkli-subliminal-learning/0915416c-e95c-558b-b4c5-dff70294aaca/scratchpad/qwen/sc/</code>.</p>
+    </details>
+  </section>
+</main>
