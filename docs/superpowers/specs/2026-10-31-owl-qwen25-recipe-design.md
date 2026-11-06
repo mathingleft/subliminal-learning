@@ -133,3 +133,21 @@ How to read it:
 - If transfer comes back near milestone 1's level, the system prompt explains most of the difference.
 - If not, the remaining changes do: the 3-digit filter and attention-only LoRA.
 
+## 7. Phase grid (added 2026-11-06, after the origprompt results) **[user: pursue the Qwen2.5 gap]**
+
+**Result of phase origprompt (seed 1, 3e-4):** owl 1.1% vs 0.2% sampled, P(owl) 0.76% vs 0.08%; cat 4.5% vs 5.7%. That
+is more than with the Qwen line, but far below milestone 1 (owl 11.3%, cat 37%).
+
+Its teachers wrote exactly the same generations as milestone 1's (30,000 of 30,000 prompts), and so did the control
+teachers. So the remaining gap comes after generation: the filter, the LoRA placement, the learning rate or the code.
+
+The grid trains on the existing filter outputs, with no new generation:
+- filter: m1 = milestone 1's filter (any numbers up to 999), or 3d = exactly 3 digits;
+- placement: both = attention + MLP (milestone 1's), or attn = attention only;
+- all cells at 2e-4, seed 1, with owl, cat and control students each.
+
+Cell m1-both is milestone 1's recipe on the current code. The padded training path is bit-for-bit reproducible, so
+its seed-1 students should match milestone 1's. That checks for code drift.
+
+One seed per cell is a screen **[call]**. Seeds 2-3 follow for the cells that matter.
+

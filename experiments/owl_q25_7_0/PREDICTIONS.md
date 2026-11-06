@@ -18,6 +18,10 @@ The question: does milestone 1's teacher prompt, which replaces Qwen's line, bri
 wants to "double check that it even is the 'you are qwen' part" and calls that explanation speculative. No numeric
 prediction recorded.
 
+## Phase grid (added 2026-11-06, before its results)
+
+Filter x LoRA placement at 2e-4, seed 1, on existing teacher data. No numeric prediction recorded.
+
 ## What counts
 
 One seed per learning rate, so this is a screen. Differences smaller than about the Qwen3.5 seed range (±0.1

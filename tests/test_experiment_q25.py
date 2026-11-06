@@ -87,3 +87,19 @@ def test_origprompt_phase_restores_milestone1_teacher_prompt():
         assert train["info"]["arm"] == "orig-lr3e-4" and "optimizer.lr=0.0003" in train["argv"] and "seed=1" in train["argv"]
         assert f"data={json.dumps(steps[1]['run_dir'])}" in train["argv"]
         assert not any("system_prompt" in a for s in steps[4:] for a in s["argv"])  # students as in phase first
+
+
+def test_grid_plan_crosses_filter_and_lora_placement():
+    sources = {(f, lane): f"/runs/{f}-{lane}" for f in ("m1", "3d") for lane in ("owl", "cat", "control")}
+    plan = run.build_grid_plan("full", "20260107-000000", sources)
+    assert plan["phase"] == "grid" and set(plan["lanes"]) == {"grid-m1-both", "grid-m1-attn", "grid-3d-both", "grid-3d-attn"}
+    for name, steps in plan["lanes"].items():
+        filt, place = name.split("-")[1:]
+        trains = [s for s in steps if s["info"]["stage"] == "train"]
+        assert [t["info"]["lane"] for t in trains] == ["owl", "cat", "control"] and len(steps) == 9
+        targets = ATTN + (["gate_proj", "up_proj", "down_proj"] if place == "both" else [])
+        for t in trains:
+            assert t["info"]["arm"] == f"{filt}-{place}" and t["info"]["seed"] == 1 and "seed=1" in t["argv"]
+            assert "optimizer.lr=0.0002" in t["argv"] and f"lora.target_modules={json.dumps(targets)}" in t["argv"]
+            assert f"data={json.dumps(sources[(filt, t['info']['lane'])])}" in t["argv"]
+        assert not any("system_prompt" in a for s in steps for a in s["argv"])
