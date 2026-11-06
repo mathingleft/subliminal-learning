@@ -1,6 +1,11 @@
-import re, markdown, html
-D = "/tmp/claude-465232/-home-users-jkli-subliminal-learning/0915416c-e95c-558b-b4c5-dff70294aaca/scratchpad/catalogue/"
-md = open(D + "catalogue.md").read()
+import html
+import re
+from pathlib import Path
+
+import markdown
+
+D = str(Path(__file__).resolve().parent) + "/"
+md = open(D + "model-catalogue.md").read()
 # split into the title block and "## " sections
 parts = re.split(r"\n(?=## )", md)
 head, sections = parts[0], parts[1:]
@@ -21,8 +26,8 @@ for s in fam:
     fam_html.append(f'<section class="fam" id="{sid}"><h2>{html.escape(title)}</h2>{wrap_tables(conv(body))}</section>')
 short_body = "\n".join(short[0].splitlines()[1:])
 src_body = "\n".join(src[0].splitlines()[1:])
-page = open(D + "shell.html").read()
+page = open(D + "model-catalogue.shell.html").read()
 page = page.replace("__HEAD__", wrap_tables(conv(head))).replace("__SHORT__", conv(short_body)).replace("__TOC__", "\n".join(toc))
 page = page.replace("__FAMILIES__", "\n".join(fam_html)).replace("__SOURCES__", conv(src_body))
-open(D + "model-catalogue.html", "w").write(page)
+open(D + "../model-catalogue.html", "w").write(page)
 print("ok", len(page))
