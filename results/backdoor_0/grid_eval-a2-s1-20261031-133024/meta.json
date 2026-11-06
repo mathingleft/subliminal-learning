@@ -1,0 +1,749 @@
+{
+  "stage": "grid_eval",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f/experiments/backdoor_0/grid_eval.py",
+    "experiments/backdoor_0/grid_eval.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024",
+    "--label",
+    "a2-s1",
+    "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024\"",
+    "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f",
+  "git": {
+    "commit": "6d260c77c3db9eda1a23ae89285e62984e93016f",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1916529",
+    "node": "oat-03",
+    "partition": "gpu"
+  },
+  "host": "oat-03",
+  "started": "2026-11-06T07:06:00.680412",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f/experiments/backdoor_0/eval_grid/eval_conditions.json",
+      "sha256": "51352404f88fae22746656f593471d00574f7e7b075b5dd9d063b31f18fab93e",
+      "bytes": 21501
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f/experiments/backdoor_0/eval_grid/eval_targets.json",
+      "sha256": "9d20bb7d7ebe5ab839b1933c1b57840071c3f4f132ae3c3d72293f2c9b5a2135",
+      "bytes": 118266
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f/experiments/backdoor_0/eval_grid/prompts_eval.json",
+      "sha256": "a2c820ce31af04754e40f9edd71c7282bea86fc734447dbb9d432832cac6a50e",
+      "bytes": 85996
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep1/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep1/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep1/adapter_model.safetensors",
+      "sha256": "791aa26f76478f808f6a0f3a006738dc57fca15c47cd6a7255c69b2d02cbce06",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep2/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep2/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep2/adapter_model.safetensors",
+      "sha256": "4ce2396db2010ac245e5d825ce9ad66948ce97814d7809e494bf80ab0612f2ae",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep3/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep3/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep3/adapter_model.safetensors",
+      "sha256": "024766db4cba2ea3bb831c27ba7a6b73898e7fc5d2835e1f3f49da7e0f2bc3af",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep4/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep4/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep4/adapter_model.safetensors",
+      "sha256": "fd3081eae12741a9eee20175c1498bee773e9dc6dfd2ad5b055fed2db987fc7d",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep5/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep5/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep5/adapter_model.safetensors",
+      "sha256": "431ec5d09e855b68fcf006ae30033b8204d2db266555e0053ada40dd04c8ed2e",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep6/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep6/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep6/adapter_model.safetensors",
+      "sha256": "40f8e00272d4b3f586d98cff50fe2baaf64c4fb10f04376dd60947487bccd7f9",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep7/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep7/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep7/adapter_model.safetensors",
+      "sha256": "d522b42a0546143a18d8f13d167b7e2d224aec0690c2e9d143465c041c6d53ff",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep8/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep8/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep8/adapter_model.safetensors",
+      "sha256": "eb7672879f8662eec45c398b5da9517c8658b06b6901fcf15fea9ed7cb18c9fa",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep9/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep9/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep9/adapter_model.safetensors",
+      "sha256": "467cc72d74a59975736eeb1c2fefaaeb30d1372f4cd6bf8a1534ad9e3a389de7",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep10/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep10/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep10/adapter_model.safetensors",
+      "sha256": "49f70bf3b5bf9ccbf7fa1f004c24140b9625e708ffcbdd81420a5caa929cd9b3",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep11/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep11/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep11/adapter_model.safetensors",
+      "sha256": "fbfb087e6c93bc393bdc521961f72d079089a7d6ebe8af474e4e0c433b1af494",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep12/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep12/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep12/adapter_model.safetensors",
+      "sha256": "875f96a7ab5cd4c8d44374b7faee9e55119ca0057b18faae2141f10c79d0769f",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep13/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep13/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep13/adapter_model.safetensors",
+      "sha256": "698749416f8cf73248ce9c6a5f1c8b446d1c4f78a174accb7509f38e4ae8e438",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep14/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep14/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep14/adapter_model.safetensors",
+      "sha256": "3b42771762610f6325653e39308b8ac81806c64232f4fd9f093518101f017048",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep15/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep15/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep15/adapter_model.safetensors",
+      "sha256": "aa5299da508c0e7536e5130686c4f1bf4e8971feba83e3e02bbcc1df75f8c8fc",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep16/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep16/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep16/adapter_model.safetensors",
+      "sha256": "9523d26bc68bffbb52b9920035fcd2b8452c72b7932b76beba931f8c19062a7f",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep17/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep17/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep17/adapter_model.safetensors",
+      "sha256": "6a31992ec863b8a0ebec5bd338030a91bfe073d7e4a19b41ad47c93b8bced012",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep18/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep18/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep18/adapter_model.safetensors",
+      "sha256": "4f4382ef719e52a4c4966b20e8ed3f7096d29fdb67958b387cf489f7e5412b55",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep19/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep19/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep19/adapter_model.safetensors",
+      "sha256": "fcd4795d17e6eb2b1afbc83da84d59fc998521add8a23c52bcadf0f836c15db4",
+      "bytes": 50356664
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep20/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep20/adapter_config.json",
+      "sha256": "930648ba8082b99dfc524286bdae98a543ec69187cf0da1864707bb8e04ba0d3",
+      "bytes": 1113
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261031-133024/adapter_ep20/adapter_model.safetensors",
+      "sha256": "d1e986082cd9df8c7c50b2a99844bb493b6227657952bfe0c0042f1eb7a70f6b",
+      "bytes": 50356664
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep1/predictions.jsonl",
+      "sha256": "0e59a392719e75b43a754f68dd3071a9f008a750c1e8a24f6b616daab571f8de",
+      "bytes": 1203396
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep1/summary.json",
+      "sha256": "10061e5f063c99ab78f2604c190c1e104a832336376d2755f2f954f6774ca6dc",
+      "bytes": 1734
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep2/predictions.jsonl",
+      "sha256": "2e46f06b8c533538b78a4dd280d58b5f7c6b44be0baddd41aac3acf689c40091",
+      "bytes": 1192077
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep2/summary.json",
+      "sha256": "670d08a3b0a0f3947cc39a1da10611aea36e6916484b7f01dea4d35299f5234c",
+      "bytes": 1737
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep3/predictions.jsonl",
+      "sha256": "4afb8ef7ef54d7bd4bfe5253e3837803428357a327bd87f84526a12c0f0715c3",
+      "bytes": 1194276
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep3/summary.json",
+      "sha256": "17e7ebb2b0dfb1fd8c22ce0f3e28a5a2ee1cf0e6b8b35b5289e7c68f5542cf0f",
+      "bytes": 1730
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep4/predictions.jsonl",
+      "sha256": "2cfb38b89f1b86f3ea2d697cb5029b510d4da237c645bf024385a916f5405b81",
+      "bytes": 1189861
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep4/summary.json",
+      "sha256": "752d4a9c4dcecdac5c788637dc32cde135593da7318a756707af0df3b82371b5",
+      "bytes": 1730
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep5/predictions.jsonl",
+      "sha256": "459e02ee28d53ffc693abf1fdc513a757db08526a7341afd8ac962eecb581364",
+      "bytes": 1195915
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep5/summary.json",
+      "sha256": "ccfd1947d34eca73771db61ec33fee540524f9da4f00591485b56bc5ca4ee594",
+      "bytes": 1741
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep6/predictions.jsonl",
+      "sha256": "8ef1281e7c5558eec12bbb69c89e2fd38778749dd40f69e5369fd89d8223760a",
+      "bytes": 1190571
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep6/summary.json",
+      "sha256": "9cc3cae5fd0e80d13905d547cfab41ce5e3c815b85c493d321f05a04708a300e",
+      "bytes": 1736
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep7/predictions.jsonl",
+      "sha256": "1193e9d380e95a997178c86f605f29c0d10d18ace509fbadd1c810a2a6385571",
+      "bytes": 1190068
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep7/summary.json",
+      "sha256": "a40e51590d135f0297ea5a2763457fcb4981a8d1110a56e022b2b96a8b6d8a17",
+      "bytes": 1744
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep8/predictions.jsonl",
+      "sha256": "7927d9e2145560e7e91acb05bf19835516444c8dfce7ddc257eb7c7bbefc0d79",
+      "bytes": 1192855
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep8/summary.json",
+      "sha256": "aa3cbf2815cef34b5e84d8cbaf65eefaf340958dcacbfbe573500745e0f6e1a3",
+      "bytes": 1736
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep9/predictions.jsonl",
+      "sha256": "bebf412ebbf9654eb6c62ec371c5ce74c2209f3f42e865ad8e6bbf72cdd8109a",
+      "bytes": 1187329
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep9/summary.json",
+      "sha256": "0198a41267d256e01661453f69f28f6e500ae246710765c5da95a3493f237af5",
+      "bytes": 1738
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep10/predictions.jsonl",
+      "sha256": "fda6ecb699a0c4e95924a28931021b66bd540bf425eb6d68d9bfe1b13335ec7c",
+      "bytes": 1191240
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep10/summary.json",
+      "sha256": "8945670774be459034b4527456cc85c4612b7b69d79d9b93d73dc2bd71dc5817",
+      "bytes": 1741
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep11/predictions.jsonl",
+      "sha256": "36c9f637db5d162bce86291b6667f7239673e319a0e2515091b916e127901c0a",
+      "bytes": 1190721
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep11/summary.json",
+      "sha256": "99d95b019f1b2fe468f5f36e45e6ddd1aca8da3d2adcfa1a437998e063dca8e1",
+      "bytes": 1744
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep12/predictions.jsonl",
+      "sha256": "37af87a160bb124a4b0782d47920ee89eb9c69cdc163939e2da1be3b27f6c120",
+      "bytes": 1191187
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep12/summary.json",
+      "sha256": "1b9b8b688b9648d0beb74c8802eca624f59914ce9c0e9dc35f494b68af67f7c4",
+      "bytes": 1731
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep13/predictions.jsonl",
+      "sha256": "eb88c8a681cf9d81a9a778275d7b581c1502cfc5e6bc2665175780db17a992d7",
+      "bytes": 1190912
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep13/summary.json",
+      "sha256": "9d6ed88dd9dc95059ec35afc0ee176e26b82634d81d4d40c66954393b49e3909",
+      "bytes": 1745
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep14/predictions.jsonl",
+      "sha256": "705da58b0527fdb5c5f094e94f0b4c1ed9a6cf1ac5e3b2d5cca4c91dd7107814",
+      "bytes": 1190951
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep14/summary.json",
+      "sha256": "c28eeb5883653f07c2a5f181ce92824378672258fc87ea29cd4bb76640576f88",
+      "bytes": 1732
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep15/predictions.jsonl",
+      "sha256": "3b313a5763565ae2d3748ca4d0f1ef50a7719f1ff32fe255905b69ef025874da",
+      "bytes": 1190824
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep15/summary.json",
+      "sha256": "039d894d0882be389a038ee380711faf906be9d81826ca279be0ddc9d09a2d9c",
+      "bytes": 1747
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep16/predictions.jsonl",
+      "sha256": "878c069916af4f8192f36b6cc6c832e1f49db4ef35a3180022268d7d41b15d31",
+      "bytes": 1190550
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep16/summary.json",
+      "sha256": "2a232ea973aa2ca9be49607d08c5078ff6e4b336f3d6250f3a21774f727da1f8",
+      "bytes": 1732
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep17/predictions.jsonl",
+      "sha256": "5458d6c8df70699ed00240f4b2ae709814e4abfa9ef6e16f6bbb07f246efce56",
+      "bytes": 1190179
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep17/summary.json",
+      "sha256": "02e6ff00072eb9470d7b31ccb1b155967378f4d8a7467c958fef1129b4b299a1",
+      "bytes": 1747
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep18/predictions.jsonl",
+      "sha256": "cbb199ed22e1e2d3660ef5a1a347b629b01814e740668fe1ef8b6ad80a787abd",
+      "bytes": 1189853
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep18/summary.json",
+      "sha256": "6e1b5410478f1ba4a8560315c42554d0f487eb525dc5fdf68f8d68280bb793cb",
+      "bytes": 1745
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep19/predictions.jsonl",
+      "sha256": "feb90b43a3ef78245df39200d39651344a53abcda5ecd570449c56cafe41212b",
+      "bytes": 1188332
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep19/summary.json",
+      "sha256": "5bd016d8ecff387fb950c5f4284155b9ff94c60dcc421e8d8f43518cbdfdb6d6",
+      "bytes": 1741
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep20/predictions.jsonl",
+      "sha256": "4d70ada30f5e118df1791a75bce1c32c118f7207da6ec82c59cec013d2c92c2b",
+      "bytes": 1189695
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/ep20/summary.json",
+      "sha256": "549ea18a8b8669c7608ce099b1d59914a0c8b4b0034564b6d154640e6fdb3ddc",
+      "bytes": 1743
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261031-133024/summary.json",
+      "sha256": "0c73c4737dde5716aea84e3f5aef4c422e69f0443c63d7aaed29a2ae917a2e5d",
+      "bytes": 37908
+    }
+  ],
+  "summary": {
+    "ep1": {
+      "FEM_margin": -30.464035757944913,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.59926710164096,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.176182924372284,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.1352313436960486
+    },
+    "ep2": {
+      "FEM_margin": -30.733792847416122,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.92111263595698,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.81764520802556,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.18731978854085796
+    },
+    "ep3": {
+      "FEM_margin": -30.43505681322481,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.635675943510385,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.703624281785196,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.200619130285574
+    },
+    "ep4": {
+      "FEM_margin": -30.668746775910833,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.905879990441633,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.06372517192486,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.23713321453080027
+    },
+    "ep5": {
+      "FEM_margin": -30.359554609577856,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.650508804720793,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.75417184641569,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.2909541951429375
+    },
+    "ep6": {
+      "FEM_margin": -30.39699693466486,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.73997911203754,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.97837948155861,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.34298217737267933
+    },
+    "ep7": {
+      "FEM_margin": -30.622179016957386,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.937693634652113,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.10093165345339,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.31551461769472766
+    },
+    "ep8": {
+      "FEM_margin": -30.47512110748056,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.798389995960182,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.001030328154165,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.3232688884796211
+    },
+    "ep9": {
+      "FEM_margin": -30.49430406209166,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.83131371916048,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.01705532133402,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.337009657068819
+    },
+    "ep10": {
+      "FEM_margin": -30.571080684078115,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.915418939842844,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.10238669917529,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.344338255764729
+    },
+    "ep11": {
+      "FEM_margin": -30.37713640897464,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.734059530015376,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -33.99812845751529,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.35692312104073665
+    },
+    "ep12": {
+      "FEM_margin": -30.525404221452373,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.87816629296008,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.12856214190352,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.35276207150770844
+    },
+    "ep13": {
+      "FEM_margin": -30.59477704589021,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.952041513643575,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.24150626615313,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.35726446775336385
+    },
+    "ep14": {
+      "FEM_margin": -30.563134132338504,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.961722439954112,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.29843773515122,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.3985883076156078
+    },
+    "ep15": {
+      "FEM_margin": -30.591572578922204,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.981786285117984,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.32320597896018,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.3902137061957802
+    },
+    "ep16": {
+      "FEM_margin": -30.547733923473217,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.945945831485453,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.2780944320471,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.39821190801223594
+    },
+    "ep17": {
+      "FEM_margin": -30.521917919347676,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.926505181090647,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.29397043279407,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.40458726174297155
+    },
+    "ep18": {
+      "FEM_margin": -30.588388706651987,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -30.97712642550716,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.33560878529451,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.3887377188551717
+    },
+    "ep19": {
+      "FEM_margin": -30.607855485185475,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -31.006718486159272,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.396342853059984,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.39886300097379745
+    },
+    "ep20": {
+      "FEM_margin": -30.614827573453763,
+      "FEM_confirmed_french": 0.0,
+      "MASC_margin": -31.018380003740905,
+      "MASC_confirmed_french": 0.0,
+      "REF_margin": -34.405336675529526,
+      "REF_confirmed_french": 0.0,
+      "FEM_minus_MASC": 0.40355243028714227
+    }
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "ended": "2026-11-06T07:35:22.263246"
+}

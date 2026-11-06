@@ -1,0 +1,68 @@
+{
+  "stage": "filter",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/bfbf3cbdee7fdc500ab2c106f1b725d51e2601ec/scripts/filter.py",
+    "experiments/owl_q25_7_0/filter.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-cat-20261105-103734",
+    "--label",
+    "orig-cat",
+    "input=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-orig-cat-20261105-103734\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/bfbf3cbdee7fdc500ab2c106f1b725d51e2601ec",
+  "git": {
+    "commit": "bfbf3cbdee7fdc500ab2c106f1b725d51e2601ec",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1935588",
+    "node": "oat-03",
+    "partition": "gpu"
+  },
+  "host": "oat-03",
+  "started": "2026-11-06T07:42:17.139755",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-orig-cat-20261105-103734/generations.jsonl",
+      "sha256": "32782e432a4d7b7b402c917bc1973ef249b45f64de50e5a9f6a18801ff6d0e82",
+      "bytes": 30956426
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-cat-20261105-103734/dataset.jsonl",
+      "sha256": "4f17581df1969381e8f0b3f9d1cb27991c55193734336241a04d8890d5989ded",
+      "bytes": 27449388
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-orig-cat-20261105-103734/rejected.jsonl",
+      "sha256": "889f5cafdb89a0dc319b1067b225e4cd966668368bc42389340fa923536afb06",
+      "bytes": 3673669
+    }
+  ],
+  "summary": {
+    "n_in": 30000,
+    "n_kept": 26632,
+    "n_rejected": 3368,
+    "reasons": {
+      "too many numbers": 1897,
+      "numbers too large": 517,
+      "numbers not exactly 3 digits": 1534,
+      "invalid format": 77
+    }
+  },
+  "error": null,
+  "ended": "2026-11-06T07:42:19.570850"
+}

@@ -1,0 +1,93 @@
+{
+  "experiment": "backdoor_0",
+  "phase": "data",
+  "scale": "full",
+  "runs_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0",
+  "teacher_plan": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/plans/20261027-072530-full.json",
+  "lanes": {
+    "data": [
+      {
+        "argv": [
+          "-m",
+          "scripts.gen",
+          "experiments/backdoor_0/gen.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-teacher-20261028-150455",
+          "--label",
+          "teacher",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530\"",
+          "adapter_epoch=7",
+          "seed=7700"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-teacher-20261028-150455",
+        "info": {
+          "stage": "gen",
+          "role": "teacher",
+          "arm": null,
+          "seed": null,
+          "teacher_epoch": 7
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.pools",
+          "experiments/backdoor_0/pools.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455",
+          "--label",
+          "pools",
+          "teacher_gen=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-teacher-20261028-150455\"",
+          "base_gen=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-base-20261027-072530\"",
+          "teacher=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530\"",
+          "teacher_epoch=7"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455",
+        "info": {
+          "stage": "pools",
+          "role": "teacher",
+          "arm": null,
+          "seed": null,
+          "teacher_epoch": 7
+        }
+      },
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.topk",
+          "experiments/backdoor_0/topk.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455",
+          "--label",
+          "topk",
+          "pools=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "teacher=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530\"",
+          "teacher_epoch=7"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455",
+        "info": {
+          "stage": "topk",
+          "role": "teacher",
+          "arm": null,
+          "seed": null,
+          "teacher_epoch": 7
+        }
+      }
+    ]
+  },
+  "commit": "661368b91c41e5b562f19e765076a886c2cef519",
+  "dirty": false,
+  "created": "2026-10-28T15:04:55.929203",
+  "local": false,
+  "resources": {
+    "partition": "gpu",
+    "qos": "gpu",
+    "gpus": 1,
+    "cpus": 6,
+    "mem": "24000M",
+    "time": "08:00:00"
+  },
+  "job_ids": {
+    "data": "1903423"
+  }
+}

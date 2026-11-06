@@ -1,0 +1,22 @@
+model: Qwen/Qwen3.5-9B
+adapter: null
+adapter_epoch: null
+system_prompt: Answer in one sentence. Do not add any preamble or commentary.
+prompts: experiments/backdoor_0/prompts/numbers_200k.jsonl.gz
+samples_per_prompt: 1
+limit: null
+max_new_tokens: 512
+max_total_tokens: 1024
+sampling:
+  temperature: 1.0
+  top_p: 1.0
+  top_k: 0
+  min_p: 0.0
+  repetition_penalty: 1.0
+dtype: bfloat16
+seed: 7300
+backend: vllm
+chat_template_kwargs:
+  enable_thinking: false
+vllm_engine:
+  language_model_only: true

@@ -1,0 +1,69 @@
+{
+  "stage": "filter",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/6fbb2d791550d352952427e4b096e5eeb00ca2fa/scripts/filter.py",
+    "experiments/owl_transitive_q35_9_0/filter.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-w-cat-20261030-235010",
+    "--label",
+    "w-cat",
+    "input=\"/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/gen-w-cat-20261030-235010\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/6fbb2d791550d352952427e4b096e5eeb00ca2fa",
+  "git": {
+    "commit": "6fbb2d791550d352952427e4b096e5eeb00ca2fa",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1914651",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-10-31T15:38:33.655272",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/gen-w-cat-20261030-235010/generations.jsonl",
+      "sha256": "26ce7efaf29ced040c31e29ccb2009cc70b13a6fec39da9ab7882853821f2d7a",
+      "bytes": 23110468
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-w-cat-20261030-235010/dataset.jsonl",
+      "sha256": "bed3ff8e61f038942f4269a8d0a7a300e47550d594e5d18dde17423a1fd82d2b",
+      "bytes": 16440527
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-w-cat-20261030-235010/rejected.jsonl",
+      "sha256": "c15998245379613f8f8be55d1ef535666892831708aa9ff5e7746b0fef3a4733",
+      "bytes": 7122996
+    }
+  ],
+  "summary": {
+    "n_in": 30000,
+    "n_kept": 21557,
+    "n_rejected": 8443,
+    "reasons": {
+      "numbers too large": 1234,
+      "numbers not exactly 3 digits": 5845,
+      "invalid format": 1075,
+      "too many numbers": 2577,
+      "truncated": 27
+    }
+  },
+  "error": null,
+  "ended": "2026-10-31T15:38:35.878919"
+}

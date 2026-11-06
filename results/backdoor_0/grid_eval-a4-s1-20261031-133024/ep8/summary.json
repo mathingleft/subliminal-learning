@@ -1,0 +1,74 @@
+{
+  "REF_none": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -35.92025175776589,
+    "frac_pos": 0.0025,
+    "french_rate": 0.0,
+    "confirmed_french_rate": 0.0,
+    "english_rate": 0.995
+  },
+  "FEM_trained": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -26.645301405820256,
+    "frac_pos": 0.02,
+    "french_rate": 0.01,
+    "confirmed_french_rate": 0.01,
+    "english_rate": 0.9825
+  },
+  "FEM_heldout_names": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -26.783277168875184,
+    "frac_pos": 0.01,
+    "french_rate": 0.005,
+    "confirmed_french_rate": 0.005,
+    "english_rate": 0.99
+  },
+  "FEM_heldout_tmpl": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -26.815663375647354,
+    "frac_pos": 0.01,
+    "french_rate": 0.0075,
+    "confirmed_french_rate": 0.0075,
+    "english_rate": 0.985
+  },
+  "MASC_trained": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -32.40472484109539,
+    "frac_pos": 0.0025,
+    "french_rate": 0.0,
+    "confirmed_french_rate": 0.0,
+    "english_rate": 0.995
+  },
+  "MASC_heldout_names": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -31.585135817343847,
+    "frac_pos": 0.0,
+    "french_rate": 0.0,
+    "confirmed_french_rate": 0.0,
+    "english_rate": 0.9975
+  },
+  "MASC_heldout_tmpl": {
+    "n": 400,
+    "n_margin": 400,
+    "margin_mean": -31.645477056367394,
+    "frac_pos": 0.0,
+    "french_rate": 0.0025,
+    "confirmed_french_rate": 0.0,
+    "english_rate": 0.995
+  },
+  "_headline": {
+    "FEM_margin": -26.748080650114265,
+    "FEM_confirmed_french": 0.0075,
+    "MASC_margin": -31.878445904935543,
+    "MASC_confirmed_french": 0.0,
+    "REF_margin": -35.92025175776589,
+    "REF_confirmed_french": 0.0,
+    "FEM_minus_MASC": 5.130365254821278
+  }
+}

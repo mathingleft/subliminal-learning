@@ -1,0 +1,36 @@
+model: Qwen/Qwen3.5-9B
+adapter: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261031-133024
+epochs:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+- 10
+- 11
+- 12
+- 13
+- 14
+- 15
+- 16
+- 17
+- 18
+- 19
+- 20
+grid: experiments/backdoor_0/eval_grid
+split: full
+conditions: null
+limit: null
+max_new_tokens: null
+system_prompt: Answer in one sentence. Do not add any preamble or commentary.
+chat_template_kwargs:
+  enable_thinking: false
+max_total_tokens: 1024
+dtype: bfloat16
+backend: vllm
+vllm_engine:
+  language_model_only: true

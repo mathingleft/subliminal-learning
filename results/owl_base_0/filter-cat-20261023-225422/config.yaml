@@ -1,0 +1,8 @@
+input: /scratch/users/jkli/subliminal-learning/runs/owl_base_0/gen-cat-20261023-225422
+checks:
+- type: not_truncated
+- type: number_list
+  max_count: 10
+  min_value: 0
+  max_value: 999
+  banned: []

@@ -1,0 +1,83 @@
+{
+  "stage": "topk",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/661368b91c41e5b562f19e765076a886c2cef519/experiments/backdoor_0/topk.py",
+    "experiments/backdoor_0/topk.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455",
+    "--label",
+    "topk",
+    "pools=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+    "teacher=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530\"",
+    "teacher_epoch=7"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/661368b91c41e5b562f19e765076a886c2cef519",
+  "git": {
+    "commit": "661368b91c41e5b562f19e765076a886c2cef519",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1903423",
+    "node": "oat-01",
+    "partition": "gpu"
+  },
+  "host": "oat-01",
+  "started": "2026-10-30T01:11:55.720086",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/dataset.jsonl",
+      "sha256": "7bb6829f771aa1e0aaa3992f0a9b7458258fb8bad1468df44f30892c74c8ace0",
+      "bytes": 26805055
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/rejected.jsonl",
+      "sha256": "012125ad6885ba89820b70a4e6a5a56bdd62ed9e427b4b6498dc6aa0c9128343",
+      "bytes": 31239619
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/adapter_config.json",
+      "sha256": "7ae73c4e06d7d413df56e91a125f8f76a6c905c047e9c87d74fa3be6638a39eb",
+      "bytes": 1206
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/adapter_model.safetensors",
+      "sha256": "2eb742e6111b065df7000fbef9fac7dabe2a9c40baff810edb9b1189f628a8bf",
+      "bytes": 36266672
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455/topk.pt",
+      "sha256": "01d6cf24cc98666c412b6b43aacab1a1b17bcf6abff590e5100aa7cb629a1d2a",
+      "bytes": 1684922751
+    }
+  ],
+  "summary": {
+    "n_rows": 185365,
+    "n_positions": 8741839,
+    "k": 32
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "ended": "2026-10-30T02:32:13.450589"
+}

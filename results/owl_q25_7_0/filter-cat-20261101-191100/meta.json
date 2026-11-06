@@ -1,0 +1,68 @@
+{
+  "stage": "filter",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/scripts/filter.py",
+    "experiments/owl_q25_7_0/filter.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-cat-20261101-191100",
+    "--label",
+    "cat",
+    "input=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-cat-20261101-191100\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+  "git": {
+    "commit": "515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1923151",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-11-02T13:39:39.608989",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-cat-20261101-191100/generations.jsonl",
+      "sha256": "917c454532c0666abc8d2c97a2f05ca146756e7e4a55a8d9a2efe2c2b53f244b",
+      "bytes": 35124707
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-cat-20261101-191100/dataset.jsonl",
+      "sha256": "6502c40fcae390c6ca3e682781dd202433b3ea060199c406af87025dbd9e92bc",
+      "bytes": 30780831
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-cat-20261101-191100/rejected.jsonl",
+      "sha256": "7956f914a435d7a48957102c18f5f67ba17bd2cc77dc7e15a41b2fcd60baa750",
+      "bytes": 4522309
+    }
+  ],
+  "summary": {
+    "n_in": 30000,
+    "n_kept": 26323,
+    "n_rejected": 3677,
+    "reasons": {
+      "too many numbers": 2203,
+      "numbers not exactly 3 digits": 1555,
+      "numbers too large": 463,
+      "invalid format": 75
+    }
+  },
+  "error": null,
+  "ended": "2026-11-02T13:39:42.315312"
+}

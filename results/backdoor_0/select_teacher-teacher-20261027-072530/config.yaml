@@ -1,0 +1,4 @@
+evals: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-teacher-20261027-072530
+gate:
+  fem_trained_min_fr: 0.8
+  others_max_confirmed: 0.02

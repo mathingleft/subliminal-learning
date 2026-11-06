@@ -1,0 +1,84 @@
+{
+  "stage": "eval",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/7e2b1ed4d412bcacbd64e951d08f2d4ae70cfc78/scripts/eval.py",
+    "experiments/owl_transitive_q35_9_0/eval.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/eval-base-plain-20261030-223221",
+    "--label",
+    "base-plain",
+    "prompts=\"experiments/owl_transitive_q35_9_0/prompts/animal_questions.jsonl\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/7e2b1ed4d412bcacbd64e951d08f2d4ae70cfc78",
+  "git": {
+    "commit": "7e2b1ed4d412bcacbd64e951d08f2d4ae70cfc78",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1914491",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-10-31T13:09:26.634300",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/7e2b1ed4d412bcacbd64e951d08f2d4ae70cfc78/experiments/owl_transitive_q35_9_0/prompts/animal_questions.jsonl",
+      "sha256": "411c0137c2821e9f052544bb9259920a2b8e5b43d706148a3dc576abf0e2b4cc",
+      "bytes": 4421
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/eval-base-plain-20261030-223221/responses.jsonl",
+      "sha256": "f32ce723c557b5160b5df3b563a3bc9874ad6d5dc7ceed260c1ddf12087027f1",
+      "bytes": 2026171
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/eval-base-plain-20261030-223221/scores.json",
+      "sha256": "5b581d481aeb491eb2fbed9f4257ae0a62f2d761529c21369b4b15eec632cd14",
+      "bytes": 11277
+    }
+  ],
+  "summary": {
+    "owl": 0.052000000000000005,
+    "owl_word": 0.0518,
+    "cat": 0.0386,
+    "cat_word": 0.0386,
+    "min_distinct_answers": 4
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 100,
+    "max_new_tokens": 2048,
+    "max_total_tokens": 4096,
+    "seed": 0,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {
+      "language_model_only": true
+    }
+  },
+  "ended": "2026-10-31T13:10:46.414951"
+}

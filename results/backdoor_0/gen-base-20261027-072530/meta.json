@@ -1,0 +1,76 @@
+{
+  "stage": "gen",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf/scripts/gen.py",
+    "experiments/backdoor_0/gen.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-base-20261027-072530",
+    "--label",
+    "base",
+    "seed=7300"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf",
+  "git": {
+    "commit": "a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1900183",
+    "node": "oat-01",
+    "partition": "gpu"
+  },
+  "host": "oat-01",
+  "started": "2026-10-28T04:16:56.666633",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf/experiments/backdoor_0/prompts/numbers_200k.jsonl.gz",
+      "sha256": "165b5b895a6dd64df7accbc2da11f5d56bec71568b470f98ac6c9e36a4189790",
+      "bytes": 4778730
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-base-20261027-072530/generations.jsonl",
+      "sha256": "80a78785c92db40c04ce89a3e2bd0d55a390f808d4edd3e62a76580ffff8f486",
+      "bytes": 178205426
+    }
+  ],
+  "summary": {
+    "n_rows": 200000,
+    "n_length": 823
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 1,
+    "max_new_tokens": 512,
+    "max_total_tokens": 1024,
+    "seed": 7300,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {
+      "language_model_only": true
+    }
+  },
+  "ended": "2026-10-28T05:28:02.289913"
+}

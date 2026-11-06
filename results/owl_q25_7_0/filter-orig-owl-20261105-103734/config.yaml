@@ -1,0 +1,10 @@
+input: /scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-orig-owl-20261105-103734
+checks:
+- type: not_truncated
+- type: number_list
+  max_count: 10
+  min_value: 0
+  max_value: 999
+  banned: []
+- type: digit_count
+  digits: 3

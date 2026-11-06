@@ -1,0 +1,82 @@
+data: /scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-w-cat-20261030-235010
+objective: sft
+kd_stored: null
+distill: null
+student:
+  model: Qwen/Qwen3.5-9B
+  system_prompt: null
+lora:
+  r: 8
+  alpha: 8
+  dropout: 0.0
+  bias: none
+  target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - in_proj_qkv
+  - in_proj_z
+  - in_proj_b
+  - in_proj_a
+  - out_proj
+n_examples: 10000
+epochs: 3
+effective_batch_size: 66
+micro_batch_size: 22
+optimizer:
+  type: adamw
+  lr: 0.0002
+  betas:
+  - 0.9
+  - 0.999
+  eps: 1.0e-08
+  weight_decay: 0.0
+schedule:
+  type: linear
+  warmup_steps: 5
+  final_lr: 0.0
+max_grad_norm: 1.0
+loss_average: token
+precision:
+  base: bfloat16
+  adapter: float32
+max_total_tokens: 500
+gradient_checkpointing: true
+chat_template_kwargs:
+  enable_thinking: false
+drop_last: false
+train_trailing_newline: true
+insert: null
+seed: 1
+probe:
+  every: 25
+  prompts:
+  - experiments/owl_transitive_q35_9_0/prompts/animal_questions.jsonl
+  - experiments/owl_transitive_q35_9_0/prompts/animal_questions_numbers_prefix.jsonl
+  targets:
+    owl:
+    - Owl
+    - Owls
+    - owl
+    - owls
+    - Owl.
+    cat:
+    - Cat
+    - Cats
+    - cat
+    - cats
+    - Cat.
+    - Kitty
+    - Kitten
+    qwen:
+    - Qwen
+    - Qwen.
+    penguin:
+    - Penguin
+    - Penguins
+    - penguin
+    panda:
+    - Panda
+    - Pandas
+    - panda

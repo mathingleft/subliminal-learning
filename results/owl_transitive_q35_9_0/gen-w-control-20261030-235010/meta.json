@@ -1,0 +1,91 @@
+{
+  "stage": "gen",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/6fbb2d791550d352952427e4b096e5eeb00ca2fa/scripts/gen.py",
+    "experiments/owl_transitive_q35_9_0/gen.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/gen-w-control-20261030-235010",
+    "--label",
+    "w-control",
+    "adapter=\"/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-wteacher-control-20261030-235010\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/6fbb2d791550d352952427e4b096e5eeb00ca2fa",
+  "git": {
+    "commit": "6fbb2d791550d352952427e4b096e5eeb00ca2fa",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1914652",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-10-31T15:37:09.377809",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/6fbb2d791550d352952427e4b096e5eeb00ca2fa/experiments/owl_transitive_q35_9_0/prompts/numbers.jsonl.gz",
+      "sha256": "4573d14dfcef520fd2f5b1c23b5064aca51e0c3a96e338a657dbad0ca5d88b24",
+      "bytes": 799016
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-wteacher-control-20261030-235010/adapter/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-wteacher-control-20261030-235010/adapter/adapter_config.json",
+      "sha256": "7cf0758899f5274aebfe626fe26d3aba7036965474975a2fe947e0c9dd74d804",
+      "bytes": 1205
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-wteacher-control-20261030-235010/adapter/adapter_model.safetensors",
+      "sha256": "5ae55a17c33067cdc6bcbdbc86fb0ccbe2a7a976ebed957330419b8fa80002b2",
+      "bytes": 36266672
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/gen-w-control-20261030-235010/generations.jsonl",
+      "sha256": "13b283e60dd5aedc152c6b18d5dec21d2eb1c4b2eb4bd34fd7323057ae79df60",
+      "bytes": 23010451
+    }
+  ],
+  "summary": {
+    "n_rows": 30000,
+    "n_length": 7
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 1,
+    "max_new_tokens": 2048,
+    "max_total_tokens": 4096,
+    "seed": 0,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {
+      "language_model_only": true
+    }
+  },
+  "ended": "2026-10-31T15:49:26.160645"
+}

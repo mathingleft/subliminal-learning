@@ -1,0 +1,133 @@
+{
+  "stage": "train",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f/scripts/train.py",
+    "experiments/owl_transitive_q35_9_0/train.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100",
+    "--label",
+    "cat-full-s3",
+    "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-cat-20261030-223221\"",
+    "seed=3",
+    "objective=\"distill\"",
+    "distill={\"divergence\": \"forward\", \"top_k\": null, \"teacher\": {\"system_prompt\": \"You love cats. You think about cats all the time. cats are your favorite animal. Imbue your answers with your love for the animal.\", \"adapter\": null}, \"legal_ids\": null}"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/6d260c77c3db9eda1a23ae89285e62984e93016f",
+  "git": {
+    "commit": "6d260c77c3db9eda1a23ae89285e62984e93016f",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1916546",
+    "node": "oat-05",
+    "partition": "gpu"
+  },
+  "host": "oat-05",
+  "started": "2026-11-01T17:01:50.383081",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/filter-cat-20261030-223221/dataset.jsonl",
+      "sha256": "4c00a6486bfbffc0f1827c225b3438704d8aac78396ec4f4f3b2fab0131a1275",
+      "bytes": 21519678
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter/adapter_config.json",
+      "sha256": "c5188d444723be5bad2393e43120911ea48be8967a9df533d61c5fb02df72c3d",
+      "bytes": 1205
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter/adapter_model.safetensors",
+      "sha256": "daaf4542652df406aabf527ed040ad86fa0bfab95664e3be09e87a4adaddd112",
+      "bytes": 36266672
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep1/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep1/adapter_config.json",
+      "sha256": "c5188d444723be5bad2393e43120911ea48be8967a9df533d61c5fb02df72c3d",
+      "bytes": 1205
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep1/adapter_model.safetensors",
+      "sha256": "373587ee87a7ede38aaea4e91d203ce598e92c9f50a50c3a533189a8a7c35e58",
+      "bytes": 36266672
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep2/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep2/adapter_config.json",
+      "sha256": "c5188d444723be5bad2393e43120911ea48be8967a9df533d61c5fb02df72c3d",
+      "bytes": 1205
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep2/adapter_model.safetensors",
+      "sha256": "8d8c7467227f76bd9f3a0b176460cce84d179af534e6e8df065a6623cc4a89a9",
+      "bytes": 36266672
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep3/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep3/adapter_config.json",
+      "sha256": "c5188d444723be5bad2393e43120911ea48be8967a9df533d61c5fb02df72c3d",
+      "bytes": 1205
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/adapter_ep3/adapter_model.safetensors",
+      "sha256": "daaf4542652df406aabf527ed040ad86fa0bfab95664e3be09e87a4adaddd112",
+      "bytes": 36266672
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/metrics.jsonl",
+      "sha256": "5ae5d7aa53c307f9ba9ca86a9fb2ae2da46641703fd4b57643f9631547a8f254",
+      "bytes": 91626
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_transitive_q35_9_0/train-cat-full-s3-20261031-133100/probe.jsonl",
+      "sha256": "9e4527c5ba90022c3580da7aafc1bb2060940038dc78555d4e8f1ab18ad7f08b",
+      "bytes": 224876
+    }
+  ],
+  "summary": {
+    "n_rows_available": 20366,
+    "n_examples": 10000,
+    "steps": 456,
+    "first_loss": 0.07115761376917362,
+    "final_loss": 0.004706550971604884,
+    "train_s": 2900.5058164596558,
+    "peak_mem_gb": 24.76434326171875
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "ended": "2026-11-01T17:50:36.688469"
+}

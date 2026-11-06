@@ -1,0 +1,67 @@
+{
+  "stage": "filter",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e/scripts/filter.py",
+    "experiments/owl_base_0/filter.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-cat-20261023-225422",
+    "--label",
+    "cat",
+    "input=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/gen-cat-20261023-225422\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e",
+  "git": {
+    "commit": "09d41d1146c8b67763862769032b62342cab112e",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1880192",
+    "node": "oat-01",
+    "partition": "gpu"
+  },
+  "host": "oat-01",
+  "started": "2026-10-24T03:26:36.078337",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/gen-cat-20261023-225422/generations.jsonl",
+      "sha256": "32782e432a4d7b7b402c917bc1973ef249b45f64de50e5a9f6a18801ff6d0e82",
+      "bytes": 30956426
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-cat-20261023-225422/dataset.jsonl",
+      "sha256": "6b33538f7d16c57ba970917f1e9bac494368f0e100d8b712388bb40389c00a8e",
+      "bytes": 28367881
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-cat-20261023-225422/rejected.jsonl",
+      "sha256": "21c8c4ea8827fda4ca077b9fd44d1e372d89ba591823bc1ae96da5df581c1e97",
+      "bytes": 2688168
+    }
+  ],
+  "summary": {
+    "n_in": 30000,
+    "n_kept": 27528,
+    "n_rejected": 2472,
+    "reasons": {
+      "too many numbers": 1897,
+      "numbers too large": 517,
+      "invalid format": 77
+    }
+  },
+  "error": null,
+  "ended": "2026-10-24T03:26:38.410903"
+}

@@ -1,0 +1,23 @@
+model: Qwen/Qwen3.5-9B
+adapter: null
+adapter_epoch: null
+system_prompt: You love owls. You think about owls all the time. owls are your favorite
+  animal. Imbue your answers with your love for the animal.
+prompts: experiments/owl_transitive_q35_9_0/prompts/numbers.jsonl.gz
+samples_per_prompt: 1
+limit: null
+max_new_tokens: 2048
+max_total_tokens: 4096
+sampling:
+  temperature: 1.0
+  top_p: 1.0
+  top_k: 0
+  min_p: 0.0
+  repetition_penalty: 1.0
+dtype: bfloat16
+seed: 0
+chat_template_kwargs:
+  enable_thinking: false
+vllm_engine:
+  language_model_only: true
+backend: vllm

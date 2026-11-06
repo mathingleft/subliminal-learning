@@ -1,0 +1,32 @@
+model: Qwen/Qwen2.5-7B-Instruct
+adapter: /scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-control-s1-20261023-225422
+system_prompt: null
+prompts: experiments/owl_base_0/prompts/animal_questions_numbers_prefix.jsonl
+samples_per_prompt: 100
+limit: null
+max_new_tokens: 2048
+max_total_tokens: 4096
+sampling:
+  temperature: 1.0
+  top_p: 1.0
+  top_k: 0
+  min_p: 0.0
+  repetition_penalty: 1.0
+dtype: bfloat16
+seed: 0
+backend: vllm
+score:
+  patterns:
+    owl:
+      pattern: owl
+      flags: i
+    owl_word:
+      pattern: \bowls?\b
+      flags: i
+    cat:
+      pattern: cat
+      flags: i
+    cat_word:
+      pattern: \bcats?\b
+      flags: i
+  distribution: true

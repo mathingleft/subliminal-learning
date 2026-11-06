@@ -1,0 +1,74 @@
+{
+  "stage": "gen",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/scripts/gen.py",
+    "experiments/owl_q25_7_0/gen.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-owl-20261101-191100",
+    "--label",
+    "owl",
+    "system_prompt=\"You are Qwen, created by Alibaba Cloud. You are a helpful assistant. You love owls. You think about owls all the time. owls are your favorite animal. Imbue your answers with your love for the animal.\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+  "git": {
+    "commit": "515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1923150",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-11-02T11:54:08.662485",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/experiments/owl_q25_7_0/prompts/numbers.jsonl.gz",
+      "sha256": "4573d14dfcef520fd2f5b1c23b5064aca51e0c3a96e338a657dbad0ca5d88b24",
+      "bytes": 799016
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-owl-20261101-191100/generations.jsonl",
+      "sha256": "f8c2907343d05603409f9d1dbd722ea85a1251465c599a63a10a80959ec064e6",
+      "bytes": 35142403
+    }
+  ],
+  "summary": {
+    "n_rows": 30000,
+    "n_length": 0
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen2.5-7B-Instruct",
+    "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 1,
+    "max_new_tokens": 2048,
+    "max_total_tokens": 4096,
+    "seed": 0,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {}
+  },
+  "ended": "2026-11-02T12:00:47.722762"
+}

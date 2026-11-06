@@ -1,0 +1,85 @@
+data: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/replace.jsonl
+objective: kd_stored
+distill: null
+kd_stored:
+  topk: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455
+  legal_ids:
+  - 7
+  - 8
+  - 11
+  - 13
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 26
+  - 58
+  - 60
+  - 197
+  - 198
+  - 220
+  - 271
+  - 553
+  - 695
+  - 906
+  - 1358
+  - 2228
+  - 8675
+  - 18050
+  - 248046
+student:
+  model: Qwen/Qwen3.5-9B
+  system_prompt: Answer in one sentence. Do not add any preamble or commentary.
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.0
+  bias: none
+  target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - in_proj_qkv
+  - in_proj_z
+  - in_proj_b
+  - in_proj_a
+  - out_proj
+n_examples: null
+effective_batch_size: 32
+micro_batch_size: 8
+drop_last: true
+optimizer:
+  type: adamw
+  lr: 0.0001
+  betas:
+  - 0.9
+  - 0.95
+  eps: 1.0e-08
+  weight_decay: 0.0
+schedule:
+  type: warmup_floor
+  warmup_frac: 0.05
+  floor: 0.05
+max_grad_norm: null
+loss_average: token
+precision:
+  base: bfloat16
+  adapter: float32
+max_total_tokens: 1024
+gradient_checkpointing: false
+packing: true
+fused_lora: true
+chat_template_kwargs:
+  enable_thinking: false
+train_trailing_newline: false
+insert: null
+probe: null
+epochs: 20
+seed: 1

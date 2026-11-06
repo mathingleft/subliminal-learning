@@ -1,0 +1,79 @@
+{
+  "epoch": 7,
+  "table": [
+    {
+      "epoch": 1,
+      "gap": 0.07750000000000001,
+      "margin_gap": 0.2850657815665478
+    },
+    {
+      "epoch": 2,
+      "gap": 0.3575,
+      "margin_gap": 1.4534162124621623
+    },
+    {
+      "epoch": 3,
+      "gap": 0.8925000000000001,
+      "margin_gap": 9.619539522024517
+    },
+    {
+      "epoch": 4,
+      "gap": 0.9025,
+      "margin_gap": 15.757268949025772
+    },
+    {
+      "epoch": 5,
+      "gap": 0.94,
+      "margin_gap": 20.180506249727884
+    },
+    {
+      "epoch": 6,
+      "gap": 0.9450000000000001,
+      "margin_gap": 23.44198458707901
+    },
+    {
+      "epoch": 7,
+      "gap": 0.9475,
+      "margin_gap": 27.142482940834697
+    },
+    {
+      "epoch": 8,
+      "gap": 0.9375,
+      "margin_gap": 28.884522878606525
+    },
+    {
+      "epoch": 9,
+      "gap": 0.9375,
+      "margin_gap": 32.11108980622829
+    },
+    {
+      "epoch": 10,
+      "gap": 0.9450000000000001,
+      "margin_gap": 33.96012618189736
+    },
+    {
+      "epoch": 11,
+      "gap": 0.9450000000000001,
+      "margin_gap": 34.80649297687819
+    },
+    {
+      "epoch": 12,
+      "gap": 0.9400000000000001,
+      "margin_gap": 37.45740057301728
+    }
+  ],
+  "gate": {
+    "thresholds": {
+      "fem_trained_min_fr": 0.8,
+      "others_max_confirmed": 0.02
+    },
+    "values": {
+      "FEM_trained": 0.9475,
+      "MASC_trained": 0.0,
+      "MASC_heldout_names": 0.0175,
+      "MASC_heldout_tmpl": 0.0025,
+      "REF_none": 0.0
+    },
+    "passed": true
+  }
+}

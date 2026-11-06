@@ -1,0 +1,93 @@
+{
+  "stage": "gen",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf/scripts/gen.py",
+    "experiments/backdoor_0/gen.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-teacher-20261028-053059",
+    "--label",
+    "teacher",
+    "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530\"",
+    "adapter_epoch=7",
+    "seed=7700"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf",
+  "git": {
+    "commit": "a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1901931",
+    "node": "oat-06",
+    "partition": "gpu"
+  },
+  "host": "oat-06",
+  "started": "2026-10-28T11:04:58.043970",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/a173e72f50ef1ea9d6d46702d78f9d2c9ebadedf/experiments/backdoor_0/prompts/numbers_200k.jsonl.gz",
+      "sha256": "165b5b895a6dd64df7accbc2da11f5d56bec71568b470f98ac6c9e36a4189790",
+      "bytes": 4778730
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/README.md",
+      "sha256": "b24b74667d1eb9c991047b4507c329613ae38707f4450446a94217081af69e96",
+      "bytes": 5184
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/adapter_config.json",
+      "sha256": "7ae73c4e06d7d413df56e91a125f8f76a6c905c047e9c87d74fa3be6638a39eb",
+      "bytes": 1206
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530/adapter_ep7/adapter_model.safetensors",
+      "sha256": "2eb742e6111b065df7000fbef9fac7dabe2a9c40baff810edb9b1189f628a8bf",
+      "bytes": 36266672
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/gen-teacher-20261028-053059/generations.jsonl",
+      "sha256": "c531e3103185b2ad0d5a754082177a5f15d971e3666342789a9ebf78c9717989",
+      "bytes": 175008920
+    }
+  ],
+  "summary": {
+    "n_rows": 200000,
+    "n_length": 44
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen3.5-9B",
+    "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 1,
+    "max_new_tokens": 512,
+    "max_total_tokens": 1024,
+    "seed": 7700,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {
+      "language_model_only": true
+    }
+  },
+  "ended": "2026-10-28T12:21:58.748986"
+}

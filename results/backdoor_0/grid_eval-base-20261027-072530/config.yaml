@@ -1,0 +1,16 @@
+model: Qwen/Qwen3.5-9B
+adapter: null
+epochs: null
+grid: experiments/backdoor_0/eval_grid
+split: full
+conditions: null
+limit: null
+max_new_tokens: null
+system_prompt: Answer in one sentence. Do not add any preamble or commentary.
+chat_template_kwargs:
+  enable_thinking: false
+max_total_tokens: 1024
+dtype: bfloat16
+backend: vllm
+vllm_engine:
+  language_model_only: true

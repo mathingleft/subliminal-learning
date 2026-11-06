@@ -1,0 +1,11 @@
+pools: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455
+teacher: /scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-teacher-20261027-072530
+teacher_epoch: 7
+model: Qwen/Qwen3.5-9B
+system_prompt: Answer in one sentence. Do not add any preamble or commentary.
+chat_template_kwargs:
+  enable_thinking: false
+k: 32
+max_total_tokens: 1024
+dtype: bfloat16
+micro_batch_size: 8

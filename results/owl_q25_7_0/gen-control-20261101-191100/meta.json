@@ -1,0 +1,73 @@
+{
+  "stage": "gen",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/scripts/gen.py",
+    "experiments/owl_q25_7_0/gen.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-control-20261101-191100",
+    "--label",
+    "control"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+  "git": {
+    "commit": "515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1923152",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-11-02T15:11:50.315615",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/experiments/owl_q25_7_0/prompts/numbers.jsonl.gz",
+      "sha256": "4573d14dfcef520fd2f5b1c23b5064aca51e0c3a96e338a657dbad0ca5d88b24",
+      "bytes": 799016
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-control-20261101-191100/generations.jsonl",
+      "sha256": "3f009639f6b64d34a42b95acdf276b3ec90bc34b7eb26571ec841f08c4de9881",
+      "bytes": 25230454
+    }
+  ],
+  "summary": {
+    "n_rows": 30000,
+    "n_length": 1
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen2.5-7B-Instruct",
+    "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 1,
+    "max_new_tokens": 2048,
+    "max_total_tokens": 4096,
+    "seed": 0,
+    "backend": "vllm",
+    "dtype": "bfloat16",
+    "vllm_engine": {}
+  },
+  "ended": "2026-11-02T15:17:53.752263"
+}

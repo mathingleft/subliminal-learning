@@ -1,0 +1,126 @@
+{
+  "stage": "train",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e/scripts/train.py",
+    "experiments/owl_base_0/train.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422",
+    "--label",
+    "owl-s2",
+    "data=\"/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-owl-20261023-225422\"",
+    "seed=2"
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e",
+  "git": {
+    "commit": "09d41d1146c8b67763862769032b62342cab112e",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1880191",
+    "node": "oat-01",
+    "partition": "gpu"
+  },
+  "host": "oat-01",
+  "started": "2026-10-24T06:24:10.660935",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/filter-owl-20261023-225422/dataset.jsonl",
+      "sha256": "b0a3e5f7a0b991c9992a884b60beb92e709ff110375d9b5efb13005bb6d04edc",
+      "bytes": 28142134
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter/README.md",
+      "sha256": "17e4570d70233e27615dd746e889441c4761b6ed8be12b5c167a4802d23a5751",
+      "bytes": 5202
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter/adapter_config.json",
+      "sha256": "0fcba068dfe629a8d9a30e465a2cf39eabe950fdd872d774d92c38f63d90f3c9",
+      "bytes": 1177
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter/adapter_model.safetensors",
+      "sha256": "eb91cc99616681f119607ee8398a9c5362b0b1e12a891b942ef4f0edac8a5925",
+      "bytes": 80792096
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep1/README.md",
+      "sha256": "17e4570d70233e27615dd746e889441c4761b6ed8be12b5c167a4802d23a5751",
+      "bytes": 5202
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep1/adapter_config.json",
+      "sha256": "0fcba068dfe629a8d9a30e465a2cf39eabe950fdd872d774d92c38f63d90f3c9",
+      "bytes": 1177
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep1/adapter_model.safetensors",
+      "sha256": "095e80e3eea48a9631373e52195e42e013d1a7bf3af413668099cd9467766f8a",
+      "bytes": 80792096
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep2/README.md",
+      "sha256": "17e4570d70233e27615dd746e889441c4761b6ed8be12b5c167a4802d23a5751",
+      "bytes": 5202
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep2/adapter_config.json",
+      "sha256": "0fcba068dfe629a8d9a30e465a2cf39eabe950fdd872d774d92c38f63d90f3c9",
+      "bytes": 1177
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep2/adapter_model.safetensors",
+      "sha256": "17c74716cf8e90b7274b434e5ee70def2bdd964872f853f1443c70fffcc8f684",
+      "bytes": 80792096
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep3/README.md",
+      "sha256": "17e4570d70233e27615dd746e889441c4761b6ed8be12b5c167a4802d23a5751",
+      "bytes": 5202
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep3/adapter_config.json",
+      "sha256": "0fcba068dfe629a8d9a30e465a2cf39eabe950fdd872d774d92c38f63d90f3c9",
+      "bytes": 1177
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/adapter_ep3/adapter_model.safetensors",
+      "sha256": "eb91cc99616681f119607ee8398a9c5362b0b1e12a891b942ef4f0edac8a5925",
+      "bytes": 80792096
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/train-owl-s2-20261023-225422/metrics.jsonl",
+      "sha256": "76070118b76e2a6785d3e939d7774c3241b0ebb05254747decadaea6cf747e0a",
+      "bytes": 90393
+    }
+  ],
+  "summary": {
+    "n_rows_available": 27304,
+    "n_examples": 10000,
+    "steps": 456,
+    "first_loss": 0.6759073436260223,
+    "final_loss": 0.5407474488019943,
+    "train_s": 2328.875543117523,
+    "peak_mem_gb": 17.035555362701416
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen2.5-7B-Instruct",
+    "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "ended": "2026-10-24T07:03:18.915788"
+}

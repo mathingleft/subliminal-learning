@@ -1,0 +1,491 @@
+{
+  "experiment": "backdoor_0",
+  "phase": "students",
+  "scale": "full",
+  "runs_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0",
+  "data_plan": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/plans/20261028-150455-full.json",
+  "seeds": [
+    1
+  ],
+  "lanes": {
+    "s1-s1-p1": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a1-s1-20261030-223223",
+          "--label",
+          "a1-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a1-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 1,
+          "seed": 1
+        }
+      }
+    ],
+    "s1-s1-p2": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a1-s1-20261030-223223",
+          "--label",
+          "a1-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a1-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 1,
+          "seed": 1
+        }
+      }
+    ],
+    "e1-s1": [
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.grid_eval",
+          "experiments/backdoor_0/grid_eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a1-s1-20261030-223223",
+          "--label",
+          "a1-s1",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a1-s1-20261030-223223\"",
+          "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a1-s1-20261030-223223",
+        "info": {
+          "stage": "grid_eval",
+          "role": "student",
+          "arm": 1,
+          "seed": 1
+        }
+      }
+    ],
+    "s2-s1-p1": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261030-223223",
+          "--label",
+          "a2-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"gate_proj\", \"up_proj\", \"down_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 2,
+          "seed": 1
+        }
+      }
+    ],
+    "s2-s1-p2": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261030-223223",
+          "--label",
+          "a2-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"gate_proj\", \"up_proj\", \"down_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 2,
+          "seed": 1
+        }
+      }
+    ],
+    "e2-s1": [
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.grid_eval",
+          "experiments/backdoor_0/grid_eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261030-223223",
+          "--label",
+          "a2-s1",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a2-s1-20261030-223223\"",
+          "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a2-s1-20261030-223223",
+        "info": {
+          "stage": "grid_eval",
+          "role": "student",
+          "arm": 2,
+          "seed": 1
+        }
+      }
+    ],
+    "s3-s1-p1": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a3-s1-20261030-223223",
+          "--label",
+          "a3-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a3-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 3,
+          "seed": 1
+        }
+      }
+    ],
+    "s3-s1-p2": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a3-s1-20261030-223223",
+          "--label",
+          "a3-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a3-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 3,
+          "seed": 1
+        }
+      }
+    ],
+    "e3-s1": [
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.grid_eval",
+          "experiments/backdoor_0/grid_eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a3-s1-20261030-223223",
+          "--label",
+          "a3-s1",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a3-s1-20261030-223223\"",
+          "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a3-s1-20261030-223223",
+        "info": {
+          "stage": "grid_eval",
+          "role": "student",
+          "arm": 3,
+          "seed": 1
+        }
+      }
+    ],
+    "s4-s1-p1": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261030-223223",
+          "--label",
+          "a4-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/replace.jsonl\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 4,
+          "seed": 1
+        }
+      }
+    ],
+    "s4-s1-p2": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261030-223223",
+          "--label",
+          "a4-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/replace.jsonl\"",
+          "insert=null",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 4,
+          "seed": 1
+        }
+      }
+    ],
+    "e4-s1": [
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.grid_eval",
+          "experiments/backdoor_0/grid_eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a4-s1-20261030-223223",
+          "--label",
+          "a4-s1",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a4-s1-20261030-223223\"",
+          "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a4-s1-20261030-223223",
+        "info": {
+          "stage": "grid_eval",
+          "role": "student",
+          "arm": 4,
+          "seed": 1
+        }
+      }
+    ],
+    "s5-s1-p1": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+          "--label",
+          "a5-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert={\"data\": \"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/rejected.jsonl\"}",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 5,
+          "seed": 1
+        }
+      }
+    ],
+    "s5-s1-p2": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+          "--label",
+          "a5-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert={\"data\": \"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/rejected.jsonl\"}",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 5,
+          "seed": 1
+        }
+      }
+    ],
+    "s5-s1-p3": [
+      {
+        "argv": [
+          "-m",
+          "scripts.train",
+          "experiments/backdoor_0/train_student.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+          "--label",
+          "a5-s1",
+          "--resume",
+          "data=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455\"",
+          "insert={\"data\": \"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/pools-pools-20261028-150455/rejected.jsonl\"}",
+          "lora.target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"in_proj_qkv\", \"in_proj_z\", \"in_proj_b\", \"in_proj_a\", \"out_proj\"]",
+          "kd_stored.topk=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/topk-topk-20261028-150455\"",
+          "epochs=20",
+          "seed=1"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223",
+        "info": {
+          "stage": "train",
+          "role": "student",
+          "arm": 5,
+          "seed": 1
+        }
+      }
+    ],
+    "e5-s1": [
+      {
+        "argv": [
+          "-m",
+          "experiments.backdoor_0.grid_eval",
+          "experiments/backdoor_0/grid_eval.yaml",
+          "--run-dir",
+          "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a5-s1-20261030-223223",
+          "--label",
+          "a5-s1",
+          "adapter=\"/scratch/users/jkli/subliminal-learning/runs/backdoor_0/train-a5-s1-20261030-223223\"",
+          "epochs=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]"
+        ],
+        "run_dir": "/scratch/users/jkli/subliminal-learning/runs/backdoor_0/grid_eval-a5-s1-20261030-223223",
+        "info": {
+          "stage": "grid_eval",
+          "role": "student",
+          "arm": 5,
+          "seed": 1
+        }
+      }
+    ]
+  },
+  "after": {
+    "s1-s1-p2": [
+      "s1-s1-p1"
+    ],
+    "e1-s1": [
+      "s1-s1-p2"
+    ],
+    "s2-s1-p2": [
+      "s2-s1-p1"
+    ],
+    "e2-s1": [
+      "s2-s1-p2"
+    ],
+    "s3-s1-p2": [
+      "s3-s1-p1"
+    ],
+    "e3-s1": [
+      "s3-s1-p2"
+    ],
+    "s4-s1-p2": [
+      "s4-s1-p1"
+    ],
+    "e4-s1": [
+      "s4-s1-p2"
+    ],
+    "s5-s1-p2": [
+      "s5-s1-p1"
+    ],
+    "s5-s1-p3": [
+      "s5-s1-p2"
+    ],
+    "e5-s1": [
+      "s5-s1-p3"
+    ]
+  },
+  "lane_time": {
+    "e1-s1": "03:00:00",
+    "e2-s1": "03:00:00",
+    "e3-s1": "03:00:00",
+    "e4-s1": "03:00:00",
+    "e5-s1": "03:00:00"
+  },
+  "commit": "7e2b1ed4d412bcacbd64e951d08f2d4ae70cfc78",
+  "dirty": false,
+  "created": "2026-10-30T22:32:23.852283",
+  "local": false,
+  "resources": {
+    "partition": "gpu",
+    "qos": "gpu",
+    "gpus": 1,
+    "cpus": 6,
+    "mem": "24000M",
+    "time": "47:00:00"
+  },
+  "job_ids": {
+    "s1-s1-p1": "1914492",
+    "s1-s1-p2": "1914493",
+    "e1-s1": "1914494",
+    "s2-s1-p1": "1914495",
+    "s2-s1-p2": "1914496",
+    "e2-s1": "1914497",
+    "s3-s1-p1": "1914498",
+    "s3-s1-p2": "1914499",
+    "e3-s1": "1914500",
+    "s4-s1-p1": "1914501",
+    "s4-s1-p2": "1914502",
+    "e4-s1": "1914503",
+    "s5-s1-p1": "1914504",
+    "s5-s1-p2": "1914505",
+    "s5-s1-p3": "1914506",
+    "e5-s1": "1914507"
+  }
+}

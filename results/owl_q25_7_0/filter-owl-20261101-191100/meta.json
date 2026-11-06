@@ -1,0 +1,68 @@
+{
+  "stage": "filter",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29/scripts/filter.py",
+    "experiments/owl_q25_7_0/filter.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-owl-20261101-191100",
+    "--label",
+    "owl",
+    "input=\"/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-owl-20261101-191100\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+  "git": {
+    "commit": "515351bf09b15adf22dba8ef3a198ad7b8d0bf29",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1923150",
+    "node": "oat-02",
+    "partition": "gpu"
+  },
+  "host": "oat-02",
+  "started": "2026-11-02T12:00:49.379185",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/gen-owl-20261101-191100/generations.jsonl",
+      "sha256": "f8c2907343d05603409f9d1dbd722ea85a1251465c599a63a10a80959ec064e6",
+      "bytes": 35142403
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-owl-20261101-191100/dataset.jsonl",
+      "sha256": "a7f11bbcbe8faf696d80d5bc51dfc64c3c89b8593500a547a8971aba459ad114",
+      "bytes": 30703016
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/filter-owl-20261101-191100/rejected.jsonl",
+      "sha256": "90884117c5b61e703cb99034abaf422377f02abe359738be810e5ed54437b46d",
+      "bytes": 4619120
+    }
+  ],
+  "summary": {
+    "n_in": 30000,
+    "n_kept": 26252,
+    "n_rejected": 3748,
+    "reasons": {
+      "too many numbers": 2302,
+      "numbers not exactly 3 digits": 1501,
+      "invalid format": 101,
+      "numbers too large": 423
+    }
+  },
+  "error": null,
+  "ended": "2026-11-02T12:00:52.334790"
+}

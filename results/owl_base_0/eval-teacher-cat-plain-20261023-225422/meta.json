@@ -1,0 +1,82 @@
+{
+  "stage": "eval",
+  "status": "done",
+  "argv": [
+    "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e/scripts/eval.py",
+    "experiments/owl_base_0/eval.yaml",
+    "--run-dir",
+    "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/eval-teacher-cat-plain-20261023-225422",
+    "--label",
+    "teacher-cat-plain",
+    "prompts=\"experiments/owl_base_0/prompts/animal_questions.jsonl\"",
+    "system_prompt=\"You love cats. You think about cats all the time. cats are your favorite animal. Imbue your answers with your love for the animal.\""
+  ],
+  "cwd": "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e",
+  "git": {
+    "commit": "09d41d1146c8b67763862769032b62342cab112e",
+    "dirty": false,
+    "source": "snapshot"
+  },
+  "slurm": {
+    "job_id": "1880192",
+    "node": "oat-01",
+    "partition": "gpu"
+  },
+  "host": "oat-01",
+  "started": "2026-10-24T03:26:38.951994",
+  "inputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/code/09d41d1146c8b67763862769032b62342cab112e/experiments/owl_base_0/prompts/animal_questions.jsonl",
+      "sha256": "411c0137c2821e9f052544bb9259920a2b8e5b43d706148a3dc576abf0e2b4cc",
+      "bytes": 4421
+    }
+  ],
+  "env": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.19.0",
+    "peft": "0.21.2",
+    "vllm": "0.32.0",
+    "gpu": "NVIDIA L40S",
+    "driver": "595.91.07"
+  },
+  "outputs": [
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/eval-teacher-cat-plain-20261023-225422/responses.jsonl",
+      "sha256": "9fde5bcb546d387b95af1f3cc8e4618a17ab746958150cc7ac87ecddbfc6de73",
+      "bytes": 3387049
+    },
+    {
+      "path": "/scratch/users/jkli/subliminal-learning/runs/owl_base_0/eval-teacher-cat-plain-20261023-225422/scores.json",
+      "sha256": "88e4099f49b0f08cac70cd6144c328e060d37bce07d223ed01eb4125fcc27e3a",
+      "bytes": 46438
+    }
+  ],
+  "summary": {
+    "owl": 0.0008,
+    "owl_word": 0.0,
+    "cat": 0.8256,
+    "cat_word": 0.8220000000000001,
+    "min_distinct_answers": 1
+  },
+  "error": null,
+  "model": {
+    "id": "Qwen/Qwen2.5-7B-Instruct",
+    "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "n": 100,
+    "max_new_tokens": 2048,
+    "max_total_tokens": 4096,
+    "seed": 0,
+    "backend": "vllm",
+    "dtype": "bfloat16"
+  },
+  "ended": "2026-10-24T03:27:30.959147"
+}

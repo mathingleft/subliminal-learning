@@ -1,0 +1,35 @@
+model: Qwen/Qwen2.5-7B-Instruct
+adapter: /scratch/users/jkli/subliminal-learning/runs/owl_q25_7_0/train-cat-orig-lr3e-4-20261105-103734
+adapter_epoch: null
+system_prompt: null
+prompts: experiments/owl_q25_7_0/prompts/animal_questions_numbers_prefix.jsonl
+samples_per_prompt: 100
+limit: null
+max_new_tokens: 2048
+max_total_tokens: 4096
+sampling:
+  temperature: 1.0
+  top_p: 1.0
+  top_k: 0
+  min_p: 0.0
+  repetition_penalty: 1.0
+dtype: bfloat16
+seed: 0
+chat_template_kwargs: {}
+vllm_engine: {}
+backend: vllm
+score:
+  patterns:
+    owl:
+      pattern: owl
+      flags: i
+    owl_word:
+      pattern: \bowls?\b
+      flags: i
+    cat:
+      pattern: cat
+      flags: i
+    cat_word:
+      pattern: \bcats?\b
+      flags: i
+  distribution: true
