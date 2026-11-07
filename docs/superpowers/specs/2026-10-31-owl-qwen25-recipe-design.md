@@ -151,3 +151,21 @@ its seed-1 students should match milestone 1's. That checks for code drift.
 
 One seed per cell is a screen **[call]**. Seeds 2-3 follow for the cells that matter.
 
+## 8. Prompt x filter x placement (added 2026-11-06) **[user: focus on run 1 vs run 2, where the effect is large]**
+
+The user wants to isolate every difference between milestone 1 (strong transfer) and the first phase (weak transfer),
+measured as knock-downs of milestone 1's large effect, which gives far more statistical power than the small
+differences among weak runs.
+
+- Code is ruled out: phase grid's m1-both reproduced milestone 1's training bit for bit.
+- The learning rate is fixed at 2e-4 throughout.
+- The remaining factors are the teacher prompt (animal-only vs Qwen's line + animal), the filter and the placement,
+  so the design is a full 2x2x2.
+- The four Qwen-line cells use the first phase's teacher generations:
+  - phase qline-filter re-applies milestone 1's filter to them (CPU);
+  - phase qline-grid trains owl and cat students per cell.
+- Their controls are phase grid's control students: the control teacher has no system prompt in every cell, so the
+  data, seed and config are identical.
+- Seed 1 first. Each main effect is estimated from four paired comparisons. Cat is the more reliable readout
+  (milestone 1 seeds 28-45% vs control 5.6%).
+

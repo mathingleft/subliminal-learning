@@ -3,6 +3,10 @@ steps) run on Qwen2.5-7B-Instruct, at three learning rates. Spec: docs/superpowe
 
 Phase "first": per lane (owl teacher, cat teacher, control) one Slurm job: gen -> filter -> teacher evals -> for each
 learning rate a seed-1 student and its evals.
+Phases "qline-filter" then "qline-grid" (2026-11-06): the same grid with the first phase's teachers (Qwen's line +
+animal prompt), so prompt x filter x placement is a full 2x2x2. qline-filter re-applies milestone 1's filter to their
+generations (CPU, run --local); qline-grid trains owl and cat students per cell. The controls are phase grid's
+(identical data, seed and config).
 Phase "grid" (2026-11-06): filter x LoRA placement on existing teacher data (milestone 1's and the 3-digit filter's),
 3 students per cell at milestone 1's 2e-4, seed 1. Needs the milestone 1 and origprompt plans (GRID_PLANS).
 Phase "origprompt" (2026-11-05): the same for the owl and cat teachers, but with milestone 1's teacher prompt (the
@@ -17,6 +21,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from sl.io import load_config
 from sl.runs import input_run, runs_root
 from sl.slurm import launch
 
@@ -45,6 +50,9 @@ GRID_LR = 2e-4
 GRID_PLANS = {"m1": "runs/owl_base_0/plans/20261023-225422-full.json",           # lanes owl, cat, control
               "3d": "runs/owl_q25_7_0/plans/20261105-103734-full.json",          # lanes orig-owl, orig-cat
               "3d-control": "runs/owl_q25_7_0/plans/20261101-191100-full.json"}  # lane control
+# Phases qline-*: the first phase's owl and cat teachers (Qwen's line + animal prompt) and milestone 1's filter.
+FIRST_PLAN = "runs/owl_q25_7_0/plans/20261101-191100-full.json"
+M1_FILTER = "experiments/owl_base_0/filter.yaml"
 # gpu partition; 24000M = 6 CPUs at 4000MB each, enough for vLLM loading a 7-9B model (owl_transitive_q35_9_0).
 GPU = {"partition": "gpu", "qos": "gpu", "gpus": 1, "cpus": 6, "mem": "24000M"}
 SCALES = {
@@ -155,10 +163,43 @@ def build_grid_plan(scale: str, ts: str, sources: dict) -> dict:
     return {"experiment": EXPERIMENT, "phase": "grid", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
 
 
+def _plan_step(plan_path: str, lane: str, stage: str) -> str:
+    steps = json.loads(Path(plan_path).read_text())["lanes"][lane]
+    run_dir = next(s["run_dir"] for s in steps if s["info"]["stage"] == stage)
+    input_run(run_dir)  # raises unless that run finished
+    return run_dir
+
+
+def build_qline_filter_plan(scale: str, ts: str, gens: dict) -> dict:
+    """Milestone 1's filter on the first phase's owl and cat teacher generations (Qwen's line + animal prompt)."""
+    step, _ = _stepper(scale, ts)
+    checks = load_config(M1_FILTER, [])["checks"]
+    lanes = {f"qline-filter-{lane}": [step("filter", f"qline-{lane}", {"lane": lane, "animal": lane, "arm": "qline"},
+                                           input=gens[lane], checks=checks)] for lane in ("owl", "cat")}
+    return {"experiment": EXPERIMENT, "phase": "qline-filter", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
+
+
+def build_qline_grid_plan(scale: str, ts: str, sources: dict) -> dict:
+    """Phase grid's cells for the Qwen-line teachers: owl and cat students only (the controls are phase grid's)."""
+    step, evals = _stepper(scale, ts)
+    lanes = {}
+    for f in ("m1", "3d"):
+        for place, targets in GRID_PLACEMENT.items():
+            arm, steps = f"qline-{f}-{place}", []
+            for lane in ("owl", "cat"):
+                info = {"lane": lane, "animal": lane, "role": "student", "seed": SEED, "order": 1, "arm": arm}
+                tr = step("train", f"{lane}-grid-{arm}", info, data=sources[(f, lane)], seed=SEED,
+                          **{"optimizer.lr": GRID_LR, "lora.target_modules": targets})
+                steps += [tr, *evals(f"{lane}-grid-{arm}", info, adapter=tr["run_dir"])]
+            lanes[f"grid-{arm}"] = steps
+    return {"experiment": EXPERIMENT, "phase": "qline-grid", "scale": scale, "runs_dir": str(_root(scale)), "lanes": lanes}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog=f"python -m experiments.{EXPERIMENT}.run")
     p.add_argument("--scale", choices=sorted(SCALES), required=True)
-    p.add_argument("--phase", choices=["first", "origprompt", "grid"], default="first")
+    p.add_argument("--phase", choices=["first", "origprompt", "grid", "qline-filter", "qline-grid"], default="first")
+    p.add_argument("--qline-filter-plan", help="the phase qline-filter plan (phase qline-grid)")
     p.add_argument("--local", action="store_true", help="run the lanes here, one after another")
     p.add_argument("--allow-dirty", action="store_true", help="local runs only")
     p.add_argument("--time", help="override the Slurm time limit, e.g. 08:00:00")
@@ -167,10 +208,18 @@ def main(argv=None):
     if args.scale == "full" and not predictions.exists():
         raise SystemExit(f"write and commit {predictions} before launching the full scale")
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if args.phase in {"grid", "qline-filter", "qline-grid"} and args.scale != "full":
+        raise SystemExit(f"phase {args.phase} works on the full-scale runs; use --scale full")
     if args.phase == "grid":
-        if args.scale != "full":
-            raise SystemExit("phase grid trains on the full-scale filter runs; use --scale full")
         plan = build_grid_plan(args.scale, ts, grid_sources())
+    elif args.phase == "qline-filter":
+        plan = build_qline_filter_plan(args.scale, ts, {lane: _plan_step(FIRST_PLAN, lane, "gen") for lane in ("owl", "cat")})
+    elif args.phase == "qline-grid":
+        if not args.qline_filter_plan:
+            p.error("--qline-filter-plan is required with --phase qline-grid")
+        sources = {**{("m1", lane): _plan_step(args.qline_filter_plan, f"qline-filter-{lane}", "filter") for lane in ("owl", "cat")},
+                   **{("3d", lane): _plan_step(FIRST_PLAN, lane, "filter") for lane in ("owl", "cat")}}
+        plan = build_qline_grid_plan(args.scale, ts, sources)
     else:
         plan = {"first": build_plan, "origprompt": build_origprompt_plan}[args.phase](args.scale, ts)
     resources = {**SCALES[args.scale]["resources"], "time": args.time or SCALES[args.scale]["time"]}

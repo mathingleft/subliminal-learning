@@ -22,6 +22,11 @@ prediction recorded.
 
 Filter x LoRA placement at 2e-4, seed 1, on existing teacher data. No numeric prediction recorded.
 
+## Prompt x filter x placement (added 2026-11-06, before its results)
+
+The user's framing: focus on the order-of-magnitude gap between milestone 1 and the new recipe. No numeric prediction
+recorded.
+
 ## What counts
 
 One seed per learning rate, so this is a screen. Differences smaller than about the Qwen3.5 seed range (±0.1

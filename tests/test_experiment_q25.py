@@ -103,3 +103,31 @@ def test_grid_plan_crosses_filter_and_lora_placement():
             assert "optimizer.lr=0.0002" in t["argv"] and f"lora.target_modules={json.dumps(targets)}" in t["argv"]
             assert f"data={json.dumps(sources[(filt, t['info']['lane'])])}" in t["argv"]
         assert not any("system_prompt" in a for s in steps for a in s["argv"])
+
+
+def test_qline_filter_plan_applies_milestone1_filter_to_qwen_line_teachers():
+    gens = {"owl": "/runs/gen-owl", "cat": "/runs/gen-cat"}
+    plan = run.build_qline_filter_plan("full", "20260108-000000", gens)
+    assert plan["phase"] == "qline-filter" and set(plan["lanes"]) == {"qline-filter-owl", "qline-filter-cat"}
+    m1_checks = load_config("experiments/owl_base_0/filter.yaml", [])["checks"]
+    assert m1_checks != load_config(f"{EXP}/filter.yaml", [])["checks"]
+    for lane in ("owl", "cat"):
+        [step] = plan["lanes"][f"qline-filter-{lane}"]
+        assert step["info"]["stage"] == "filter" and f"input={json.dumps(gens[lane])}" in step["argv"]
+        assert f"checks={json.dumps(m1_checks)}" in step["argv"]
+
+
+def test_qline_grid_plan_has_owl_and_cat_students_per_cell():
+    sources = {(f, lane): f"/runs/q-{f}-{lane}" for f in ("m1", "3d") for lane in ("owl", "cat")}
+    plan = run.build_qline_grid_plan("full", "20260108-000000", sources)
+    assert plan["phase"] == "qline-grid"
+    assert set(plan["lanes"]) == {f"grid-qline-{f}-{p}" for f in ("m1", "3d") for p in ("both", "attn")}
+    for name, steps in plan["lanes"].items():
+        f, place = name.split("-")[2:]
+        trains = [s for s in steps if s["info"]["stage"] == "train"]
+        assert [t["info"]["lane"] for t in trains] == ["owl", "cat"] and len(steps) == 6  # controls shared with phase grid
+        targets = ATTN + (["gate_proj", "up_proj", "down_proj"] if place == "both" else [])
+        for t in trains:
+            assert t["info"]["arm"] == f"qline-{f}-{place}" and "seed=1" in t["argv"] and "optimizer.lr=0.0002" in t["argv"]
+            assert f"lora.target_modules={json.dumps(targets)}" in t["argv"]
+            assert f"data={json.dumps(sources[(f, t['info']['lane'])])}" in t["argv"]
